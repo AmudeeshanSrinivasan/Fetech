@@ -55,6 +55,11 @@ class FetechClient:
     async def fetch(self, request: FetchRequest) -> FetchResult:
         return await self.gateway.fetch(request)
 
+    async def crawl(self, request: FetchRequest) -> FetchResult:
+        """Run a bounded crawl using the same canonical result contract."""
+
+        return await self.gateway.fetch(request.model_copy(update={"intent": "crawl"}))
+
     async def submit(self, request: FetchRequest) -> FetchHandle:
         run = await self.gateway.submit(request)
         return FetchHandle(run.run_id, self.gateway)

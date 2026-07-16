@@ -10,6 +10,7 @@ from fetech.models import (
     Artifact,
     CapabilityOutcome,
     CapabilityOutcomeStatus,
+    CrawlReport,
     Diagnostic,
     FetchAttempt,
     FetchRequest,
@@ -34,6 +35,7 @@ class ExecutionContext:
     policy_decisions: list[PolicyDecision] = field(default_factory=list)
     diagnostics: list[Diagnostic] = field(default_factory=list)
     accepted: bool = False
+    crawl_report: CrawlReport | None = None
 
     def latest_artifact(self, *representations: str) -> Artifact | None:
         allowed = set(representations)

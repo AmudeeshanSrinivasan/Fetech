@@ -43,10 +43,16 @@ def build_server() -> object:
     @server.tool()
     async def crawl_domain(target: str, maximum_pages: int = 20, maximum_depth: int = 2) -> str:
         """Submit a bounded domain crawl request."""
+        if not 1 <= maximum_pages <= 99:
+            raise ValueError("maximum_pages must be between 1 and 99")
         request = FetchRequest(
             target=target,
             intent="crawl",
-            budget=ResourceBudget(crawl_pages=maximum_pages, crawl_depth=maximum_depth),
+            budget=ResourceBudget(
+                attempts=maximum_pages + 1,
+                crawl_pages=maximum_pages,
+                crawl_depth=maximum_depth,
+            ),
         )
         return (await gateway.fetch(request)).model_dump_json()
 

@@ -20,6 +20,11 @@ fixture, failure semantics, and security constraints. Adding a Clingo predicate 
 not create a new capability ID. Live network tests must be opt-in; the default suite must remain
 hermetic.
 
+Discovery changes need frontier replay, page/depth/attempt budget, robots, and cross-domain tests.
+Browser changes need missing-dependency, offline subresource, malformed-output, interaction-bound,
+and connector policy tests. URL-variant changes must prove that no HTTPS downgrade or secret-bearing
+cross-origin fetch can be produced.
+
 Run the repository verification commands in `AGENTS.md` before submitting changes. Generated
 Graphify output and local runtime data must remain untracked.
 

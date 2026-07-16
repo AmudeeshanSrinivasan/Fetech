@@ -25,6 +25,24 @@ READER_CAPABILITIES = (
     "jina_reader",
     "browser_reader_mode",
 )
+BROWSER_CAPABILITIES = (
+    "playwright",
+    "puppeteer",
+    "selenium",
+    "cdp",
+    "headless_dom",
+    "visible_text",
+    "screenshot",
+    "wait_for_selector",
+    "wait_for_network_idle",
+    "scroll_to_load",
+    "click_expand",
+    "cookie_banner_handling",
+    "lazy_loading",
+    "javascript_rendering",
+    "spa_route_handling",
+)
+BROWSER_ENGINES = ("playwright", "puppeteer", "selenium", "cdp")
 
 
 def classify_target(target: str, outputs: tuple[str, ...]) -> str:
@@ -78,18 +96,50 @@ class DeterministicPlanner:
                 reserved_budget={"bytes": request.budget.bytes},
             ),
         ]
-        if family == "web" and http_capability != "http_head":
-            reader_nodes = self._reader_nodes(request)
+        if request.intent == "crawl":
+            nodes.append(
+                PlanNode(
+                    id="crawl",
+                    capability_id="depth_limited_crawl",
+                    adapter="discovery",
+                    dependencies=("http",),
+                    stop_on_acceptance=True,
+                    reserved_budget={
+                        "attempts": request.budget.attempts,
+                        "crawl_pages": request.budget.crawl_pages,
+                        "crawl_depth": request.budget.crawl_depth,
+                    },
+                )
+            )
+        elif family == "web" and http_capability != "http_head":
+            nodes.append(
+                PlanNode(
+                    id="alternatives",
+                    capability_id="candidate_url_expansion",
+                    adapter="variants",
+                    dependencies=("http",),
+                )
+            )
+            reader_nodes = self._reader_nodes(request, dependency="alternatives")
             nodes.extend(reader_nodes)
             if self.registry.get("playwright").available:
                 terminal_reader = reader_nodes[-1].id
+                requested_browser = set(request.output_requirements) & set(BROWSER_CAPABILITIES)
+                browser_engine = next(
+                    (
+                        capability_id
+                        for capability_id in BROWSER_ENGINES
+                        if capability_id in requested_browser
+                    ),
+                    "playwright",
+                )
                 nodes.append(
                     PlanNode(
-                        id="playwright",
-                        capability_id="playwright",
+                        id="browser",
+                        capability_id=browser_engine,
                         adapter="browser",
                         dependencies=(terminal_reader,),
-                        fallback_for=terminal_reader,
+                        fallback_for=None if requested_browser else terminal_reader,
                         stop_on_acceptance=True,
                         reserved_budget={"browser_seconds": request.budget.browser_seconds},
                     )
@@ -177,7 +227,7 @@ class DeterministicPlanner:
         return "http_get"
 
     @staticmethod
-    def _reader_nodes(request: FetchRequest) -> list[PlanNode]:
+    def _reader_nodes(request: FetchRequest, *, dependency: str) -> list[PlanNode]:
         requested = [
             capability_id
             for capability_id in READER_CAPABILITIES
@@ -192,7 +242,7 @@ class DeterministicPlanner:
                     id=f"reader-{index}-{capability_id.replace('_', '-')}",
                     capability_id=capability_id,
                     adapter="reader",
-                    dependencies=("http",),
+                    dependencies=(dependency,),
                     parallel_group="static-readers",
                     fallback_for=previous,
                     stop_on_acceptance=True,

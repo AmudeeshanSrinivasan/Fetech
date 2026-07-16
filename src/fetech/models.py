@@ -185,7 +185,7 @@ class FetchPlan(ContractModel):
 class FetchAttempt(ContractModel):
     attempt_id: UUID = Field(default_factory=uuid4)
     capability_id: str
-    adapter_version: str = "0.1.0"
+    adapter_version: str = "0.2.0"
     started_at: datetime = Field(default_factory=utc_now)
     finished_at: datetime | None = None
     sanitized_destination: str
@@ -259,6 +259,25 @@ class Diagnostic(ContractModel):
     details: dict[str, str | int | float | bool | None] = Field(default_factory=dict)
 
 
+class DiscoveredTarget(ContractModel):
+    url: str
+    depth: int = Field(ge=0)
+    parent_url: str | None = None
+    relation: str
+    fetched: bool = False
+    accepted: bool = False
+    failure_code: str | None = None
+
+
+class CrawlReport(ContractModel):
+    root_url: str
+    targets: tuple[DiscoveredTarget, ...]
+    pages_fetched: int = Field(ge=0)
+    pages_failed: int = Field(ge=0)
+    maximum_depth_reached: int = Field(ge=0)
+    frontier_omitted: int = Field(ge=0)
+
+
 class FetchResult(ContractModel):
     schema_version: str = "1.0"
     run_id: UUID = Field(default_factory=uuid4)
@@ -271,6 +290,7 @@ class FetchResult(ContractModel):
     diagnostics: tuple[Diagnostic, ...] = ()
     provenance_event_ids: tuple[UUID, ...] = ()
     remaining_budget: ResourceBudget = Field(default_factory=ResourceBudget)
+    crawl_report: CrawlReport | None = None
 
 
 class ProvenanceEvent(ContractModel):

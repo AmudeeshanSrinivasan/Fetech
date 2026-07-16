@@ -124,6 +124,35 @@ def fetch(
     asyncio.run(run())
 
 
+@app.command()
+def crawl(
+    target: str,
+    maximum_pages: Annotated[int, typer.Option("--max-pages", min=1, max=99)] = 20,
+    maximum_depth: Annotated[int, typer.Option("--max-depth", min=0, max=20)] = 2,
+    search: Annotated[
+        bool,
+        typer.Option("--search", help="Use the configured search connector."),
+    ] = False,
+) -> None:
+    """Crawl one public domain within explicit page and depth limits."""
+
+    async def run() -> None:
+        request = FetchRequest(
+            target=target,
+            intent="crawl",
+            policy_profile="allow_search_discovery" if search else "default",
+            budget=ResourceBudget(
+                attempts=min(100, maximum_pages + 1),
+                crawl_pages=maximum_pages,
+                crawl_depth=maximum_depth,
+            ),
+        )
+        async with FetechClient() as client:
+            _json(await client.crawl(request))
+
+    asyncio.run(run())
+
+
 @app.command("run")
 def run_snapshot(run_id: UUID) -> None:
     """Read a persisted run snapshot."""

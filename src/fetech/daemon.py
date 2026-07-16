@@ -35,7 +35,7 @@ def create_app() -> Any:
         finally:
             await gateway.close()
 
-    app = FastAPI(title="Fetech", version="0.1.0a0", lifespan=lifespan)
+    app = FastAPI(title="Fetech", version="0.2.0a0", lifespan=lifespan)
     app.state.gateway = gateway
 
     @app.post("/v1/fetch", response_model=FetchRun, status_code=202)

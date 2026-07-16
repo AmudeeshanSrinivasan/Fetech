@@ -298,6 +298,7 @@ class ExecutionEngine:
             diagnostics=tuple(context.diagnostics),
             provenance_event_ids=tuple(event.event_id for event in await self.ledger.events(run_id)),
             remaining_budget=remaining_budget,
+            crawl_report=context.crawl_report,
         )
         final = await self._emit(
             run_id, "run.finished", "executor", {"status": status.value}, (root.event_id,)
@@ -340,7 +341,11 @@ class ExecutionEngine:
         failed: bool,
     ) -> ResultStatus:
         if context.accepted:
-            return ResultStatus.SUCCEEDED
+            return (
+                ResultStatus.PARTIAL
+                if failed or dependency_missing or budget_exhausted
+                else ResultStatus.SUCCEEDED
+            )
         if policy_blocked:
             return ResultStatus.BLOCKED_BY_POLICY
         if auth_required:

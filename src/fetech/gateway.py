@@ -9,10 +9,14 @@ from uuid import UUID, uuid4
 
 from fetech.adapters.archive import ArchiveAdapter
 from fetech.adapters.base import Adapter, ExecutionContext
+from fetech.adapters.browser import BrowserAdapter
+from fetech.adapters.discovery import DiscoveryAdapter
 from fetech.adapters.documents import DocumentAdapter
 from fetech.adapters.http import HTTPAdapter
 from fetech.adapters.reader import ReaderAdapter
 from fetech.adapters.structured import OptionalAdapter, StructuredAdapter
+from fetech.adapters.variants import VariantAdapter
+from fetech.browser_render import BrowserRenderWorker, RemoteBrowserConnector
 from fetech.config import Settings
 from fetech.executor import ExecutionEngine
 from fetech.ledger import EventLedger
@@ -33,6 +37,7 @@ from fetech.models import (
 from fetech.planning import DeterministicPlanner, classify_target
 from fetech.provenance import build_runtime_graph
 from fetech.registry import CapabilityRegistry
+from fetech.search import HTTPSearchProvider
 from fetech.security import PolicyBlockedError, SafeURLPolicy, normalize_url
 from fetech.storage import FileSystemCAS
 
@@ -46,21 +51,45 @@ class UniversalFetchGateway:
         self.policy = SafeURLPolicy()
         self.ledger = EventLedger.sqlite(self.settings.database_path)
         self.cas = FileSystemCAS(self.settings.artifact_dir)
-        self.adapters: dict[str, Adapter] = {
-            "http": HTTPAdapter(
-                user_agent=self.settings.user_agent,
+        http_adapter = HTTPAdapter(
+            user_agent=self.settings.user_agent,
+            policy=self.policy,
+            global_concurrency=self.settings.global_concurrency,
+            per_host_concurrency=self.settings.per_host_concurrency,
+            per_host_min_interval_seconds=self.settings.per_host_min_interval_seconds,
+        )
+        remote_browsers = {
+            engine: RemoteBrowserConnector(endpoint, policy=self.policy)
+            for engine, endpoint in {
+                "puppeteer": self.settings.puppeteer_connector_url,
+                "selenium": self.settings.selenium_connector_url,
+            }.items()
+            if endpoint
+        }
+        search_provider = (
+            HTTPSearchProvider(
+                self.settings.search_provider_template,
                 policy=self.policy,
-                global_concurrency=self.settings.global_concurrency,
-                per_host_concurrency=self.settings.per_host_concurrency,
-                per_host_min_interval_seconds=self.settings.per_host_min_interval_seconds,
-            ),
+                user_agent=self.settings.user_agent,
+            )
+            if self.settings.search_provider_template
+            else None
+        )
+        self.adapters: dict[str, Adapter] = {
+            "http": http_adapter,
+            "discovery": DiscoveryAdapter(http_adapter, search_provider=search_provider),
             "reader": ReaderAdapter(
                 remote_reader_template=self.settings.jina_reader_template,
                 policy=self.policy,
                 user_agent=self.settings.user_agent,
             ),
+            "variants": VariantAdapter(http_adapter),
             "api": StructuredAdapter(),
-            "browser": OptionalAdapter("browser rendering", "browser"),
+            "browser": BrowserAdapter(
+                BrowserRenderWorker(),
+                remote_renderers=remote_browsers,
+                user_agent=self.settings.user_agent,
+            ),
             "documents": DocumentAdapter(),
             "media": OptionalAdapter("media parsing", "media"),
             "cache": ArchiveAdapter(),

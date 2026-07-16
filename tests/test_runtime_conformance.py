@@ -52,7 +52,11 @@ async def test_full_gateway_fetch_is_persisted_and_projected(
     await gateway.initialize()
     result = await gateway.fetch(FetchRequest(target="https://example.com/article"))
     assert result.status == ResultStatus.SUCCEEDED
-    assert [artifact.representation for artifact in result.artifacts] == ["raw", "clean_text"]
+    assert [artifact.representation for artifact in result.artifacts] == [
+        "raw",
+        "url_candidates",
+        "clean_text",
+    ]
     snapshot = await gateway.get_run(result.run_id)
     assert snapshot.result == result
     graph = json.loads(gateway.settings.runtime_graph_path.read_text(encoding="utf-8"))

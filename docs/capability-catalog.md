@@ -52,6 +52,26 @@ Policies, detectors, and negotiated transport features run inside their owning s
 `CapabilityOutcome`; they do not become artificial DAG nodes. Per-run statuses are `APPLIED`,
 `OBSERVED`, `NOT_APPLICABLE`, `BLOCKED`, `DEPENDENCY_MISSING`, and `FAILED`.
 
+## v0.2 conformance state
+
+The v0.2 set is cardinality-locked at 40 entries across discovery (12), URL alternatives (13), and
+browser rendering (15). The overlay reports 36 native paths and four optional paths, with no planned
+gaps. Optional paths are search-provider discovery, local Playwright/Chromium, and independently
+configured Puppeteer and Selenium connectors. Optional means the implementation boundary ships but
+its binary or operator endpoint is not part of the Apache core installation.
+
+Discovery is owned by a schedulable bounded-frontier operation and emits outcomes for sitemap,
+robots, internal, related, pagination, next-page, category/tag, official-domain, candidate-expansion,
+depth-limit, domain-limit, and search-provider behavior. URL generators run inside the candidate
+stage; they do not become artificial DAG nodes. HTTPS-to-HTTP is deliberately observable as
+`BLOCKED`, never as a generated URL.
+
+The browser stage returns `rendered_html`, `visible_text`, and optional `screenshot` artifacts. Local
+Playwright rendering receives acquired HTML in a bounded subprocess, enables JavaScript, blocks
+service workers, runs offline, and aborts subresources. Interaction capabilities are request-driven
+and bounded. Puppeteer/Selenium connectors require explicit public policy and receive the same
+offline contract. See [v0.2 conformance](v0.2-conformance.md) for failure and policy semantics.
+
 ## Logic projections
 
 The optional logic backends receive generated, bounded projections of the manifest rather than

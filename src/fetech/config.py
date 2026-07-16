@@ -13,7 +13,7 @@ class Settings:
     database_path: Path
     artifact_dir: Path
     runtime_graph_path: Path
-    user_agent: str = "Fetech/0.1 (+https://github.com/fetech-runtime/fetech)"
+    user_agent: str = "Fetech/0.2 (+https://github.com/fetech-runtime/fetech)"
     global_concurrency: int = 8
     per_host_concurrency: int = 2
     per_host_min_interval_seconds: float = 0.1
@@ -26,6 +26,9 @@ class Settings:
     clingo_executable: str = "clingo"
     prolog_executable: str = "swipl"
     jina_reader_template: str | None = None
+    puppeteer_connector_url: str | None = None
+    selenium_connector_url: str | None = None
+    search_provider_template: str | None = None
 
     @classmethod
     def from_environment(cls) -> Settings:
@@ -36,7 +39,7 @@ class Settings:
             artifact_dir=data_dir / "artifacts",
             runtime_graph_path=data_dir / "runtime-graphify" / "graph.json",
             user_agent=os.environ.get(
-                "FETECH_USER_AGENT", "Fetech/0.1 (+https://github.com/fetech-runtime/fetech)"
+                "FETECH_USER_AGENT", "Fetech/0.2 (+https://github.com/fetech-runtime/fetech)"
             ),
             global_concurrency=max(1, int(os.environ.get("FETECH_GLOBAL_CONCURRENCY", "8"))),
             per_host_concurrency=max(1, int(os.environ.get("FETECH_PER_HOST_CONCURRENCY", "2"))),
@@ -53,4 +56,7 @@ class Settings:
             clingo_executable=os.environ.get("FETECH_CLINGO_EXECUTABLE", "clingo"),
             prolog_executable=os.environ.get("FETECH_PROLOG_EXECUTABLE", "swipl"),
             jina_reader_template=os.environ.get("FETECH_JINA_READER_TEMPLATE"),
+            puppeteer_connector_url=os.environ.get("FETECH_PUPPETEER_CONNECTOR_URL"),
+            selenium_connector_url=os.environ.get("FETECH_SELENIUM_CONNECTOR_URL"),
+            search_provider_template=os.environ.get("FETECH_SEARCH_PROVIDER_TEMPLATE"),
         )

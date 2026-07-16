@@ -155,7 +155,9 @@ class ReaderAdapter:
         return b"".join(chunks).decode("utf-8", errors="replace"), "jina-reader", size
 
 
-def _html_to_text(document: str) -> str:
+def extract_visible_text(document: str) -> str:
+    """Return deterministic visible text without running document scripts."""
+
     without_scripts = _SCRIPT_STYLE.sub(" ", document)
     without_tags = _TAGS.sub(" ", without_scripts)
     return _WHITESPACE.sub(" ", unescape(without_tags)).strip()
@@ -168,9 +170,9 @@ def _extract(capability_id: str, document: str, media_type: str) -> tuple[str, s
     if not is_html:
         return document, "plain-text"
     if capability_id in {"clean_text", "boilerplate_removal"}:
-        return _html_to_text(document), "builtin-reader"
+        return extract_visible_text(document), "builtin-reader"
     if capability_id in {"main_article", "newspaper_style", "mercury_style"}:
-        return _html_to_text(_main_html(document)), "builtin-main-content"
+        return extract_visible_text(_main_html(document)), "builtin-main-content"
     if capability_id == "mozilla_readability":
         try:
             from readability import Document  # type: ignore[import-untyped]
@@ -180,7 +182,7 @@ def _extract(capability_id: str, document: str, media_type: str) -> tuple[str, s
             raise AdapterDependencyError(
                 "mozilla_readability requires the fetech[web] extra"
             ) from exc
-        return _html_to_text(str(Document(document).summary())), "readability-lxml"
+        return extract_visible_text(str(Document(document).summary())), "readability-lxml"
     if capability_id == "trafilatura":
         try:
             import trafilatura

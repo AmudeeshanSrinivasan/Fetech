@@ -11,10 +11,13 @@ an explicitly installed system dependency.
 
 The registry combines the immutable 13/155 manifest with a code-owned conformance overlay. The
 overlay prevents a registered roadmap capability from being advertised as available. The current
-v0.1 report is 56/56 implementation paths and `closure_ready=true`. HTTP/3 uses an optional bounded
+reports are v0.1 at 56/56 and v0.2 at 40/40 implementation paths, both with
+`closure_ready=true`, for 96 cumulative paths. HTTP/3 uses an optional bounded
 curl subprocess, reuses Python-validated DNS addresses, and refuses fallback to HTTP/2 or HTTP/1.1.
-Browser reader mode uses an offline Playwright subprocess over the acquired HTML; full networked
-browser rendering remains a v0.2 capability family.
+Browser reader mode and v0.2 browser rendering use offline Playwright subprocesses over acquired
+HTML. Reader mode disables JavaScript; rendering enables JavaScript and bounded interactions while
+aborting every subresource. Optional Puppeteer and Selenium service connectors use the same
+already-fetched-HTML/offline contract.
 
 ## Runtime flow
 
@@ -45,6 +48,17 @@ Python execution DAG and isolated workers
 Artifacts, quality checks, event ledger, cache, and graph projections
 ```
 
+For a crawl, the HTTP root node enforces robots policy and the discovery node runs a deterministic
+same-domain frontier. Page, depth, attempt, byte, redirect, deadline, concurrency, and per-host pacing
+limits remain cumulative. Sitemap, internal/related/category/pagination links, safe URL candidates,
+and optional search results feed the frontier; rejected cross-domain and over-depth candidates remain
+observable. The result includes a typed `CrawlReport` and a CAS-backed `crawl_report` artifact.
+
+For ordinary web retrieval, `candidate_url_expansion` owns the 13 non-schedulable URL generators.
+It writes a sanitized `url_candidates` artifact and may try a safe alternative only when extracted
+visible text is inadequate. Private, authenticated, or secret-bearing requests never fetch variants;
+`https_to_http` is always recorded as blocked.
+
 ## Language responsibilities
 
 ### Python
@@ -57,6 +71,7 @@ Python is required and authoritative. It owns:
 - cumulative attempt/deadline accounting, per-host pacing, and bounded robots enforcement for crawls;
 - deterministic classification and the safe baseline planner;
 - HTTP, browser, API, document, media, archive, cache, and storage adapters;
+- bounded same-domain discovery, sitemap parsing, URL alternatives, and crawl reports;
 - artifact normalization, quality assessment, provenance events, and result statuses;
 - SDK, CLI, REST, SSE, MCP, SQLite/Postgres metadata, and CAS interfaces;
 - validation of every Clingo answer set and Prolog solution.

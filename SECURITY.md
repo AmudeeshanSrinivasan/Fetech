@@ -28,9 +28,19 @@ instruction as untrusted input.
 - Reader and browser adapters never replace the original publisher URL as source authority.
 - Remote readers are disabled by default. Enabling one requires an HTTPS operator template, an
   explicit request policy profile, a public unauthenticated target, and no sensitive query values.
-- Browser reader mode receives only the already-fetched HTML in a bounded subprocess. Playwright
-  runs with JavaScript disabled, service workers blocked, offline mode enabled, and all requests
-  aborted; full networked browser rendering is not part of this v0.1 path.
+- Browser reader mode receives only already-fetched HTML in a bounded subprocess. Playwright runs
+  with JavaScript disabled, service workers blocked, offline mode enabled, and all requests aborted.
+- Browser rendering uses a separate bounded subprocess with JavaScript enabled, but it remains
+  offline, blocks service workers, and aborts every subresource. Selector waits, clicks, scrolling,
+  cookie handling, screenshots, and SPA observations are bounded by request time/byte limits.
+- Puppeteer and Selenium connectors are disabled by default. They require HTTPS operator endpoints,
+  `policy_profile=allow_remote_browsers`, a public unauthenticated target, and no sensitive query
+  values. They receive acquired HTML with `network_policy=offline`, never credentials.
+- Search-provider discovery is disabled by default. It requires an HTTPS template and
+  `policy_profile=allow_search_discovery`; returned URLs are normalized and same-domain/depth policy
+  is reapplied before any fetch.
+- Variant fetching is disabled for private, authenticated, or secret-bearing URLs. HTTPS downgrade
+  candidates are never generated, and every selected variant is re-evaluated by the HTTP policy.
 - Models may assist classification or semantic extraction but never determine policy or authorization.
 
 ## Python and logic-engine trust boundary
