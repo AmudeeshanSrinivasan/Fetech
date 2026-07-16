@@ -30,6 +30,12 @@ class CapabilityKind(StrEnum):
     STORAGE_STRATEGY = "storage_strategy"
 
 
+class ImplementationStatus(StrEnum):
+    NATIVE = "native"
+    OPTIONAL = "optional"
+    PLANNED = "planned"
+
+
 class ResultStatus(StrEnum):
     SUCCEEDED = "SUCCEEDED"
     PARTIAL = "PARTIAL"
@@ -49,6 +55,17 @@ class AttemptStatus(StrEnum):
     SKIPPED = "SKIPPED"
     FAILED = "FAILED"
     CANCELLED = "CANCELLED"
+
+
+class CapabilityOutcomeStatus(StrEnum):
+    """Observable per-run disposition of a registered capability."""
+
+    APPLIED = "APPLIED"
+    OBSERVED = "OBSERVED"
+    NOT_APPLICABLE = "NOT_APPLICABLE"
+    BLOCKED = "BLOCKED"
+    DEPENDENCY_MISSING = "DEPENDENCY_MISSING"
+    FAILED = "FAILED"
 
 
 class RunState(StrEnum):
@@ -86,15 +103,17 @@ class CapabilityManifestEntry(ContractModel):
     reference: str
     tests: tuple[str, ...]
     lifecycle_status: str = "registered"
-    available: bool = True
+    implementation_status: ImplementationStatus = ImplementationStatus.PLANNED
+    implementation: str
+    available: bool = False
 
 
 class ResourceBudget(ContractModel):
     deadline_seconds: float = Field(default=30.0, gt=0, le=3600)
-    attempts: int = Field(default=6, ge=1, le=100)
+    attempts: int = Field(default=6, ge=0, le=100)
     redirects: int = Field(default=8, ge=0, le=30)
-    bytes: int = Field(default=10_000_000, ge=1, le=2_000_000_000)
-    decompressed_bytes: int = Field(default=50_000_000, ge=1, le=4_000_000_000)
+    bytes: int = Field(default=10_000_000, ge=0, le=2_000_000_000)
+    decompressed_bytes: int = Field(default=50_000_000, ge=0, le=4_000_000_000)
     crawl_pages: int = Field(default=20, ge=1, le=100_000)
     crawl_depth: int = Field(default=2, ge=0, le=20)
     browser_seconds: float = Field(default=20.0, ge=0, le=1800)
@@ -125,6 +144,10 @@ class FetchRequest(ContractModel):
         overlap = self.allow_capabilities & self.deny_capabilities
         if overlap:
             raise ValueError(f"capabilities cannot be both allowed and denied: {sorted(overlap)}")
+        if self.budget.attempts == 0:
+            raise ValueError("request budget must allow at least one attempt")
+        if self.budget.bytes == 0 or self.budget.decompressed_bytes == 0:
+            raise ValueError("request byte budgets must be greater than zero")
         return self
 
 
@@ -221,6 +244,14 @@ class PolicyDecision(ContractModel):
     evaluated_at: datetime = Field(default_factory=utc_now)
 
 
+class CapabilityOutcome(ContractModel):
+    capability_id: str
+    status: CapabilityOutcomeStatus
+    stage: str
+    details: dict[str, str | int | float | bool | None] = Field(default_factory=dict)
+    observed_at: datetime = Field(default_factory=utc_now)
+
+
 class Diagnostic(ContractModel):
     code: str
     message: str
@@ -235,6 +266,7 @@ class FetchResult(ContractModel):
     resources: tuple[Resource, ...] = ()
     artifacts: tuple[Artifact, ...] = ()
     attempts: tuple[FetchAttempt, ...] = ()
+    capability_outcomes: tuple[CapabilityOutcome, ...] = ()
     policy_decisions: tuple[PolicyDecision, ...] = ()
     diagnostics: tuple[Diagnostic, ...] = ()
     provenance_event_ids: tuple[UUID, ...] = ()

@@ -5,12 +5,14 @@ from __future__ import annotations
 import os
 from collections.abc import Iterator
 from importlib.resources import files
+from importlib.resources.abc import Traversable
 from pathlib import Path
 from typing import Any
 
 import yaml
 
-from fetech.models import CapabilityKind, CapabilityManifestEntry
+from fetech.conformance import implementation_for, release_report
+from fetech.models import CapabilityKind, CapabilityManifestEntry, ImplementationStatus
 
 EXPECTED_CATEGORIES = 13
 EXPECTED_CAPABILITIES = 155
@@ -20,7 +22,7 @@ class ManifestError(ValueError):
     """Raised when the canonical manifest violates a registry invariant."""
 
 
-def default_manifest_path() -> Path:
+def default_manifest_path() -> Path | Traversable:
     configured = os.environ.get("FETECH_MANIFEST")
     if configured:
         return Path(configured).expanduser().resolve()
@@ -28,11 +30,11 @@ def default_manifest_path() -> Path:
     if source_path.exists():
         return source_path
     resource = files("fetech").joinpath("data/manifest.yaml")
-    return Path(str(resource))
+    return resource
 
 
 class CapabilityRegistry:
-    def __init__(self, manifest_path: Path | None = None) -> None:
+    def __init__(self, manifest_path: Path | Traversable | None = None) -> None:
         self.manifest_path = manifest_path or default_manifest_path()
         self.manifest_version, self._entries = self._load(self.manifest_path)
         self._by_id = {entry.id: entry for entry in self._entries}
@@ -40,7 +42,7 @@ class CapabilityRegistry:
         self._validate()
 
     @staticmethod
-    def _load(path: Path) -> tuple[str, tuple[CapabilityManifestEntry, ...]]:
+    def _load(path: Path | Traversable) -> tuple[str, tuple[CapabilityManifestEntry, ...]]:
         raw = yaml.safe_load(path.read_text(encoding="utf-8"))
         if not isinstance(raw, dict) or not isinstance(raw.get("categories"), list):
             raise ManifestError("manifest must contain a categories list")
@@ -52,15 +54,18 @@ class CapabilityRegistry:
                 if not isinstance(capability, dict):
                     raise ManifestError("each capability must be a mapping")
                 capability_id = str(capability["id"])
+                adapter = str(capability.get("adapter", category["adapter"]))
+                closure_release = str(category["closure_release"])
+                implementation = implementation_for(capability_id, closure_release, adapter)
                 entries.append(
                     CapabilityManifestEntry(
                         id=capability_id,
                         aliases=tuple(capability.get("aliases", [])),
                         category=str(category["id"]),
                         category_name=str(category["name"]),
-                        closure_release=str(category["closure_release"]),
+                        closure_release=closure_release,
                         kind=CapabilityKind(str(capability["kind"])),
-                        adapter=str(capability.get("adapter", category["adapter"])),
+                        adapter=adapter,
                         risk_class=str(capability.get("risk_class", category["risk_class"])),
                         inputs=tuple(capability.get("inputs", ["target"])),
                         outputs=tuple(capability.get("outputs", ["attempt"])),
@@ -72,7 +77,9 @@ class CapabilityRegistry:
                         ),
                         tests=tuple(capability.get("tests", [f"manifest::{capability_id}"])),
                         lifecycle_status=str(capability.get("status", "registered")),
-                        available=bool(capability.get("available", True)),
+                        implementation_status=implementation["status"],
+                        implementation=implementation["implementation"],
+                        available=implementation["status"] != ImplementationStatus.PLANNED,
                     )
                 )
         return str(raw.get("manifest_version", "unknown")), tuple(entries)
@@ -128,5 +135,9 @@ class CapabilityRegistry:
             "manifest_version": self.manifest_version,
             "category_count": len(self.categories),
             "capability_count": len(self),
+            "releases": {
+                release: release_report(self._entries, release)
+                for release in ("v0.1", "v0.2", "v0.3", "v0.4")
+            },
             "categories": grouped,
         }

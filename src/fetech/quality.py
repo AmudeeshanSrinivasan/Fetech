@@ -11,6 +11,15 @@ _CAPTCHA = re.compile(r"\b(captcha|verify you are human|human verification)\b", 
 _BOT = re.compile(r"\b(access denied|bot detection|unusual traffic|checking your browser)\b", re.I)
 _PAYWALL = re.compile(r"\b(subscribe to continue|subscription required|unlock this article)\b", re.I)
 _ERROR = re.compile(r"\b(404 not found|500 internal server error|service unavailable)\b", re.I)
+_WORDS = re.compile(r"[^\W\d_]+", re.UNICODE)
+_LANGUAGE_MARKERS = {
+    "de": {"der", "die", "das", "ein", "eine", "ist", "mit", "und"},
+    "en": {"a", "and", "for", "is", "of", "that", "the", "to"},
+    "es": {"de", "el", "en", "es", "la", "los", "que", "y"},
+    "fr": {"dans", "de", "des", "est", "et", "la", "le", "les"},
+    "it": {"che", "con", "di", "e", "il", "la", "per", "un"},
+    "pt": {"a", "com", "de", "e", "o", "os", "para", "que"},
+}
 
 
 def assess_text(
@@ -37,20 +46,59 @@ def assess_text(
     elif _ERROR.search(normalized) and len(normalized) < 5_000:
         state = PageState.ERROR
         reasons.append("error page marker detected")
+    detected_language = detect_language(normalized)
+    if (
+        state == PageState.OK
+        and expected_language
+        and detected_language
+        and detected_language != expected_language.lower().split("-", maxsplit=1)[0]
+    ):
+        state = PageState.WRONG_LANGUAGE
+        reasons.append(
+            f"detected language {detected_language} does not match requested {expected_language}"
+        )
     length_score = min(1.0, len(normalized) / 1_000)
     accepted = state == PageState.OK and length_score >= 0.05
     if state == PageState.OK and not accepted:
         reasons.append("content is below the minimum useful-text threshold")
-    if expected_language:
-        reasons.append("language verification requires an optional detector")
+    if expected_language and detected_language is None:
+        reasons.append("text was too ambiguous for deterministic language detection")
     score = length_score if state == PageState.OK else min(0.2, length_score)
     return QualityAssessment(
         page_state=state,
         score=round(score, 4),
         accepted=accepted,
+        language=detected_language,
         completeness=length_score,
         reasons=tuple(reasons),
     )
+
+
+def detect_language(text: str) -> str | None:
+    """Return a conservative language hint without a model or network dependency."""
+
+    if not text.strip():
+        return None
+    counts = {
+        "ar": sum("\u0600" <= character <= "\u06ff" for character in text),
+        "ko": sum("\uac00" <= character <= "\ud7af" for character in text),
+        "ru": sum("\u0400" <= character <= "\u04ff" for character in text),
+    }
+    if max(counts.values(), default=0) >= 8:
+        return max(counts, key=counts.__getitem__)
+    hiragana = sum("\u3040" <= character <= "\u30ff" for character in text)
+    cjk = sum("\u4e00" <= character <= "\u9fff" for character in text)
+    if hiragana >= 4:
+        return "ja"
+    if cjk >= 8:
+        return "zh"
+    words = [word.casefold() for word in _WORDS.findall(text)]
+    scores = {
+        language: sum(word in markers for word in words)
+        for language, markers in _LANGUAGE_MARKERS.items()
+    }
+    best = max(scores, key=scores.__getitem__)
+    return best if scores[best] >= 2 else None
 
 
 def assess_binary(size: int, *, media_type: str) -> QualityAssessment:

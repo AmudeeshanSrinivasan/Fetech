@@ -4,6 +4,8 @@ from fetech.client import FetechClient
 from fetech.logic.models import ReasoningQuery, ReasoningResult
 from fetech.models import (
     Artifact,
+    CapabilityOutcome,
+    CapabilityOutcomeStatus,
     FetchPlan,
     FetchRequest,
     FetchResult,
@@ -13,6 +15,8 @@ from fetech.models import (
 
 __all__ = [
     "Artifact",
+    "CapabilityOutcome",
+    "CapabilityOutcomeStatus",
     "FetchPlan",
     "FetchRequest",
     "FetchResult",

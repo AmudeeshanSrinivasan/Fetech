@@ -77,6 +77,7 @@ def is_public_address(address: str) -> bool:
 class DestinationPolicy:
     allowed_ports: frozenset[int] = frozenset(DEFAULT_ALLOWED_PORTS)
     allow_public_http: bool = True
+    blocked_threat_hostnames: frozenset[str] = frozenset()
 
 
 class SafeURLPolicy:
@@ -111,6 +112,12 @@ class SafeURLPolicy:
             reason = "local and metadata hostnames are blocked"
             raise PolicyBlockedError(
                 reason, (PolicyDecision(policy_id="ssrf_private_ip_check", allowed=False, reason=reason),)
+            )
+        if host in self.policy.blocked_threat_hostnames:
+            reason = "destination is present in the configured malware/phishing deny-list"
+            raise PolicyBlockedError(
+                reason,
+                (PolicyDecision(policy_id="malware_phishing_check", allowed=False, reason=reason),),
             )
         port = parts.port or (443 if parts.scheme == "https" else 80)
         if port not in self.policy.allowed_ports:
@@ -148,6 +155,12 @@ class SafeURLPolicy:
                 policy_id="ssrf_private_ip_check",
                 allowed=True,
                 reason="all resolved addresses are public",
+                destination=sanitize_url(normalized),
+            ),
+            PolicyDecision(
+                policy_id="malware_phishing_check",
+                allowed=True,
+                reason="destination is not in the configured threat deny-list",
                 destination=sanitize_url(normalized),
             ),
         )

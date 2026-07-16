@@ -106,7 +106,10 @@ async def test_every_redirect_host_is_policy_checked(
     assert response.url.host == "cdn.example"
     assert body == b"asset"
     assert resolved == ["example.com", "cdn.example"]
-    assert len(context.policy_decisions) == 6
+    assert len(context.policy_decisions) == 10
+    assert [decision.policy_id for decision in context.policy_decisions].count(
+        "rate_limit_policy"
+    ) == 2
 
 
 @pytest.mark.asyncio

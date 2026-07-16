@@ -13,6 +13,11 @@ instruction as untrusted input.
   closed.
 - Declared and streamed wire bytes are bounded independently from transparently decompressed bytes,
   preventing compressed responses from bypassing expansion limits.
+- Attempt and deadline budgets are cumulative across the run. Per-host concurrency and minimum
+  request intervals apply to every redirect host. Crawl requests fetch a bounded `robots.txt` before
+  the target and stop when its rules disallow the target; robots rules are never treated as authority.
+- Explicit HTTP/3 requests use only HTTPS, pin curl to a Python-validated public address, require
+  `--http3-only`, bound process time and output, and fail rather than negotiate an older protocol.
 - URL credentials are rejected. Sensitive query values and headers are removed from diagnostics.
 - Authenticated and public cache scopes are distinct.
 - Credentials are opaque references and never enter plans, logs, graphs, artifacts, or Obsidian.
@@ -21,6 +26,11 @@ instruction as untrusted input.
   expansion, and suspicious compression ratios.
 - CAPTCHA, paywall, login, cookie-wall, bot-block, and error pages cannot support accepted evidence.
 - Reader and browser adapters never replace the original publisher URL as source authority.
+- Remote readers are disabled by default. Enabling one requires an HTTPS operator template, an
+  explicit request policy profile, a public unauthenticated target, and no sensitive query values.
+- Browser reader mode receives only the already-fetched HTML in a bounded subprocess. Playwright
+  runs with JavaScript disabled, service workers blocked, offline mode enabled, and all requests
+  aborted; full networked browser rendering is not part of this v0.1 path.
 - Models may assist classification or semantic extraction but never determine policy or authorization.
 
 ## Python and logic-engine trust boundary

@@ -8,7 +8,8 @@ and testable.
 
 The catalogue is language-neutral, while execution ownership is explicit:
 
-- Python adapters implement and enforce every executable capability path.
+- Python adapters own and enforce executable capability paths. Registration does not imply local
+  availability: the conformance overlay labels each entry `native`, `optional`, or `planned`.
 - Clingo may reason over manifest facts such as `capability/1`, dependencies, risk, availability,
   cost, and requested outputs to propose a feasible or optimized plan.
 - Prolog may reason over policy, eligibility, aliases, provenance, and explanation relationships.
@@ -36,6 +37,20 @@ The catalogue is language-neutral, while execution ownership is explicit:
 
 Run `fetech capabilities` for the expanded runtime entries, including adapter ownership, aliases,
 risk, reference, test identifier, and local dependency availability.
+
+## v0.1 conformance state
+
+The v0.1 set is cardinality-locked at 56 entries. The current alpha exposes 56 implementation paths:
+51 native and five optional (HTTP/3 through an HTTP/3-enabled curl, `mozilla_readability`,
+`trafilatura`, the explicitly configured `jina_reader`, and offline Playwright reader mode).
+`closure_ready` is true. An HTTP/1.1 or HTTP/2 response does not prove HTTP/3 support;
+the optional path requires `--http3-only` and verifies the negotiated protocol. In-process
+browser extraction would violate the worker-isolation requirement, so browser reader mode runs in a
+bounded offline subprocess and aborts every network request.
+
+Policies, detectors, and negotiated transport features run inside their owning stage and emit a
+`CapabilityOutcome`; they do not become artificial DAG nodes. Per-run statuses are `APPLIED`,
+`OBSERVED`, `NOT_APPLICABLE`, `BLOCKED`, `DEPENDENCY_MISSING`, and `FAILED`.
 
 ## Logic projections
 

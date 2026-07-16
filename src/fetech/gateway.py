@@ -8,7 +8,7 @@ from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 from fetech.adapters.archive import ArchiveAdapter
-from fetech.adapters.base import Adapter
+from fetech.adapters.base import Adapter, ExecutionContext
 from fetech.adapters.documents import DocumentAdapter
 from fetech.adapters.http import HTTPAdapter
 from fetech.adapters.reader import ReaderAdapter
@@ -20,11 +20,13 @@ from fetech.logic import LogicCoordinator, ReasoningResult
 from fetech.logic.models import PlanProposal
 from fetech.models import (
     Artifact,
+    CapabilityOutcomeStatus,
     FetchPlan,
     FetchRequest,
     FetchResult,
     FetchRun,
     InspectionResult,
+    PlanNode,
     ProvenanceEvent,
     RunState,
 )
@@ -50,8 +52,13 @@ class UniversalFetchGateway:
                 policy=self.policy,
                 global_concurrency=self.settings.global_concurrency,
                 per_host_concurrency=self.settings.per_host_concurrency,
+                per_host_min_interval_seconds=self.settings.per_host_min_interval_seconds,
             ),
-            "reader": ReaderAdapter(),
+            "reader": ReaderAdapter(
+                remote_reader_template=self.settings.jina_reader_template,
+                policy=self.policy,
+                user_agent=self.settings.user_agent,
+            ),
             "api": StructuredAdapter(),
             "browser": OptionalAdapter("browser rendering", "browser"),
             "documents": DocumentAdapter(),
@@ -187,5 +194,37 @@ class UniversalFetchGateway:
 
 
 class _CoreAdapter:
-    async def execute(self, node: object, context: object) -> None:
-        del node, context
+    async def execute(self, node: PlanNode, context: ExecutionContext) -> None:
+        if node.capability_id == "url_normalisation":
+            normalized = normalize_url(context.request.target)
+            context.record_outcome(
+                "url_normalisation",
+                CapabilityOutcomeStatus.APPLIED,
+                "core",
+                changed=normalized != context.request.target,
+            )
+            return
+        if node.capability_id == "url_validation":
+            normalize_url(context.request.target)
+            context.record_outcome(
+                "url_validation",
+                CapabilityOutcomeStatus.APPLIED,
+                "core",
+                scheme="http(s)",
+            )
+            context.record_outcome(
+                "resource_budget_policy",
+                CapabilityOutcomeStatus.APPLIED,
+                "core",
+                attempts=context.request.budget.attempts,
+                maximum_bytes=context.request.budget.bytes,
+            )
+            if context.request.intent != "crawl":
+                context.record_outcome(
+                    "robots_policy_check",
+                    CapabilityOutcomeStatus.NOT_APPLICABLE,
+                    "core",
+                    reason="robots policy is applied to crawling, not a single retrieval",
+                )
+            return
+        raise ValueError(f"core adapter cannot execute {node.capability_id}")

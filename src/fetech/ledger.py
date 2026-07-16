@@ -15,6 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from fetech.models import FetchResult, ProvenanceEvent, RunState
+from fetech.security import sanitize_url
 
 
 class Base(DeclarativeBase):
@@ -66,13 +67,14 @@ class EventLedger:
     async def create_run(
         self, run_id: UUID, request_document: dict[str, Any], submitted_at: datetime
     ) -> None:
+        sanitized_request = _sanitize_payload(request_document)
         async with self.sessions() as session:
             session.add(
                 RunRow(
                     run_id=str(run_id),
                     state=RunState.QUEUED.value,
                     submitted_at=submitted_at,
-                    request_json=json.dumps(request_document, sort_keys=True, default=str),
+                    request_json=json.dumps(sanitized_request, sort_keys=True, default=str),
                 )
             )
             await session.commit()
@@ -172,4 +174,16 @@ def _sanitize_payload(value: Any, *, key: str = "") -> Any:
         }
     if isinstance(value, list | tuple):
         return [_sanitize_payload(child, key=key) for child in value]
+    if isinstance(value, str) and key.lower() in {
+        "authority_url",
+        "canonical_url",
+        "destination",
+        "requested_url",
+        "target",
+        "url",
+    }:
+        try:
+            return sanitize_url(value)
+        except ValueError:
+            return "[REDACTED_INVALID_URL]"
     return value

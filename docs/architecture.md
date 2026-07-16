@@ -9,6 +9,13 @@ Implementation status: the alpha implements the Python runtime and deterministic
 Clingo executable may come from `fetech[logic]` or an explicitly configured path; SWI-Prolog remains
 an explicitly installed system dependency.
 
+The registry combines the immutable 13/155 manifest with a code-owned conformance overlay. The
+overlay prevents a registered roadmap capability from being advertised as available. The current
+v0.1 report is 56/56 implementation paths and `closure_ready=true`. HTTP/3 uses an optional bounded
+curl subprocess, reuses Python-validated DNS addresses, and refuses fallback to HTTP/2 or HTTP/1.1.
+Browser reader mode uses an offline Playwright subprocess over the acquired HTML; full networked
+browser rendering remains a v0.2 capability family.
+
 ## Runtime flow
 
 ```text
@@ -47,11 +54,16 @@ Python is required and authoritative. It owns:
 - versioned Pydantic contracts and capability registry validation;
 - URL normalization, DNS pinning, redirect checks, authorization, approvals, and budgets;
 - per-hop redirect policy, redirect-loop detection, and separate wire/decompressed transfer budgets;
+- cumulative attempt/deadline accounting, per-host pacing, and bounded robots enforcement for crawls;
 - deterministic classification and the safe baseline planner;
 - HTTP, browser, API, document, media, archive, cache, and storage adapters;
 - artifact normalization, quality assessment, provenance events, and result statuses;
 - SDK, CLI, REST, SSE, MCP, SQLite/Postgres metadata, and CAS interfaces;
 - validation of every Clingo answer set and Prolog solution.
+
+`FetchResult.capability_outcomes` records both scheduled operations and capabilities negotiated
+inside another stage. This keeps HTTP protocol negotiation, redirect types, page-state detectors,
+policies, and validation observable without turning each one into a no-op plan node.
 
 ### Clingo
 

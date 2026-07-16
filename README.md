@@ -9,6 +9,12 @@ SQLite event ledger, content-addressed storage, quality validation, runtime prov
 Python SDK, CLI, REST, and MCP interfaces, and a bounded Graphify/QMD context broker. Heavy browser, document,
 media, and OCR engines are optional extras.
 
+The v0.1 closure set contains 56 capabilities, and the checked-in conformance overlay reports all
+56 implementation paths: 51 native and five optional. HTTP/3 is an optional bounded
+`curl --http3-only` path and returns `DEPENDENCY_MISSING` when the configured
+curl build lacks HTTP/3. `GET /v1/capabilities` and `fetech capabilities` expose the same release report; the
+project does not infer availability from manifest registration alone.
+
 Fetech uses a deliberately narrow polyglot design. Python 3.12 is the required runtime and remains
 authoritative for public APIs, security, budgets, adapters, artifacts, and persistence. A pure-Python
 planner is always available. Optional Clingo and SWI-Prolog backends can add constraint optimization
@@ -27,6 +33,10 @@ execution. Fetech continues deterministically when either logic engine is absent
 > **Alpha status:** the current package ships the pure-Python planner, a bounded Clingo planner
 > adapter, and a bounded SWI-Prolog reasoner. Python remains the default. Clingo can be installed with
 > the `logic` extra; SWI-Prolog is discovered as an explicitly installed system executable.
+
+Every fetch result includes `capability_outcomes`. These distinguish applied and observed features
+from not-applicable, blocked, dependency-missing, and failed paths. Attempt, deadline, redirect,
+wire-byte, and decompressed-byte budgets are decremented cumulatively in `remaining_budget`.
 
 ## Quick start
 
@@ -52,6 +62,15 @@ binary location. Daemons select backends with `FETECH_PLANNER_BACKEND=clingo` an
 back to Python unless `FETECH_LOGIC_FALLBACK=false`. See
 [the architecture](docs/architecture.md) and [ADR 0001](docs/adr/0001-polyglot-logic-backends.md)
 for the backend contracts and trust boundaries.
+
+The optional remote reader is disabled until an operator configures
+`FETECH_JINA_READER_TEMPLATE` with a `{target}` placeholder. A request must also use
+`policy_profile=allow_remote_readers`, remain public and unauthenticated, and contain no sensitive
+query values. The original publisher resource remains authoritative.
+
+`browser_reader_mode` uses a separate bounded Python/Playwright subprocess over the already-fetched
+HTML. Its context is offline, JavaScript is disabled, and every request is aborted. It does not open
+the networked browser-rendering surface planned for v0.2.
 
 The local logic runner is bounded by input/output, CPU, and wall time; Linux also applies an
 address-space limit. It is not a full OS sandbox. Deployments must isolate solver processes to deny

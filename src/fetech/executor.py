@@ -5,18 +5,30 @@ from __future__ import annotations
 import asyncio
 import json
 from collections.abc import Awaitable, Callable
+from time import monotonic
 from uuid import UUID
 
-from fetech.adapters.base import Adapter, AdapterDependencyError, AdapterExecutionError, ExecutionContext
+from fetech.adapters.base import (
+    Adapter,
+    AdapterAuthRequiredError,
+    AdapterDependencyError,
+    AdapterExecutionError,
+    AdapterNotFoundError,
+    ExecutionContext,
+)
 from fetech.ledger import EventLedger
 from fetech.models import (
+    AttemptStatus,
+    CapabilityOutcomeStatus,
     Diagnostic,
     FetchPlan,
     FetchResult,
     PlanNode,
     ProvenanceEvent,
+    ResourceBudget,
     ResultStatus,
     RunState,
+    utc_now,
 )
 from fetech.security import PolicyBlockedError
 from fetech.storage import FileSystemCAS
@@ -29,6 +41,7 @@ class ExecutionEngine:
         self.ledger = ledger
 
     async def execute(self, run_id: UUID, plan: FetchPlan) -> FetchResult:
+        execution_started = monotonic()
         await self.ledger.update_run(run_id, RunState.RUNNING)
         context = ExecutionContext(run_id=run_id, request=plan.request, cas=self.cas)
         root = await self._emit(
@@ -40,14 +53,29 @@ class ExecutionEngine:
         completed: set[str] = set()
         dependency_missing = False
         policy_blocked = False
+        budget_exhausted = False
+        auth_required = False
+        not_found = False
         failed = False
         for node in plan.nodes:
             if not set(node.dependencies).issubset(completed):
                 context.diagnostics.append(
                     Diagnostic(code="dependency_skipped", message=f"{node.id} dependencies did not complete")
                 )
+                context.record_outcome(
+                    node.capability_id,
+                    CapabilityOutcomeStatus.NOT_APPLICABLE,
+                    node.adapter,
+                    reason="dependencies did not complete",
+                )
                 continue
             if context.accepted and node.fallback_for:
+                context.record_outcome(
+                    node.capability_id,
+                    CapabilityOutcomeStatus.NOT_APPLICABLE,
+                    node.adapter,
+                    reason=f"accepted artifact made fallback for {node.fallback_for} unnecessary",
+                )
                 completed.add(node.id)
                 continue
             adapter = self.adapters.get(node.adapter)
@@ -55,6 +83,12 @@ class ExecutionEngine:
                 dependency_missing = True
                 context.diagnostics.append(
                     Diagnostic(code="adapter_missing", message=f"no adapter registered for {node.adapter}")
+                )
+                context.record_outcome(
+                    node.capability_id,
+                    CapabilityOutcomeStatus.DEPENDENCY_MISSING,
+                    node.adapter,
+                    reason="adapter is not registered",
                 )
                 continue
             event = await self._emit(
@@ -64,13 +98,46 @@ class ExecutionEngine:
                 {"capability_id": node.capability_id},
                 (root.event_id,),
             )
+            outcome_count = len(context.capability_outcomes)
             try:
-                async with asyncio.timeout(plan.request.budget.deadline_seconds):
+                remaining_deadline = plan.request.budget.deadline_seconds - (
+                    monotonic() - execution_started
+                )
+                if remaining_deadline <= 0:
+                    raise BudgetExhaustedError("run deadline budget exhausted")
+                async with asyncio.timeout(remaining_deadline):
                     await self._with_retries(adapter.execute, node, context, node.retry.maximum)
+            except BudgetExhaustedError as exc:
+                budget_exhausted = True
+                self._mark_running_attempt_failed(context, "budget_exhausted")
+                context.diagnostics.append(Diagnostic(code="budget_exhausted", message=str(exc)))
+                self._ensure_outcome(
+                    context,
+                    node,
+                    outcome_count,
+                    CapabilityOutcomeStatus.FAILED,
+                    reason=str(exc),
+                )
+                await self._emit(
+                    run_id,
+                    "attempt.budget_exhausted",
+                    node.adapter,
+                    {"capability_id": node.capability_id},
+                    (event.event_id,),
+                )
+                break
             except PolicyBlockedError as exc:
                 policy_blocked = True
+                self._mark_running_attempt_failed(context, "policy")
                 context.policy_decisions.extend(exc.decisions)
                 context.diagnostics.append(Diagnostic(code="policy_blocked", message=exc.reason))
+                self._ensure_outcome(
+                    context,
+                    node,
+                    outcome_count,
+                    CapabilityOutcomeStatus.BLOCKED,
+                    reason=exc.reason,
+                )
                 await self._emit(
                     run_id,
                     "attempt.blocked",
@@ -81,7 +148,15 @@ class ExecutionEngine:
                 break
             except AdapterDependencyError as exc:
                 dependency_missing = True
+                self._mark_running_attempt_failed(context, "dependency_missing")
                 context.diagnostics.append(Diagnostic(code="dependency_missing", message=str(exc)))
+                self._ensure_outcome(
+                    context,
+                    node,
+                    outcome_count,
+                    CapabilityOutcomeStatus.DEPENDENCY_MISSING,
+                    reason=str(exc),
+                )
                 await self._emit(
                     run_id,
                     "attempt.unavailable",
@@ -91,10 +166,56 @@ class ExecutionEngine:
                 )
                 completed.add(node.id)
                 continue
+            except AdapterAuthRequiredError as exc:
+                auth_required = True
+                self._mark_running_attempt_failed(context, "auth_required")
+                context.diagnostics.append(Diagnostic(code="auth_required", message=str(exc)))
+                self._ensure_outcome(
+                    context,
+                    node,
+                    outcome_count,
+                    CapabilityOutcomeStatus.FAILED,
+                    reason=str(exc),
+                )
+                await self._emit(
+                    run_id,
+                    "attempt.auth_required",
+                    node.adapter,
+                    {"capability_id": node.capability_id},
+                    (event.event_id,),
+                )
+                break
+            except AdapterNotFoundError as exc:
+                not_found = True
+                self._mark_running_attempt_failed(context, "not_found")
+                context.diagnostics.append(Diagnostic(code="not_found", message=str(exc)))
+                self._ensure_outcome(
+                    context,
+                    node,
+                    outcome_count,
+                    CapabilityOutcomeStatus.FAILED,
+                    reason=str(exc),
+                )
+                await self._emit(
+                    run_id,
+                    "attempt.not_found",
+                    node.adapter,
+                    {"capability_id": node.capability_id},
+                    (event.event_id,),
+                )
+                break
             except TimeoutError:
                 failed = True
+                self._mark_running_attempt_failed(context, "deadline")
                 context.diagnostics.append(
                     Diagnostic(code="deadline", message=f"{node.id} exceeded the deadline")
+                )
+                self._ensure_outcome(
+                    context,
+                    node,
+                    outcome_count,
+                    CapabilityOutcomeStatus.FAILED,
+                    reason="deadline exceeded",
                 )
                 await self._emit(
                     run_id,
@@ -106,8 +227,16 @@ class ExecutionEngine:
                 break
             except (AdapterExecutionError, ValueError, json.JSONDecodeError) as exc:
                 failed = True
+                self._mark_running_attempt_failed(context, type(exc).__name__)
                 context.diagnostics.append(
                     Diagnostic(code="adapter_failed", message=str(exc), retryable=False)
+                )
+                self._ensure_outcome(
+                    context,
+                    node,
+                    outcome_count,
+                    CapabilityOutcomeStatus.FAILED,
+                    reason=str(exc),
                 )
                 await self._emit(
                     run_id,
@@ -118,23 +247,57 @@ class ExecutionEngine:
                 )
                 completed.add(node.id)
                 continue
+            self._ensure_outcome(
+                context,
+                node,
+                outcome_count,
+                CapabilityOutcomeStatus.APPLIED,
+            )
             completed.add(node.id)
             last_artifact = context.artifacts[-1] if context.artifacts else None
             payload = {"capability_id": node.capability_id}
             if last_artifact:
                 payload["artifact_id"] = str(last_artifact.artifact_id)
             await self._emit(run_id, "attempt.finished", node.adapter, payload, (event.event_id,))
-        status = self._status(context, policy_blocked, dependency_missing, failed)
+        context.record_outcome(
+            "fetch_attempt_logging",
+            CapabilityOutcomeStatus.APPLIED,
+            "ledger",
+            attempts=len(context.attempts),
+        )
+        context.record_outcome(
+            "timeout_diagnostics",
+            CapabilityOutcomeStatus.APPLIED,
+            "executor",
+            deadline_seconds=plan.request.budget.deadline_seconds,
+        )
+        context.record_outcome(
+            "cache_expiry_check",
+            CapabilityOutcomeStatus.NOT_APPLICABLE,
+            "cache",
+            reason="no validated cache record was consulted",
+        )
+        status = self._status(
+            context,
+            policy_blocked,
+            dependency_missing,
+            budget_exhausted,
+            auth_required,
+            not_found,
+            failed,
+        )
+        remaining_budget = self._remaining_budget(plan, context, execution_started)
         result = FetchResult(
             run_id=run_id,
             status=status,
             resources=tuple(context.resources),
             artifacts=tuple(context.artifacts),
             attempts=tuple(context.attempts),
+            capability_outcomes=tuple(context.capability_outcomes),
             policy_decisions=tuple(context.policy_decisions),
             diagnostics=tuple(context.diagnostics),
             provenance_event_ids=tuple(event.event_id for event in await self.ledger.events(run_id)),
-            remaining_budget=plan.request.budget,
+            remaining_budget=remaining_budget,
         )
         final = await self._emit(
             run_id, "run.finished", "executor", {"status": status.value}, (root.event_id,)
@@ -154,9 +317,13 @@ class ExecutionEngine:
     ) -> None:
         error: AdapterExecutionError | None = None
         for _ in range(maximum + 1):
+            if len(context.attempts) >= context.request.budget.attempts:
+                raise BudgetExhaustedError("attempt budget exhausted")
             try:
                 await operation(node, context)
                 return
+            except (AdapterAuthRequiredError, AdapterNotFoundError):
+                raise
             except AdapterExecutionError as exc:
                 error = exc
         if error is not None:
@@ -164,17 +331,87 @@ class ExecutionEngine:
 
     @staticmethod
     def _status(
-        context: ExecutionContext, policy_blocked: bool, dependency_missing: bool, failed: bool
+        context: ExecutionContext,
+        policy_blocked: bool,
+        dependency_missing: bool,
+        budget_exhausted: bool,
+        auth_required: bool,
+        not_found: bool,
+        failed: bool,
     ) -> ResultStatus:
         if context.accepted:
             return ResultStatus.SUCCEEDED
         if policy_blocked:
             return ResultStatus.BLOCKED_BY_POLICY
+        if auth_required:
+            return ResultStatus.AUTH_REQUIRED
+        if not_found:
+            return ResultStatus.NOT_FOUND
+        if budget_exhausted:
+            return ResultStatus.BUDGET_EXHAUSTED
         if context.artifacts:
             return ResultStatus.PARTIAL if failed or dependency_missing else ResultStatus.LOW_QUALITY
         if dependency_missing:
             return ResultStatus.DEPENDENCY_MISSING
         return ResultStatus.FAILED
+
+    @staticmethod
+    def _ensure_outcome(
+        context: ExecutionContext,
+        node: PlanNode,
+        outcome_count: int,
+        status: CapabilityOutcomeStatus,
+        **details: str | int | float | bool | None,
+    ) -> None:
+        if any(
+            outcome.capability_id == node.capability_id
+            for outcome in context.capability_outcomes[outcome_count:]
+        ):
+            return
+        context.record_outcome(node.capability_id, status, node.adapter, **details)
+
+    @staticmethod
+    def _mark_running_attempt_failed(context: ExecutionContext, failure_code: str) -> None:
+        if not context.attempts or context.attempts[-1].status != AttemptStatus.RUNNING:
+            return
+        context.attempts[-1] = context.attempts[-1].model_copy(
+            update={
+                "status": AttemptStatus.FAILED,
+                "finished_at": utc_now(),
+                "failure_code": failure_code,
+            }
+        )
+
+    @staticmethod
+    def _remaining_budget(
+        plan: FetchPlan,
+        context: ExecutionContext,
+        execution_started: float,
+    ) -> ResourceBudget:
+        consumed_bytes = sum(
+            int(attempt.consumed_budget.get("bytes", 0)) for attempt in context.attempts
+        )
+        consumed_decompressed = sum(
+            int(attempt.consumed_budget.get("decompressed_bytes", 0))
+            for attempt in context.attempts
+        )
+        consumed_redirects = sum(
+            int(attempt.consumed_budget.get("redirects", 0)) for attempt in context.attempts
+        )
+        budget = plan.request.budget
+        return budget.model_copy(
+            update={
+                "deadline_seconds": max(
+                    0.001, budget.deadline_seconds - (monotonic() - execution_started)
+                ),
+                "attempts": max(0, budget.attempts - len(context.attempts)),
+                "redirects": max(0, budget.redirects - consumed_redirects),
+                "bytes": max(0, budget.bytes - consumed_bytes),
+                "decompressed_bytes": max(
+                    0, budget.decompressed_bytes - consumed_decompressed
+                ),
+            }
+        )
 
     async def _emit(
         self,
@@ -193,3 +430,7 @@ class ExecutionEngine:
         )
         await self.ledger.append(event)
         return event
+
+
+class BudgetExhaustedError(RuntimeError):
+    """Raised before an adapter can exceed a reserved run budget."""
