@@ -1,0 +1,5 @@
+[mcp_servers.fetech-context]
+command = "uv"
+args = ["run", "--project", ".", "fetech-context-mcp"]
+startup_timeout_sec = 20
+tool_timeout_sec = 60

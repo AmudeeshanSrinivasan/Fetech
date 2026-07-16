@@ -1,0 +1,250 @@
+manifest_version: "1.0"
+project: fetech
+category_count: 13
+capability_count: 155
+categories:
+  - id: intake
+    name: URL intake and canonicalisation
+    closure_release: v0.1
+    adapter: core
+    risk_class: low
+    capabilities:
+      - {id: url_validation, kind: policy}
+      - {id: url_normalisation, kind: operation}
+
+  - id: security
+    name: Security and policy
+    closure_release: v0.1
+    adapter: core
+    risk_class: high
+    capabilities:
+      - {id: dns_resolution_check, kind: policy}
+      - {id: tls_certificate_check, kind: detector}
+      - {id: connectivity_check, kind: detector}
+      - {id: malware_phishing_check, kind: detector}
+      - {id: ssrf_private_ip_check, kind: policy}
+      - {id: robots_policy_check, kind: policy}
+      - {id: rate_limit_policy, kind: policy}
+      - {id: resource_budget_policy, kind: policy}
+
+  - id: discovery
+    name: Discovery and crawling
+    closure_release: v0.2
+    adapter: discovery
+    risk_class: medium
+    capabilities:
+      - {id: sitemap_discovery, kind: operation}
+      - {id: robots_discovery, kind: operation}
+      - {id: internal_link_discovery, kind: operation}
+      - {id: depth_limited_crawl, kind: operation}
+      - {id: domain_limited_crawl, kind: operation}
+      - {id: search_provider_discovery, kind: connector}
+      - {id: official_domain_discovery, kind: operation}
+      - {id: candidate_url_expansion, kind: operation}
+      - {id: related_link_discovery, kind: operation}
+      - {id: pagination_discovery, kind: operation}
+      - {id: next_page_discovery, kind: operation}
+      - {id: category_tag_discovery, kind: operation}
+
+  - id: transport
+    name: HTTP transport and redirects
+    closure_release: v0.1
+    adapter: http
+    risk_class: medium
+    capabilities:
+      - {id: http_get, kind: operation}
+      - {id: http_head, kind: operation}
+      - {id: http_post, kind: operation}
+      - {id: browser_header_http, kind: operation}
+      - {id: http_1_1, kind: transport_feature}
+      - {id: http_2, kind: transport_feature}
+      - {id: http_3, kind: transport_feature}
+      - {id: streaming_response, kind: transport_feature}
+      - {id: range_request, kind: operation}
+      - {id: chunked_response, kind: transport_feature}
+      - {id: redirect_301, kind: transport_feature}
+      - {id: redirect_302, kind: transport_feature}
+      - {id: redirect_303, kind: transport_feature}
+      - {id: redirect_307, kind: transport_feature}
+      - {id: redirect_308, kind: transport_feature}
+      - {id: meta_refresh_redirect, kind: transport_feature}
+      - {id: javascript_redirect, kind: transport_feature}
+      - {id: canonical_redirect, kind: transport_feature}
+      - {id: opengraph_url_redirect, kind: transport_feature}
+      - {id: redirect_chain, kind: transport_feature}
+      - {id: redirect_loop_detection, kind: detector}
+
+  - id: alternatives
+    name: URL alternatives
+    closure_release: v0.2
+    adapter: variants
+    risk_class: medium
+    capabilities:
+      - {id: http_to_https, kind: variant_generator}
+      - {id: https_to_http, kind: variant_generator}
+      - {id: www_to_non_www, kind: variant_generator}
+      - {id: non_www_to_www, kind: variant_generator}
+      - {id: trailing_slash, kind: variant_generator}
+      - {id: remove_trailing_slash, kind: variant_generator}
+      - {id: clean_query_parameters, kind: variant_generator}
+      - {id: canonical_url_variant, kind: variant_generator}
+      - {id: mobile_variant, kind: variant_generator}
+      - {id: amp_variant, kind: variant_generator}
+      - {id: print_variant, kind: variant_generator}
+      - {id: language_variant, kind: variant_generator}
+      - {id: region_variant, kind: variant_generator}
+
+  - id: readers
+    name: Reader extraction
+    closure_release: v0.1
+    adapter: reader
+    risk_class: low
+    capabilities:
+      - {id: raw_html, kind: extractor}
+      - {id: clean_text, kind: extractor}
+      - {id: main_article, kind: extractor}
+      - {id: boilerplate_removal, kind: extractor}
+      - {id: mozilla_readability, kind: extractor}
+      - {id: trafilatura, kind: extractor}
+      - {id: newspaper_style, kind: extractor}
+      - {id: mercury_style, kind: extractor}
+      - {id: jina_reader, kind: connector}
+      - {id: browser_reader_mode, kind: extractor}
+
+  - id: browser
+    name: Browser rendering
+    closure_release: v0.2
+    adapter: browser
+    risk_class: high
+    capabilities:
+      - {id: playwright, kind: operation, aliases: [playwright_render]}
+      - {id: puppeteer, kind: operation}
+      - {id: selenium, kind: operation}
+      - {id: cdp, kind: operation}
+      - {id: headless_dom, kind: extractor}
+      - {id: visible_text, kind: extractor}
+      - {id: screenshot, kind: operation}
+      - {id: wait_for_selector, kind: operation}
+      - {id: wait_for_network_idle, kind: operation}
+      - {id: scroll_to_load, kind: operation}
+      - {id: click_expand, kind: operation}
+      - {id: cookie_banner_handling, kind: operation}
+      - {id: lazy_loading, kind: operation}
+      - {id: javascript_rendering, kind: operation}
+      - {id: spa_route_handling, kind: operation}
+
+  - id: authentication
+    name: Authentication and private sessions
+    closure_release: v0.3
+    adapter: auth
+    risk_class: critical
+    capabilities:
+      - {id: cookie_session, kind: connector}
+      - {id: login_session, kind: connector}
+      - {id: oauth, kind: connector}
+      - {id: api_key, kind: connector}
+      - {id: bearer_token, kind: connector}
+      - {id: csrf_token, kind: connector}
+      - {id: form_submit, kind: operation}
+      - {id: sso, kind: connector}
+      - {id: connector_auth, kind: connector}
+      - {id: private_workspace, kind: connector}
+
+  - id: api
+    name: Structured APIs and feeds
+    closure_release: v0.3
+    adapter: api
+    risk_class: medium
+    capabilities:
+      - {id: rest, kind: connector}
+      - {id: graphql, kind: connector}
+      - {id: json_endpoint, kind: connector}
+      - {id: xml_endpoint, kind: connector}
+      - {id: rss, kind: connector}
+      - {id: atom, kind: connector}
+      - {id: sitemap_xml, kind: connector}
+      - {id: openapi_discovery, kind: connector}
+      - {id: github_api, kind: connector}
+      - {id: semantic_scholar_api, kind: connector}
+      - {id: arxiv_api, kind: connector}
+      - {id: openreview_api, kind: connector}
+      - {id: crossref_openalex_api, kind: connector}
+
+  - id: documents
+    name: Documents and files
+    closure_release: v0.4
+    adapter: document
+    risk_class: high
+    capabilities:
+      - {id: pdf, kind: format_handler}
+      - {id: scanned_pdf, kind: format_handler}
+      - {id: docx, kind: format_handler}
+      - {id: pptx, kind: format_handler}
+      - {id: xlsx, kind: format_handler}
+      - {id: csv, kind: format_handler}
+      - {id: txt, kind: format_handler}
+      - {id: markdown, kind: format_handler}
+      - {id: json_file, kind: format_handler}
+      - {id: xml_file, kind: format_handler}
+      - {id: zip_archive, kind: format_handler}
+      - {id: github_raw, kind: connector}
+      - {id: git_lfs, kind: connector}
+      - {id: dataset_file, kind: format_handler}
+
+  - id: media
+    name: Images, audio, video, and media
+    closure_release: v0.4
+    adapter: media
+    risk_class: high
+    capabilities:
+      - {id: image, kind: format_handler}
+      - {id: image_metadata, kind: extractor}
+      - {id: image_ocr, kind: extractor}
+      - {id: screenshot_to_text, kind: extractor}
+      - {id: video_metadata, kind: extractor}
+      - {id: audio_metadata, kind: extractor}
+      - {id: transcript, kind: extractor}
+      - {id: youtube_metadata, kind: connector}
+      - {id: podcast_feed, kind: connector}
+      - {id: thumbnail, kind: extractor}
+      - {id: exif_metadata, kind: extractor}
+
+  - id: cache
+    name: Cache, snapshots, and archives
+    closure_release: v0.4
+    adapter: cache
+    risk_class: medium
+    capabilities:
+      - {id: search_snippet_cache, kind: storage_strategy}
+      - {id: search_cache, kind: storage_strategy}
+      - {id: search_engine_cache_adapter, kind: connector}
+      - {id: alternate_search_cache_adapter, kind: connector}
+      - {id: web_archive, kind: connector}
+      - {id: internet_archive_snapshot, kind: connector}
+      - {id: local_snapshot, kind: storage_strategy}
+      - {id: previous_successful_snapshot, kind: storage_strategy}
+      - {id: cdn_copy, kind: connector}
+      - {id: browser_cache, kind: storage_strategy}
+      - {id: rag_document_cache, kind: storage_strategy}
+
+  - id: validation
+    name: Validation, provenance, and observability
+    closure_release: v0.1
+    adapter: quality
+    risk_class: medium
+    capabilities:
+      - {id: content_type_probe, kind: detector}
+      - {id: file_size_probe, kind: detector}
+      - {id: paywall_detection, kind: detector}
+      - {id: captcha_detection, kind: detector}
+      - {id: bot_block_detection, kind: detector}
+      - {id: login_wall_detection, kind: detector}
+      - {id: empty_page_detection, kind: detector}
+      - {id: error_page_detection, kind: detector}
+      - {id: wrong_language_detection, kind: detector}
+      - {id: duplicate_detection, kind: detector}
+      - {id: content_quality_validation, kind: detector}
+      - {id: fetch_attempt_logging, kind: operation}
+      - {id: timeout_diagnostics, kind: detector}
+      - {id: source_hash_comparison, kind: detector}
+      - {id: cache_expiry_check, kind: detector}

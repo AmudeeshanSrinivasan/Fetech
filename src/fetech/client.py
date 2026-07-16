@@ -1,0 +1,60 @@
+"""Asynchronous Python SDK."""
+
+from __future__ import annotations
+
+from collections.abc import AsyncIterator
+from uuid import UUID
+
+from fetech.config import Settings
+from fetech.gateway import UniversalFetchGateway
+from fetech.logic.models import ReasoningResult
+from fetech.models import FetchPlan, FetchRequest, FetchResult, FetchRun, ProvenanceEvent
+
+
+class FetchHandle:
+    def __init__(self, run_id: UUID, gateway: UniversalFetchGateway) -> None:
+        self.run_id = run_id
+        self._gateway = gateway
+
+    async def result(self) -> FetchResult:
+        return await self._gateway.wait(self.run_id)
+
+    async def events(self) -> AsyncIterator[ProvenanceEvent]:
+        async for event in self._gateway.ledger.stream(self.run_id):
+            yield event
+
+    async def snapshot(self) -> FetchRun:
+        return await self._gateway.get_run(self.run_id)
+
+
+class FetechClient:
+    def __init__(self, settings: Settings | None = None) -> None:
+        self.gateway = UniversalFetchGateway(settings)
+
+    async def __aenter__(self) -> FetechClient:
+        await self.gateway.initialize()
+        return self
+
+    async def __aexit__(self, *_: object) -> None:
+        await self.close()
+
+    async def close(self) -> None:
+        await self.gateway.close()
+
+    async def plan(self, request: FetchRequest) -> FetchPlan:
+        return await self.gateway.plan_async(request)
+
+    def plan_deterministic(self, request: FetchRequest) -> FetchPlan:
+        return self.gateway.plan(request)
+
+    async def explain_capability(
+        self, capability_id: str, *, request: FetchRequest | None = None
+    ) -> ReasoningResult:
+        return await self.gateway.explain_capability(capability_id, request=request)
+
+    async def fetch(self, request: FetchRequest) -> FetchResult:
+        return await self.gateway.fetch(request)
+
+    async def submit(self, request: FetchRequest) -> FetchHandle:
+        run = await self.gateway.submit(request)
+        return FetchHandle(run.run_id, self.gateway)
