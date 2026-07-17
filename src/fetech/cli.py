@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import json
 from dataclasses import replace
+from enum import StrEnum
 from pathlib import Path
 from typing import Annotated
 from uuid import UUID
@@ -20,6 +21,13 @@ from fetech.registry import CapabilityRegistry
 
 app = typer.Typer(no_args_is_help=True, help="Policy-aware universal content acquisition.")
 DEFAULT_REPOSITORY = Path.cwd()
+
+
+class PrivacyProfile(StrEnum):
+    """CLI-safe projection of the public request privacy profiles."""
+
+    PUBLIC = "public"
+    PRIVATE = "private"
 
 
 def _json(document: object) -> None:
@@ -53,11 +61,29 @@ def plan(
     target: str,
     output: Annotated[list[str] | None, typer.Option("--output", "-o")] = None,
     backend: Annotated[str | None, typer.Option("--backend", help="python or clingo")] = None,
+    authentication_ref: Annotated[
+        str | None,
+        typer.Option("--auth-ref", help="Opaque reference for a configured provider."),
+    ] = None,
+    privacy_profile: Annotated[
+        PrivacyProfile,
+        typer.Option("--privacy", help="Request privacy profile."),
+    ] = PrivacyProfile.PUBLIC,
+    approve: Annotated[
+        list[str] | None,
+        typer.Option("--approve", help="Explicitly approve a capability."),
+    ] = None,
 ) -> None:
     """Build a validated fetch plan without making a network request."""
 
     async def run() -> None:
-        request = FetchRequest(target=target, output_requirements=tuple(output or ["clean_text"]))
+        request = FetchRequest(
+            target=target,
+            output_requirements=tuple(output or ["clean_text"]),
+            authentication_ref=authentication_ref,
+            privacy_profile=privacy_profile.value,
+            approved_capabilities=frozenset(approve or ()),
+        )
         settings = Settings.from_environment()
         if backend:
             settings = replace(settings, planner_backend=backend.lower())
@@ -109,6 +135,18 @@ def fetch(
     target: str,
     output: Annotated[list[str] | None, typer.Option("--output", "-o")] = None,
     maximum_bytes: Annotated[int, typer.Option("--max-bytes")] = 10_000_000,
+    authentication_ref: Annotated[
+        str | None,
+        typer.Option("--auth-ref", help="Opaque reference for a configured provider."),
+    ] = None,
+    privacy_profile: Annotated[
+        PrivacyProfile,
+        typer.Option("--privacy", help="Request privacy profile."),
+    ] = PrivacyProfile.PUBLIC,
+    approve: Annotated[
+        list[str] | None,
+        typer.Option("--approve", help="Explicitly approve a capability."),
+    ] = None,
 ) -> None:
     """Fetch a target and print its canonical result."""
 
@@ -116,6 +154,9 @@ def fetch(
         request = FetchRequest(
             target=target,
             output_requirements=tuple(output or ["clean_text"]),
+            authentication_ref=authentication_ref,
+            privacy_profile=privacy_profile.value,
+            approved_capabilities=frozenset(approve or ()),
             budget=ResourceBudget(bytes=maximum_bytes),
         )
         async with FetechClient() as client:

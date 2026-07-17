@@ -14,7 +14,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Protocol
 
-from fetech.models import Artifact, QualityAssessment, Resource
+from fetech.auth import authentication_cache_scope
+from fetech.models import Artifact, FetchRequest, QualityAssessment, Resource
 
 
 class ArtifactStore(Protocol):
@@ -80,6 +81,28 @@ class CacheKey:
     language: str
     parser_version: str
     vary: tuple[tuple[str, str], ...] = ()
+
+    @classmethod
+    def for_request(
+        cls,
+        request: FetchRequest,
+        *,
+        url: str,
+        representation: str,
+        parser_version: str,
+        vary: tuple[tuple[str, str], ...] = (),
+    ) -> CacheKey:
+        """Build a partitioned key without persisting the opaque authentication reference."""
+
+        return cls(
+            url=url,
+            representation=representation,
+            authentication_scope=authentication_cache_scope(request.authentication_ref),
+            policy_profile=request.policy_profile,
+            language=request.language or "",
+            parser_version=parser_version,
+            vary=vary,
+        )
 
     @property
     def digest(self) -> str:

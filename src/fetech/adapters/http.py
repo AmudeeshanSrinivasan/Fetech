@@ -4,19 +4,34 @@ from __future__ import annotations
 
 import asyncio
 import re
+import time
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from html.parser import HTMLParser
+from typing import Literal
 from urllib import robotparser
 from urllib.parse import urljoin, urlsplit
 
 import httpx
 
 from fetech.adapters.base import (
+    AdapterAuthExpiredError,
     AdapterAuthRequiredError,
+    AdapterDependencyError,
     AdapterExecutionError,
     AdapterNotFoundError,
     ExecutionContext,
 )
+from fetech.auth import (
+    CredentialMaterial,
+    CredentialNotFoundError,
+    CredentialProvider,
+    CredentialProviderError,
+    CredentialProviderUnavailableError,
+    NullCredentialProvider,
+    canonical_origin,
+)
+from fetech.auth_flows import OriginScopedSession, SessionBindingError, SessionCapability
 from fetech.http3 import CurlHTTP3Client
 from fetech.models import (
     AttemptStatus,
@@ -27,9 +42,23 @@ from fetech.models import (
     Resource,
 )
 from fetech.quality import assess_binary, assess_text
-from fetech.security import PolicyBlockedError, SafeURLPolicy, sanitize_url
+from fetech.security import (
+    PolicyBlockedError,
+    SafeURLPolicy,
+    sanitize_url,
+    sanitize_url_for_request,
+)
 from fetech.storage import build_artifact
 from fetech.transport import PinnedAsyncHTTPTransport
+
+_EPHEMERAL_COOKIE_COUNT_LIMIT = 16
+_EPHEMERAL_COOKIE_NAME_LIMIT = 128
+_EPHEMERAL_COOKIE_VALUE_LIMIT = 4096
+_EPHEMERAL_COOKIE_PATH_LIMIT = 1024
+_EPHEMERAL_COOKIE_HEADER_LIMIT = 8192
+_EPHEMERAL_SET_COOKIE_LIMIT = 16_384
+_COOKIE_NAME = re.compile(r"^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$")
+_COOKIE_VALUE = re.compile(r"^[\x21\x23-\x2B\x2D-\x3A\x3C-\x5B\x5D-\x7E]*$")
 
 
 class HTTPAdapter:
@@ -38,6 +67,7 @@ class HTTPAdapter:
         *,
         user_agent: str,
         policy: SafeURLPolicy | None = None,
+        credential_provider: CredentialProvider | None = None,
         transport: httpx.AsyncBaseTransport | None = None,
         global_concurrency: int = 8,
         per_host_concurrency: int = 2,
@@ -46,6 +76,7 @@ class HTTPAdapter:
     ) -> None:
         self.user_agent = user_agent
         self.policy = policy or SafeURLPolicy()
+        self.credential_provider = credential_provider or NullCredentialProvider()
         self.transport = transport
         self._global_concurrency = global_concurrency
         self._global_limit = asyncio.Semaphore(global_concurrency)
@@ -60,20 +91,41 @@ class HTTPAdapter:
         destination = context.request.target
         attempt = FetchAttempt(
             capability_id=node.capability_id,
-            sanitized_destination=sanitize_url(destination),
+            sanitized_destination=sanitize_url_for_request(
+                destination,
+                context.request,
+            ),
             status=AttemptStatus.RUNNING,
         )
         context.attempts.append(attempt)
         started = datetime.now(UTC)
         try:
-            response, body, wire_bytes = await self._request(destination, context, node)
+            response, body, wire_bytes = await self._request(
+                destination,
+                context,
+                node,
+                credential_mode=(
+                    "anonymous"
+                    if _anonymous_form_bootstrap(context)
+                    else "request"
+                ),
+            )
             media_type = (
                 response.headers.get("content-type", "application/octet-stream").split(";", 1)[0].strip()
             )
             resource = Resource(
-                canonical_url=sanitize_url(str(response.url)),
-                requested_url=sanitize_url(context.request.target),
-                authority_url=sanitize_url(context.request.target),
+                canonical_url=sanitize_url_for_request(
+                    str(response.url),
+                    context.request,
+                ),
+                requested_url=sanitize_url_for_request(
+                    context.request.target,
+                    context.request,
+                ),
+                authority_url=sanitize_url_for_request(
+                    context.request.target,
+                    context.request,
+                ),
                 media_type=media_type,
                 status_code=response.status_code,
             )
@@ -129,11 +181,19 @@ class HTTPAdapter:
             )
             raise
         except AdapterExecutionError as exc:
+            if isinstance(exc, AdapterAuthExpiredError):
+                failure_code = "auth_expired"
+            elif isinstance(exc, AdapterAuthRequiredError):
+                failure_code = "auth_required"
+            elif isinstance(exc, AdapterNotFoundError):
+                failure_code = "not_found"
+            else:
+                failure_code = type(exc).__name__
             context.attempts[-1] = attempt.model_copy(
                 update={
                     "status": AttemptStatus.FAILED,
                     "finished_at": datetime.now(UTC),
-                    "failure_code": type(exc).__name__,
+                    "failure_code": failure_code,
                     "warnings": (str(exc),),
                 }
             )
@@ -155,19 +215,61 @@ class HTTPAdapter:
         destination: str,
         context: ExecutionContext,
         node: PlanNode | None = None,
+        *,
+        method_override: str | None = None,
+        body: bytes | None = None,
+        extra_headers: dict[str, str] | None = None,
+        allow_ephemeral_login_cookies: bool = False,
+        credential_mode: Literal["request", "anonymous"] = "request",
     ) -> tuple[httpx.Response, bytes, int]:
+        if credential_mode not in {"request", "anonymous"}:
+            raise AdapterExecutionError("HTTP credential mode is unsupported")
+        if allow_ephemeral_login_cookies and credential_mode != "anonymous":
+            raise AdapterExecutionError(
+                "ephemeral login cookie handoff requires anonymous credential mode"
+            )
         if "http_3" in context.request.output_requirements:
+            if allow_ephemeral_login_cookies:
+                raise AdapterDependencyError(
+                    "ephemeral login cookie handoff is unavailable over HTTP/3"
+                )
             return await self._request_http3(destination, context)
         maximum_wire_bytes = context.request.budget.bytes
         maximum_decompressed_bytes = context.request.budget.decompressed_bytes
         timeout = httpx.Timeout(context.request.budget.deadline_seconds)
         method, headers = self._request_spec(node, context)
+        if method_override is not None:
+            method = method_override.strip().upper()
+            if method not in {"GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"}:
+                raise AdapterExecutionError("HTTP method override is unsupported")
+        if extra_headers:
+            forbidden = {
+                name.casefold()
+                for name in extra_headers
+                if name.casefold()
+                not in {"accept", "content-type", "if-match", "if-none-match"}
+            }
+            if forbidden:
+                raise AdapterExecutionError("ephemeral request contains a forbidden header")
+            headers.update(extra_headers)
+        if body is not None:
+            if method in {"GET", "HEAD"}:
+                raise AdapterExecutionError("request bodies are forbidden for safe retrieval methods")
+            if len(body) > min(1_000_000, maximum_wire_bytes):
+                raise AdapterExecutionError("request body exceeded the bounded upload limit")
+        request_body = body
         current = destination
         previous: str | None = None
         visited: set[str] = set()
         redirect_statuses: list[int] = []
         robots_checked: set[str] = set()
         auxiliary_bytes = 0
+        credential: CredentialMaterial | None = None
+        credential_outcome_recorded = False
+        refresh_attempted = False
+        ephemeral_cookies: dict[tuple[str, str], _EphemeralCookie] = {}
+        ephemeral_cookie_origin: str | None = None
+        ephemeral_cookie_used = False
         transport = self._transport_for_request()
         async with httpx.AsyncClient(
             follow_redirects=False,
@@ -189,6 +291,43 @@ class HTTPAdapter:
                         "security",
                         reason=decision.reason,
                     )
+                if (
+                    credential_mode == "request"
+                    and context.request.authentication_ref is not None
+                    and credential is None
+                ):
+                    cached_credential = context.sensitive_state.get("credential_material")
+                    credential = (
+                        cached_credential
+                        if isinstance(cached_credential, CredentialMaterial)
+                        else await self._resolve_credential(context.request.authentication_ref)
+                    )
+                    if not credential.applies_to(current):
+                        reason = "credential scope does not match the initial target origin"
+                        decision = PolicyDecision(
+                            policy_id="credential_origin_scope",
+                            allowed=False,
+                            reason=reason,
+                            destination=sanitize_url(current),
+                        )
+                        context.record_outcome(
+                            "connector_auth",
+                            CapabilityOutcomeStatus.BLOCKED,
+                            "auth",
+                            reason=reason,
+                        )
+                        raise PolicyBlockedError(reason, (decision,))
+                    if credential.expired:
+                        if credential.capability_id != "bearer_token":
+                            raise AdapterAuthExpiredError("credential material is expired")
+                        credential = await self._refresh_credential(
+                            context,
+                            credential,
+                            method=method,
+                            already_attempted=refresh_attempted,
+                        )
+                        refresh_attempted = True
+                        context.sensitive_state["credential_material"] = credential
                 if current in visited:
                     raise AdapterExecutionError("redirect loop detected")
                 visited.add(current)
@@ -198,8 +337,15 @@ class HTTPAdapter:
                 host_limit = self._host_limits.setdefault(host, asyncio.Semaphore(self._per_host_concurrency))
                 parts = urlsplit(current)
                 origin = f"{parts.scheme}://{parts.netloc}"
+                if (
+                    ephemeral_cookie_origin is not None
+                    and canonical_origin(current) != ephemeral_cookie_origin
+                ):
+                    ephemeral_cookies.clear()
+                    ephemeral_cookie_origin = None
                 if context.request.intent == "crawl" and origin not in robots_checked:
                     robots_checked.add(origin)
+                    client.cookies.clear()
                     auxiliary_bytes += await self._enforce_robots(
                         client,
                         current,
@@ -224,16 +370,131 @@ class HTTPAdapter:
                     minimum_interval_seconds=self._per_host_min_interval_seconds,
                     concurrency=self._per_host_concurrency,
                 )
-                async with self._global_limit, host_limit, client.stream(method, current) as response:
+                hop_headers = dict(headers)
+                credential_applied = credential is not None and credential.applies_to(current)
+                if credential_applied and credential is not None:
+                    hop_headers.update(credential.request_headers())
+                    context.policy_decisions.append(
+                        PolicyDecision(
+                            policy_id="credential_origin_scope",
+                            allowed=True,
+                            reason="credential material matched the exact request origin",
+                            destination=sanitize_url(current),
+                        )
+                    )
+                    if not credential_outcome_recorded:
+                        context.record_outcome(
+                            credential.capability_id,
+                            CapabilityOutcomeStatus.APPLIED,
+                            "auth",
+                            exact_origin=True,
+                        )
+                        context.record_outcome(
+                            "connector_auth",
+                            CapabilityOutcomeStatus.APPLIED,
+                            "auth",
+                            exact_origin=True,
+                        )
+                        credential_outcome_recorded = True
+                elif credential is not None:
+                    context.policy_decisions.append(
+                        PolicyDecision(
+                            policy_id="credential_origin_scope",
+                            allowed=True,
+                            reason="credential material was withheld from a different redirect origin",
+                            destination=sanitize_url(current),
+                        )
+                    )
+                    context.record_outcome(
+                        "connector_auth",
+                        CapabilityOutcomeStatus.NOT_APPLICABLE,
+                        "auth",
+                        reason="redirect origin did not match credential scope",
+                    )
+                if (
+                    allow_ephemeral_login_cookies
+                    and ephemeral_cookie_origin == canonical_origin(current)
+                ):
+                    cookie_header = _render_ephemeral_cookie_header(
+                        ephemeral_cookies,
+                        current,
+                    )
+                    if cookie_header is not None:
+                        hop_headers["Cookie"] = cookie_header
+                        ephemeral_cookie_used = True
+                client.cookies.clear()
+                async with (
+                    self._global_limit,
+                    host_limit,
+                    client.stream(
+                        method,
+                        current,
+                        headers=hop_headers,
+                        content=request_body,
+                    ) as response,
+                ):
                     if response.is_redirect:
                         redirect_statuses.append(response.status_code)
                         location = response.headers.get("location")
                         if not location:
                             raise AdapterExecutionError("redirect response omitted Location")
-                        previous, current = current, urljoin(current, location)
+                        redirected = urljoin(current, location)
+                        if (
+                            allow_ephemeral_login_cookies
+                            and response.status_code in {307, 308}
+                        ):
+                            raise _redirect_body_replay_error(redirected)
+                        if response.status_code == 303 or (
+                            response.status_code in {301, 302} and method == "POST"
+                        ):
+                            method = "GET"
+                            request_body = None
+                            headers.pop("Content-Type", None)
+                        elif request_body is not None:
+                            raise _redirect_body_replay_error(redirected)
+                        if allow_ephemeral_login_cookies:
+                            if _same_exact_origin(current, redirected):
+                                ephemeral_cookies = _capture_ephemeral_login_cookies(
+                                    response,
+                                    current,
+                                    ephemeral_cookies,
+                                )
+                                ephemeral_cookie_origin = (
+                                    canonical_origin(current)
+                                    if ephemeral_cookies
+                                    else None
+                                )
+                            else:
+                                ephemeral_cookies.clear()
+                                ephemeral_cookie_origin = None
+                        previous, current = current, redirected
                         continue
                     if response.status_code in {404, 410}:
                         raise AdapterNotFoundError(f"target returned HTTP {response.status_code}")
+                    if (
+                        response.status_code == 401
+                        and credential_applied
+                        and credential is not None
+                        and credential.capability_id == "bearer_token"
+                        and _reports_expired_credential(response)
+                    ):
+                        if (
+                            context.request.authentication_ref is not None
+                            and not refresh_attempted
+                            and method in {"GET", "HEAD"}
+                        ):
+                            credential = await self._refresh_credential(
+                                context,
+                                credential,
+                                method=method,
+                                already_attempted=False,
+                            )
+                            context.sensitive_state["credential_material"] = credential
+                            credential_outcome_recorded = False
+                            refresh_attempted = True
+                            visited.remove(current)
+                            continue
+                        raise AdapterAuthExpiredError("credential material was rejected as expired")
                     if response.status_code in {401, 403}:
                         raise AdapterAuthRequiredError(f"target returned HTTP {response.status_code}")
                     response.raise_for_status()
@@ -254,6 +515,12 @@ class HTTPAdapter:
                     response.extensions["fetech_redirect_count"] = len(redirect_statuses)
                     response.extensions["fetech_redirect_statuses"] = tuple(redirect_statuses)
                     response.extensions["fetech_auxiliary_bytes"] = auxiliary_bytes
+                    response.extensions["fetech_ephemeral_login_cookie_handoff"] = (
+                        ephemeral_cookie_used
+                    )
+                    if allow_ephemeral_login_cookies:
+                        _scrub_cookie_state(response)
+                        client.cookies.clear()
                     return response, b"".join(chunks), wire_size + auxiliary_bytes
             raise AdapterExecutionError("redirect budget exhausted")
 
@@ -279,6 +546,14 @@ class HTTPAdapter:
                     "security",
                     reason=decision.reason,
                 )
+            if context.request.authentication_ref is not None:
+                context.record_outcome(
+                    "connector_auth",
+                    CapabilityOutcomeStatus.DEPENDENCY_MISSING,
+                    "auth",
+                    reason="authenticated HTTP/3 transport is not implemented",
+                )
+                raise AdapterDependencyError("authenticated HTTP/3 transport is unavailable")
             parts = urlsplit(current)
             if parts.scheme != "https":
                 raise AdapterExecutionError("HTTP/3 transport requires HTTPS")
@@ -353,6 +628,21 @@ class HTTPAdapter:
             maximum_keepalive_connections=self._global_concurrency,
         )
 
+    async def _resolve_credential(self, reference: str) -> CredentialMaterial:
+        try:
+            material = await self.credential_provider.resolve(reference)
+        except CredentialNotFoundError as exc:
+            raise AdapterAuthRequiredError("authentication reference could not be resolved") from exc
+        except CredentialProviderUnavailableError as exc:
+            raise AdapterDependencyError("credential provider is unavailable") from exc
+        except CredentialProviderError as exc:
+            raise AdapterDependencyError("credential provider failed") from exc
+        except Exception as exc:
+            raise AdapterDependencyError("credential provider failed") from exc
+        if not isinstance(material, CredentialMaterial):
+            raise AdapterDependencyError("credential provider returned invalid material")
+        return material
+
     async def _apply_rate_limit(self, host: str) -> None:
         lock = self._rate_locks.setdefault(host, asyncio.Lock())
         async with lock:
@@ -381,6 +671,7 @@ class HTTPAdapter:
         parts = urlsplit(target)
         robots_url = f"{parts.scheme}://{parts.netloc}/robots.txt"
         await self._apply_rate_limit(host)
+        client.cookies.clear()
         try:
             async with self._global_limit, host_limit, client.stream("GET", robots_url) as response:
                 if response.status_code != 200:
@@ -446,8 +737,12 @@ class HTTPAdapter:
         if capability_id == "http_head":
             return "HEAD", headers
         if capability_id == "http_post":
-            if context.request.metadata.get("http_post_approved", "").lower() != "true":
-                reason = "http_post requires explicit http_post_approved metadata"
+            approved = (
+                "http_post" in context.request.approved_capabilities
+                or context.request.metadata.get("http_post_approved", "").lower() == "true"
+            )
+            if not approved:
+                reason = "http_post requires explicit approval"
                 raise PolicyBlockedError(
                     reason,
                     (
@@ -476,6 +771,120 @@ class HTTPAdapter:
             headers["Range"] = requested_range
             return "GET", headers
         return "GET", headers
+
+    async def _refresh_credential(
+        self,
+        context: ExecutionContext,
+        existing_material: CredentialMaterial,
+        *,
+        method: str,
+        already_attempted: bool,
+    ) -> CredentialMaterial:
+        if already_attempted or method not in {"GET", "HEAD"}:
+            raise AdapterAuthExpiredError("credential material is expired")
+        session = context.sensitive_state.get("origin_scoped_session")
+        reference = context.request.authentication_ref
+        if (
+            not isinstance(session, OriginScopedSession)
+            or reference is None
+            or session.authentication_ref != reference
+            or session.capability_id
+            not in {SessionCapability.OAUTH, SessionCapability.SSO}
+            or session.refresh_ref is None
+            or existing_material.capability_id != "bearer_token"
+        ):
+            raise AdapterAuthExpiredError("credential material is expired")
+        try:
+            session.validate_material_binding(existing_material)
+        except SessionBindingError as exc:
+            raise AdapterAuthRequiredError(
+                "credential material does not match the configured session"
+            ) from exc
+        capability_id = session.capability_id.value
+        refresh = getattr(self.credential_provider, "refresh", None)
+        if not callable(refresh):
+            raise AdapterAuthExpiredError("credential material is expired")
+        context.record_runtime_event(
+            "auth.refresh.started",
+            "auth",
+            capability_id=capability_id,
+        )
+        try:
+            material = await refresh(session.refresh_ref)
+        except CredentialProviderUnavailableError as exc:
+            context.record_runtime_event(
+                "auth.refresh.failed",
+                "auth",
+                capability_id=capability_id,
+                reason="provider_unavailable",
+            )
+            raise AdapterDependencyError("credential provider is unavailable") from exc
+        except (CredentialNotFoundError, CredentialProviderError) as exc:
+            context.record_runtime_event(
+                "auth.refresh.failed",
+                "auth",
+                capability_id=capability_id,
+                reason="refresh_rejected",
+            )
+            raise AdapterAuthExpiredError("credential refresh was rejected") from exc
+        except Exception as exc:
+            context.record_runtime_event(
+                "auth.refresh.failed",
+                "auth",
+                capability_id=capability_id,
+                reason="provider_failed",
+            )
+            raise AdapterDependencyError("credential provider failed") from exc
+        if not isinstance(material, CredentialMaterial):
+            context.record_runtime_event(
+                "auth.refresh.failed",
+                "auth",
+                capability_id=capability_id,
+                reason="invalid_material",
+            )
+            raise AdapterDependencyError("credential provider returned invalid material")
+        if material.expired:
+            context.record_runtime_event(
+                "auth.refresh.failed",
+                "auth",
+                capability_id=capability_id,
+                reason="expired_material",
+            )
+            raise AdapterAuthExpiredError("credential refresh returned expired material")
+        try:
+            session.validate_material_binding(material)
+        except SessionBindingError as exc:
+            context.record_runtime_event(
+                "auth.refresh.failed",
+                "auth",
+                capability_id=capability_id,
+                reason="invalid_binding",
+            )
+            raise AdapterAuthRequiredError(
+                "refreshed credential does not match the configured session"
+            ) from exc
+        if material.capability_id != existing_material.capability_id:
+            context.record_runtime_event(
+                "auth.refresh.failed",
+                "auth",
+                capability_id=capability_id,
+                reason="credential_type_changed",
+            )
+            raise AdapterAuthRequiredError(
+                "refreshed credential changed authentication type"
+            )
+        context.record_outcome(
+            capability_id,
+            CapabilityOutcomeStatus.APPLIED,
+            "auth",
+            refreshed=True,
+        )
+        context.record_runtime_event(
+            "auth.refresh.succeeded",
+            "auth",
+            capability_id=capability_id,
+        )
+        return material
 
     @staticmethod
     def _record_response_outcomes(
@@ -615,6 +1024,159 @@ class HTTPAdapter:
                 )
 
 
+@dataclass(frozen=True, slots=True)
+class _EphemeralCookie:
+    name: str
+    value: str
+    path: str
+
+
+def _capture_ephemeral_login_cookies(
+    response: httpx.Response,
+    source_url: str,
+    existing: dict[tuple[str, str], _EphemeralCookie],
+) -> dict[tuple[str, str], _EphemeralCookie]:
+    """Validate a redirect's cookies into request-local, exact-origin state."""
+
+    set_cookie_headers = response.headers.get_list("set-cookie")
+    if not set_cookie_headers:
+        return existing
+    if (
+        len(set_cookie_headers) > _EPHEMERAL_COOKIE_COUNT_LIMIT
+        or sum(len(value.encode("latin-1")) for value in set_cookie_headers)
+        > _EPHEMERAL_SET_COOKIE_LIMIT
+    ):
+        raise AdapterExecutionError("ephemeral login cookie exceeded security bounds")
+
+    parsed = list(response.cookies.jar)
+    if len(parsed) != len(set_cookie_headers):
+        raise AdapterExecutionError("ephemeral login cookie was malformed")
+
+    parts = urlsplit(source_url)
+    host = (parts.hostname or "").encode("idna").decode("ascii").lower().rstrip(".")
+    if parts.scheme != "https" or not host:
+        raise AdapterExecutionError("ephemeral login cookies require HTTPS")
+
+    captured = dict(existing)
+    now = time.time()
+    for cookie in parsed:
+        name = cookie.name
+        value = cookie.value
+        path = cookie.path or "/"
+        domain = cookie.domain.lstrip(".").lower().rstrip(".")
+        if value is None:
+            raise AdapterExecutionError("ephemeral login cookie was malformed")
+        if (
+            not cookie.secure
+            or domain != host
+            or len(name) > _EPHEMERAL_COOKIE_NAME_LIMIT
+            or len(value) > _EPHEMERAL_COOKIE_VALUE_LIMIT
+            or len(path) > _EPHEMERAL_COOKIE_PATH_LIMIT
+            or _COOKIE_NAME.fullmatch(name) is None
+            or _COOKIE_VALUE.fullmatch(value) is None
+            or not path.startswith("/")
+            or any(ord(character) < 32 or ord(character) == 127 for character in path)
+        ):
+            raise AdapterExecutionError("ephemeral login cookie failed security validation")
+        key = (name, path)
+        if cookie.expires is not None and cookie.expires <= now:
+            captured.pop(key, None)
+        else:
+            captured[key] = _EphemeralCookie(name=name, value=value, path=path)
+
+    if len(captured) > _EPHEMERAL_COOKIE_COUNT_LIMIT:
+        raise AdapterExecutionError("ephemeral login cookie exceeded security bounds")
+    rendered_all = "; ".join(
+        f"{cookie.name}={cookie.value}"
+        for cookie in sorted(
+            captured.values(),
+            key=lambda cookie: (-len(cookie.path), cookie.name),
+        )
+    )
+    if len(rendered_all.encode("ascii")) > _EPHEMERAL_COOKIE_HEADER_LIMIT:
+        raise AdapterExecutionError("ephemeral login cookie exceeded security bounds")
+    return captured
+
+
+def _render_ephemeral_cookie_header(
+    cookies: dict[tuple[str, str], _EphemeralCookie],
+    target_url: str,
+) -> str | None:
+    target_path = urlsplit(target_url).path or "/"
+    selected = sorted(
+        (
+            cookie
+            for cookie in cookies.values()
+            if _cookie_path_matches(cookie.path, target_path)
+        ),
+        key=lambda cookie: (-len(cookie.path), cookie.name),
+    )
+    if not selected:
+        return None
+    rendered = "; ".join(f"{cookie.name}={cookie.value}" for cookie in selected)
+    if len(rendered.encode("ascii")) > _EPHEMERAL_COOKIE_HEADER_LIMIT:
+        raise AdapterExecutionError("ephemeral login cookie exceeded security bounds")
+    return rendered
+
+
+def _cookie_path_matches(cookie_path: str, target_path: str) -> bool:
+    if target_path == cookie_path:
+        return True
+    if not target_path.startswith(cookie_path):
+        return False
+    return cookie_path.endswith("/") or target_path[len(cookie_path)] == "/"
+
+
+def _same_exact_origin(left: str, right: str) -> bool:
+    try:
+        return canonical_origin(left) == canonical_origin(right)
+    except ValueError:
+        return False
+
+
+def _scrub_cookie_state(response: httpx.Response) -> None:
+    """Remove ephemeral cookie material from the response object returned upstream."""
+
+    response.headers.pop("set-cookie", None)
+    response.request.headers.pop("cookie", None)
+    response.cookies.clear()
+
+
+def _redirect_body_replay_error(redirected: str) -> PolicyBlockedError:
+    reason = (
+        "a request cannot replay its body to a redirected target "
+        "without a new exact-target approval"
+    )
+    return PolicyBlockedError(
+        reason,
+        (
+            PolicyDecision(
+                policy_id="redirect_body_replay",
+                allowed=False,
+                reason=reason,
+                destination=sanitize_url(redirected),
+            ),
+        ),
+    )
+
+
+def _anonymous_form_bootstrap(context: ExecutionContext) -> bool:
+    """Use an auth reference solely as a form-provider handle until login succeeds."""
+
+    requested = set(context.request.output_requirements)
+    authenticated_outputs = {
+        "api_key",
+        "bearer_token",
+        "connector_auth",
+        "cookie_session",
+        "login_session",
+        "oauth",
+        "private_workspace",
+        "sso",
+    }
+    return "form_submit" in requested and not (requested & authenticated_outputs)
+
+
 class _NavigationParser(HTMLParser):
     _JAVASCRIPT_LOCATION = re.compile(
         r"(?:window\.)?location(?:\.href)?\s*=\s*['\"]([^'\"]+)['\"]",
@@ -667,3 +1229,17 @@ def _content_length(response: httpx.Response) -> int | None:
     if length < 0:
         raise AdapterExecutionError("response contained an invalid Content-Length")
     return length
+
+
+def _reports_expired_credential(response: httpx.Response) -> bool:
+    challenge = response.headers.get("www-authenticate", "").strip()
+    if re.match(r"(?i)^bearer(?:\s|$)", challenge) is None:
+        return False
+    return (
+        re.search(r'(?i)\berror\s*=\s*"?invalid_token"?', challenge) is not None
+        or re.search(r'(?i)\berror\s*=\s*"?expired_token"?', challenge) is not None
+        or (
+            re.search(r"(?i)\berror_description\s*=", challenge) is not None
+            and re.search(r"(?i)\b(?:expired|expiration)\b", challenge) is not None
+        )
+    )

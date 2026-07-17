@@ -44,7 +44,7 @@ class BrowserAdapter:
         local_renderer: BrowserRenderer,
         *,
         remote_renderers: Mapping[str, BrowserRenderer] | None = None,
-        user_agent: str = "Fetech/0.2",
+        user_agent: str = "Fetech/0.3",
     ) -> None:
         self.local_renderer = local_renderer
         self.remote_renderers = dict(remote_renderers or {})

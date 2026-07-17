@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Protocol
+from typing import Any, Protocol
 from uuid import UUID
 
 from fetech.models import (
@@ -36,6 +36,8 @@ class ExecutionContext:
     diagnostics: list[Diagnostic] = field(default_factory=list)
     accepted: bool = False
     crawl_report: CrawlReport | None = None
+    sensitive_state: dict[str, object] = field(default_factory=dict, repr=False)
+    pending_events: list[tuple[str, str, dict[str, Any]]] = field(default_factory=list)
 
     def latest_artifact(self, *representations: str) -> Artifact | None:
         allowed = set(representations)
@@ -100,6 +102,16 @@ class ExecutionContext:
             score=quality.score,
         )
 
+    def record_runtime_event(
+        self,
+        event_type: str,
+        actor: str,
+        **payload: str | int | float | bool | None,
+    ) -> None:
+        """Queue a sanitized adapter event for the executor-owned ledger boundary."""
+
+        self.pending_events.append((event_type, actor, dict(payload)))
+
 
 class Adapter(Protocol):
     async def execute(self, node: PlanNode, context: ExecutionContext) -> None: ...
@@ -119,3 +131,7 @@ class AdapterNotFoundError(AdapterExecutionError):
 
 class AdapterAuthRequiredError(AdapterExecutionError):
     pass
+
+
+class AdapterAuthExpiredError(AdapterAuthRequiredError):
+    """Resolved credential material is known to be expired."""

@@ -139,16 +139,70 @@ categories:
     adapter: auth
     risk_class: critical
     capabilities:
-      - {id: cookie_session, kind: connector}
-      - {id: login_session, kind: connector}
-      - {id: oauth, kind: connector}
-      - {id: api_key, kind: connector}
-      - {id: bearer_token, kind: connector}
-      - {id: csrf_token, kind: connector}
-      - {id: form_submit, kind: operation}
-      - {id: sso, kind: connector}
-      - {id: connector_auth, kind: connector}
-      - {id: private_workspace, kind: connector}
+      - id: cookie_session
+        kind: connector
+        adapter: http
+        reference: docs/capability-catalog.md#cookie-session
+        tests:
+          - tests/test_v03_capability_matrix.py::test_v03_capability_evidence_matrix[cookie_session]
+          - tests/test_v03_auth.py::test_authenticated_crawl_never_sends_credentials_to_robots
+      - id: login_session
+        kind: connector
+        reference: docs/capability-catalog.md#login-session
+        tests:
+          - tests/test_v03_capability_matrix.py::test_v03_capability_evidence_matrix[login_session]
+          - tests/test_v03_auth_flows.py::test_session_contract_rejects_insecure_scope_bad_refresh_and_wrong_material
+      - id: oauth
+        kind: connector
+        reference: docs/capability-catalog.md#oauth
+        tests:
+          - tests/test_v03_capability_matrix.py::test_v03_capability_evidence_matrix[oauth]
+          - tests/test_v03_integration.py::test_oauth_refreshes_once_and_emits_sanitized_events
+      - id: api_key
+        kind: connector
+        adapter: http
+        reference: docs/capability-catalog.md#api-key
+        tests:
+          - tests/test_v03_capability_matrix.py::test_v03_capability_evidence_matrix[api_key]
+          - tests/test_v03_auth.py::test_exact_origin_credentials_are_injected_per_request
+      - id: bearer_token
+        kind: connector
+        adapter: http
+        reference: docs/capability-catalog.md#bearer-token
+        tests:
+          - tests/test_v03_capability_matrix.py::test_v03_capability_evidence_matrix[bearer_token]
+          - tests/test_v03_auth.py::test_only_explicit_protocol_evidence_marks_server_rejection_expired
+      - id: csrf_token
+        kind: connector
+        reference: docs/capability-catalog.md#csrf-token
+        tests:
+          - tests/test_v03_capability_matrix.py::test_v03_capability_evidence_matrix[csrf_token]
+          - tests/test_v03_auth_flows.py::test_csrf_extraction_accepts_only_one_bounded_same_origin_hidden_form_token
+      - id: form_submit
+        kind: operation
+        reference: docs/capability-catalog.md#form-submit
+        tests:
+          - tests/test_v03_capability_matrix.py::test_v03_capability_evidence_matrix[form_submit]
+          - tests/test_v03_auth_flows.py::test_mutating_form_submission_requires_live_exact_approval_and_hides_values
+      - id: sso
+        kind: connector
+        reference: docs/capability-catalog.md#sso
+        tests:
+          - tests/test_v03_capability_matrix.py::test_v03_capability_evidence_matrix[sso]
+          - tests/test_v03_auth_flows.py::test_oauth_and_sso_sessions_are_opaque_exact_origin_and_refresh_bounded
+      - id: connector_auth
+        kind: connector
+        adapter: http
+        reference: docs/capability-catalog.md#connector-auth
+        tests:
+          - tests/test_v03_capability_matrix.py::test_v03_capability_evidence_matrix[connector_auth]
+          - tests/test_v03_auth.py::test_exact_origin_credentials_are_injected_per_request
+      - id: private_workspace
+        kind: connector
+        reference: docs/capability-catalog.md#private-workspace
+        tests:
+          - tests/test_v03_capability_matrix.py::test_v03_capability_evidence_matrix[private_workspace]
+          - tests/test_v03_auth_flows.py::test_private_workspace_is_an_opaque_exact_origin_authenticated_connector_target
 
   - id: api
     name: Structured APIs and feeds
@@ -156,19 +210,84 @@ categories:
     adapter: api
     risk_class: medium
     capabilities:
-      - {id: rest, kind: connector}
-      - {id: graphql, kind: connector}
-      - {id: json_endpoint, kind: connector}
-      - {id: xml_endpoint, kind: connector}
-      - {id: rss, kind: connector}
-      - {id: atom, kind: connector}
-      - {id: sitemap_xml, kind: connector}
-      - {id: openapi_discovery, kind: connector}
-      - {id: github_api, kind: connector}
-      - {id: semantic_scholar_api, kind: connector}
-      - {id: arxiv_api, kind: connector}
-      - {id: openreview_api, kind: connector}
-      - {id: crossref_openalex_api, kind: connector}
+      - id: rest
+        kind: connector
+        reference: docs/capability-catalog.md#rest
+        tests:
+          - tests/test_v03_capability_matrix.py::test_v03_capability_evidence_matrix[rest]
+          - tests/test_v03_integration.py::test_planner_selects_every_v03_api_capability[rest]
+      - id: graphql
+        kind: connector
+        reference: docs/capability-catalog.md#graphql
+        tests:
+          - tests/test_v03_capability_matrix.py::test_v03_capability_evidence_matrix[graphql]
+          - tests/test_v03_integration.py::test_planner_selects_every_v03_api_capability[graphql]
+      - id: json_endpoint
+        kind: connector
+        reference: docs/capability-catalog.md#json-endpoint
+        tests:
+          - tests/test_v03_capability_matrix.py::test_v03_capability_evidence_matrix[json_endpoint]
+          - tests/test_v03_integration.py::test_planner_selects_every_v03_api_capability[json_endpoint]
+      - id: xml_endpoint
+        kind: connector
+        reference: docs/capability-catalog.md#xml-endpoint
+        tests:
+          - tests/test_v03_capability_matrix.py::test_v03_capability_evidence_matrix[xml_endpoint]
+          - tests/test_v03_integration.py::test_planner_selects_every_v03_api_capability[xml_endpoint]
+      - id: rss
+        kind: connector
+        reference: docs/capability-catalog.md#rss
+        tests:
+          - tests/test_v03_capability_matrix.py::test_v03_capability_evidence_matrix[rss]
+          - tests/test_v03_integration.py::test_planner_selects_every_v03_api_capability[rss]
+      - id: atom
+        kind: connector
+        reference: docs/capability-catalog.md#atom
+        tests:
+          - tests/test_v03_capability_matrix.py::test_v03_capability_evidence_matrix[atom]
+          - tests/test_v03_integration.py::test_planner_selects_every_v03_api_capability[atom]
+      - id: sitemap_xml
+        kind: connector
+        reference: docs/capability-catalog.md#sitemap-xml
+        tests:
+          - tests/test_v03_capability_matrix.py::test_v03_capability_evidence_matrix[sitemap_xml]
+          - tests/test_v03_integration.py::test_planner_selects_every_v03_api_capability[sitemap_xml]
+      - id: openapi_discovery
+        kind: connector
+        reference: docs/capability-catalog.md#openapi-discovery
+        tests:
+          - tests/test_v03_capability_matrix.py::test_v03_capability_evidence_matrix[openapi_discovery]
+          - tests/test_v03_integration.py::test_planner_selects_every_v03_api_capability[openapi_discovery]
+      - id: github_api
+        kind: connector
+        reference: docs/capability-catalog.md#github-api
+        tests:
+          - tests/test_v03_capability_matrix.py::test_v03_capability_evidence_matrix[github_api]
+          - tests/test_v03_integration.py::test_planner_selects_every_v03_api_capability[github_api]
+      - id: semantic_scholar_api
+        kind: connector
+        reference: docs/capability-catalog.md#semantic-scholar-api
+        tests:
+          - tests/test_v03_capability_matrix.py::test_v03_capability_evidence_matrix[semantic_scholar_api]
+          - tests/test_v03_integration.py::test_planner_selects_every_v03_api_capability[semantic_scholar_api]
+      - id: arxiv_api
+        kind: connector
+        reference: docs/capability-catalog.md#arxiv-api
+        tests:
+          - tests/test_v03_capability_matrix.py::test_v03_capability_evidence_matrix[arxiv_api]
+          - tests/test_v03_integration.py::test_planner_selects_every_v03_api_capability[arxiv_api]
+      - id: openreview_api
+        kind: connector
+        reference: docs/capability-catalog.md#openreview-api
+        tests:
+          - tests/test_v03_capability_matrix.py::test_v03_capability_evidence_matrix[openreview_api]
+          - tests/test_v03_integration.py::test_planner_selects_every_v03_api_capability[openreview_api]
+      - id: crossref_openalex_api
+        kind: connector
+        reference: docs/capability-catalog.md#crossref-openalex-api
+        tests:
+          - tests/test_v03_capability_matrix.py::test_v03_capability_evidence_matrix[crossref_openalex_api]
+          - tests/test_v03_integration.py::test_planner_selects_every_v03_api_capability[crossref_openalex_api]
 
   - id: documents
     name: Documents and files

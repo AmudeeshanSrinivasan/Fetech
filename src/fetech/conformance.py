@@ -33,6 +33,43 @@ _V02_OPTIONAL: dict[str, str] = {
     "selenium": "fetech.adapters.browser.BrowserAdapter[configured Selenium connector]",
 }
 
+_V03_NATIVE: dict[str, str] = {
+    "api_key": "fetech.auth.CredentialProvider+fetech.adapters.http.HTTPAdapter",
+    "arxiv_api": "fetech.adapters.api.StructuredAPIAdapter[arXiv Atom schema]",
+    "atom": "fetech.adapters.api.StructuredAPIAdapter[bounded Atom parser]",
+    "bearer_token": "fetech.auth.CredentialProvider+fetech.adapters.http.HTTPAdapter",
+    "connector_auth": "fetech.auth.CredentialProvider",
+    "cookie_session": "fetech.auth.CredentialProvider+fetech.adapters.http.HTTPAdapter",
+    "crossref_openalex_api": (
+        "fetech.adapters.api.StructuredAPIAdapter[Crossref/OpenAlex schemas]"
+    ),
+    "csrf_token": "fetech.auth_flows.extract_csrf_token+fetech.adapters.auth.AuthAdapter",
+    "form_submit": "fetech.adapters.auth.AuthAdapter[explicit approval]",
+    "github_api": "fetech.adapters.api.StructuredAPIAdapter[GitHub schema]",
+    "graphql": "fetech.adapters.api.StructuredAPIAdapter[GraphQL envelope]",
+    "json_endpoint": "fetech.adapters.api.StructuredAPIAdapter[bounded JSON parser]",
+    "login_session": (
+        "fetech.adapters.auth.AuthAdapter[origin-scoped session provider and approved form login]"
+    ),
+    "oauth": "fetech.adapters.auth.AuthAdapter[origin-scoped OAuth session provider]",
+    "openapi_discovery": "fetech.adapters.api.StructuredAPIAdapter[bounded OpenAPI parser]",
+    "openreview_api": "fetech.adapters.api.StructuredAPIAdapter[OpenReview schema]",
+    "rest": "fetech.adapters.api.StructuredAPIAdapter[JSON/XML response]",
+    "rss": "fetech.adapters.api.StructuredAPIAdapter[bounded RSS parser]",
+    "semantic_scholar_api": (
+        "fetech.adapters.api.StructuredAPIAdapter[Semantic Scholar schema]"
+    ),
+    "sitemap_xml": "fetech.adapters.api.StructuredAPIAdapter[bounded sitemap parser]",
+    "xml_endpoint": "fetech.adapters.api.StructuredAPIAdapter[DTD-free XML parser]",
+}
+
+_V03_OPTIONAL: dict[str, str] = {
+    "private_workspace": (
+        "fetech.adapters.auth.AuthAdapter[configured private workspace connector]"
+    ),
+    "sso": "fetech.adapters.auth.AuthAdapter[configured SSO session connector]",
+}
+
 _IMPLEMENTATIONS = {
     "browser": "fetech.adapters.browser.BrowserAdapter[fetech[browser]]",
     "core": "fetech.gateway._CoreAdapter",
@@ -49,6 +86,16 @@ def implementation_for(
     closure_release: str,
     adapter: str,
 ) -> ImplementationRecord:
+    if closure_release == "v0.3" and capability_id in _V03_NATIVE:
+        return {
+            "status": ImplementationStatus.NATIVE,
+            "implementation": _V03_NATIVE[capability_id],
+        }
+    if closure_release == "v0.3" and capability_id in _V03_OPTIONAL:
+        return {
+            "status": ImplementationStatus.OPTIONAL,
+            "implementation": _V03_OPTIONAL[capability_id],
+        }
     if closure_release not in {"v0.1", "v0.2"}:
         return {
             "status": ImplementationStatus.PLANNED,

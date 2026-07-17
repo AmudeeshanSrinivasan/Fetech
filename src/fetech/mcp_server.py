@@ -4,33 +4,61 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import Literal
 from uuid import UUID
 
+from fetech.auth import CredentialProvider
+from fetech.auth_flows import FormSubmissionProvider, SessionProvider
 from fetech.context import ContextBroker
 from fetech.gateway import UniversalFetchGateway
 from fetech.models import FetchRequest, ResourceBudget
 
 
-def build_server() -> object:
+def build_server(
+    *,
+    credential_provider: CredentialProvider | None = None,
+    session_provider: SessionProvider | None = None,
+    form_submission_provider: FormSubmissionProvider | None = None,
+) -> object:
+    """Build the scoped MCP server with configured opaque-material providers.
+
+    Session descriptors and credential material remain separate injected
+    boundaries; MCP receives only opaque references.
+    """
+
     try:
         from mcp.server.fastmcp import FastMCP
     except ImportError as exc:
         raise RuntimeError("install fetech[mcp] to run the MCP server") from exc
 
     server = FastMCP("fetech-context")
-    gateway = UniversalFetchGateway()
+    gateway = UniversalFetchGateway(
+        credential_provider=credential_provider,
+        session_provider=session_provider,
+        form_submission_provider=form_submission_provider,
+    )
     repository = Path(os.environ.get("FETECH_REPOSITORY", Path.cwd())).resolve()
     vault_value = os.environ.get("FETECH_OBSIDIAN_VAULT")
     broker = ContextBroker(repository, vault=Path(vault_value) if vault_value else None)
 
     @server.tool()
     async def fetch_content(
-        target: str, outputs: list[str] | None = None, maximum_bytes: int = 10_000_000
+        target: str,
+        outputs: list[str] | None = None,
+        maximum_bytes: int = 10_000_000,
+        authentication_ref: str | None = None,
+        privacy_profile: Literal["public", "private"] = "public",
+        approved_capabilities: list[str] | None = None,
     ) -> str:
-        """Fetch public content through Fetech policy, budgets, evidence, and provenance."""
+        """Fetch content using opaque auth references and explicit capability approvals."""
+        if not 1 <= maximum_bytes <= 2_000_000_000:
+            raise ValueError("maximum_bytes must be between 1 and 2000000000")
         request = FetchRequest(
             target=target,
             output_requirements=tuple(outputs or ["clean_text"]),
+            authentication_ref=authentication_ref,
+            privacy_profile=privacy_profile,
+            approved_capabilities=frozenset(approved_capabilities or ()),
             budget=ResourceBudget(bytes=maximum_bytes),
         )
         return (await gateway.fetch(request)).model_dump_json()

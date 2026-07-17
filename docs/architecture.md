@@ -11,13 +11,18 @@ an explicitly installed system dependency.
 
 The registry combines the immutable 13/155 manifest with a code-owned conformance overlay. The
 overlay prevents a registered roadmap capability from being advertised as available. The current
-reports are v0.1 at 56/56 and v0.2 at 40/40 implementation paths, both with
-`closure_ready=true`, for 96 cumulative paths. HTTP/3 uses an optional bounded
+reports are v0.1 at 56/56, v0.2 at 40/40, and v0.3 at 23/23 implementation paths, all with
+`closure_ready=true`, for 119 cumulative paths. HTTP/3 uses an optional bounded
 curl subprocess, reuses Python-validated DNS addresses, and refuses fallback to HTTP/2 or HTTP/1.1.
 Browser reader mode and v0.2 browser rendering use offline Playwright subprocesses over acquired
 HTML. Reader mode disables JavaScript; rendering enables JavaScript and bounded interactions while
 aborting every subresource. Optional Puppeteer and Selenium service connectors use the same
 already-fetched-HTML/offline contract.
+
+The v0.3 release closes authentication/private sessions and structured APIs/feeds. Twenty-one paths
+are native. `sso` and `private_workspace` are optional because they require an explicitly configured
+operator connector, but their typed boundary, policy checks, failure semantics, and tests ship in the
+Apache core.
 
 ## Runtime flow
 
@@ -59,6 +64,61 @@ It writes a sanitized `url_candidates` artifact and may try a safe alternative o
 visible text is inadequate. Private, authenticated, or secret-bearing requests never fetch variants;
 `https_to_http` is always recorded as blocked.
 
+## Authentication boundary
+
+Python resolves `FetchRequest.authentication_ref` through an injected asynchronous
+`CredentialProvider`. The reference is an opaque lookup key, not credential material. The default
+provider resolves nothing, so an authenticated request cannot silently fall back to anonymous
+fetching. Library callers may inject an in-memory provider; daemon integrations can implement the
+same protocol for an OS keychain or configured vault without changing fetch contracts.
+
+`CredentialMaterial` is scoped to one canonical HTTPS origin: scheme, IDNA-normalized host, and
+effective port must all match. Material is resolved only after destination policy succeeds. The HTTP
+adapter builds authentication headers and cookies for each validated hop and never puts them on the
+shared client. It clears the HTTPX cookie jar before every hop, withholds credentials after any
+cross-origin redirect, and fetches `robots.txt` without them. A first-hop scope mismatch is a policy
+block. Authenticated HTTP/3 currently returns `DEPENDENCY_MISSING` because the bounded curl path has
+no secret-safe credential channel.
+
+Known local expiry or explicit server expiry evidence produces `AUTH_REQUIRED` with an
+`auth_expired` diagnostic and `attempt.auth_expired` provenance event. Other 401/403 responses remain
+generic authentication-required failures. Public and authenticated cache keys use separate
+partitions; authenticated partitions contain a domain-separated SHA-256 digest of the opaque
+reference, never the reference or credential value. Clingo and Prolog receive none of this material
+and cannot authorize or inject it.
+
+High-level `login_session`, `oauth`, `sso`, and `private_workspace` nodes first apply destination and
+privacy policy, then resolve a separate `OriginScopedSession` through `SessionProvider`. Python
+validates the descriptor capability, opaque reference, exact origin, issuer/scopes, connector
+identity, and credential type before HTTP. A descriptor-authorized refreshable provider may replace
+an expired OAuth/SSO bearer token once, and only for GET or HEAD. The adapter queues sanitized
+`auth.refresh.started`, `auth.refresh.succeeded`, or `auth.refresh.failed` events through the
+executor-owned ledger boundary.
+
+`csrf_token` runs over a bounded already-acquired HTML artifact and stores the extracted value only
+in the execution context's sensitive in-memory state. `form_submit` resolves a bounded proposal from
+an injected provider, which atomically consumes it for one run. Provider-supplied CSRF material must
+exactly match the token and source lineage extracted in the current run. Python requires a
+request-level capability approval and a live approval grant bound to the exact HTTPS action and
+method immediately before I/O. POST/PUT/PATCH/DELETE bodies are never placed in plan parameters or
+metadata. A 303, or a 301/302 following POST, becomes GET and drops the body; every body-preserving
+redirect fails closed. For an anonymous approved login POST only, bounded Secure cookies may cross
+same-origin GET redirects in request-local memory before being scrubbed.
+
+## Structured API boundary
+
+The API adapter performs no network I/O. It consumes the authoritative raw artifact created by a
+successful HTTP attempt, then emits canonical JSON with a parent-artifact edge and the publisher URL
+preserved as authority.
+
+JSON parsing rejects duplicate keys, non-finite values, excessive nodes, and excessive depth. XML
+parsing rejects DTD/entity declarations and bounds nodes and depth. RSS, Atom, sitemap, GraphQL, and
+OpenAPI handlers require recognizable roots or envelopes. OpenAPI YAML uses the safe loader and
+rejects aliases/anchors; external references are represented as data and never followed. Named API
+connectors require an exact approved official origin/path plus a recognizable response schema. All
+thirteen capabilities share HTTP security, authentication, redirects, budgets, and provenance
+instead of creating independent transport stacks.
+
 ## Language responsibilities
 
 ### Python
@@ -73,7 +133,8 @@ Python is required and authoritative. It owns:
 - HTTP, browser, API, document, media, archive, cache, and storage adapters;
 - bounded same-domain discovery, sitemap parsing, URL alternatives, and crawl reports;
 - artifact normalization, quality assessment, provenance events, and result statuses;
-- SDK, CLI, REST, SSE, MCP, SQLite/Postgres metadata, and CAS interfaces;
+- SDK, CLI, REST, SSE, MCP, SQLite metadata, and filesystem CAS interfaces, with Postgres/S3
+  retained as storage-protocol extension points;
 - validation of every Clingo answer set and Prolog solution.
 
 `FetchResult.capability_outcomes` records both scheduled operations and capabilities negotiated

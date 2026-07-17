@@ -72,6 +72,70 @@ service workers, runs offline, and aborts subresources. Interaction capabilities
 and bounded. Puppeteer/Selenium connectors require explicit public policy and receive the same
 offline contract. See [v0.2 conformance](v0.2-conformance.md) for failure and policy semantics.
 
+## v0.3 conformance state
+
+The v0.3 set is cardinality-locked at 23 entries: ten authentication/private-session capabilities and
+13 structured API/feed capabilities. The overlay reports 21 native and two optional paths, no
+planned gaps, and `closure_ready=true`. Together with v0.1 and v0.2 this yields 119 cumulative
+implementation paths.
+
+Static API-key, bearer, cookie, and connector authentication remain observable inside the HTTP owner
+stage. High-level login/OAuth/SSO/private-workspace validation and CSRF/form operations use the
+schedulable auth adapter. Core `SessionProvider` implementations make `login_session` and `oauth`
+native provider-backed paths. `sso` and `private_workspace` remain optional because useful execution
+requires an operator-provisioned identity or workspace connector; absence fails closed and does not
+make the capability planned.
+
+The thirteen API/feed paths use one schedulable structured adapter after HTTP acquisition. Generic
+JSON/XML, REST, GraphQL, RSS, Atom, sitemap, and OpenAPI paths require format/schema evidence. GitHub,
+Semantic Scholar, arXiv, OpenReview, and Crossref/OpenAlex additionally require exact official
+origins and recognizable response envelopes. The adapter performs bounded parsing only, preserves
+the raw parent artifact and original authority URL, and never follows OpenAPI references or
+pagination links automatically.
+
+### Authentication capability evidence
+
+The reference anchors below are the stable targets used by the manifest. “Owner path” distinguishes
+an independently scheduled auth node from credential features observed inside the HTTP stage.
+
+| Capability | Status | Importable implementation | Planner/owner path |
+| --- | --- | --- | --- |
+| <a id="cookie-session"></a>`cookie_session` | native | `fetech.auth.CredentialProvider` | HTTP owner; exact-origin cookie injection |
+| <a id="login-session"></a>`login_session` | native | `fetech.adapters.auth.AuthAdapter` | auth node → HTTP or approved form-cookie handoff |
+| <a id="oauth"></a>`oauth` | native | `fetech.adapters.auth.AuthAdapter` | auth node → HTTP; typed session and refresh providers |
+| <a id="api-key"></a>`api_key` | native | `fetech.auth.CredentialProvider` | HTTP owner; exact-origin header injection |
+| <a id="bearer-token"></a>`bearer_token` | native | `fetech.auth.CredentialProvider` | HTTP owner; exact-origin bearer injection |
+| <a id="csrf-token"></a>`csrf_token` | native | `fetech.auth_flows.extract_csrf_token` | HTTP → auth extraction node |
+| <a id="form-submit"></a>`form_submit` | native | `fetech.adapters.auth.AuthAdapter` | HTTP/CSRF → approved auth mutation node |
+| <a id="sso"></a>`sso` | optional | `fetech.adapters.auth.AuthAdapter` | auth node → HTTP; configured `SessionProvider` |
+| <a id="connector-auth"></a>`connector_auth` | native | `fetech.auth.CredentialProvider` | observable inside the HTTP owner |
+| <a id="private-workspace"></a>`private_workspace` | optional | `fetech.adapters.auth.AuthAdapter` | private-profile auth node → HTTP; configured connector |
+
+### Structured API and feed capability evidence
+
+All thirteen paths are native bounded parsers owned by
+`fetech.adapters.api.StructuredAPIAdapter`. The deterministic planner schedules exactly one selected
+structured capability after the HTTP acquisition node.
+
+| Capability | Accepted evidence and owner path |
+| --- | --- |
+| <a id="rest"></a>`rest` | JSON or XML response evidence; HTTP → structured API owner |
+| <a id="graphql"></a>`graphql` | GraphQL response envelope; HTTP → structured API owner |
+| <a id="json-endpoint"></a>`json_endpoint` | JSON media type or syntax; HTTP → structured API owner |
+| <a id="xml-endpoint"></a>`xml_endpoint` | DTD-free XML evidence; HTTP → structured API owner |
+| <a id="rss"></a>`rss` | RSS root and required feed markers; HTTP → structured API owner |
+| <a id="atom"></a>`atom` | namespaced Atom feed markers; HTTP → structured API owner |
+| <a id="sitemap-xml"></a>`sitemap_xml` | sitemap `urlset` or `sitemapindex`; HTTP → structured API owner |
+| <a id="openapi-discovery"></a>`openapi_discovery` | bounded OpenAPI JSON/YAML document; HTTP → structured API owner |
+| <a id="github-api"></a>`github_api` | exact GitHub API origin and response envelope; HTTP → structured API owner |
+| <a id="semantic-scholar-api"></a>`semantic_scholar_api` | exact Semantic Scholar route and response envelope; HTTP → structured API owner |
+| <a id="arxiv-api"></a>`arxiv_api` | exact arXiv API route and Atom evidence; HTTP → structured API owner |
+| <a id="openreview-api"></a>`openreview_api` | exact OpenReview origin and response envelope; HTTP → structured API owner |
+| <a id="crossref-openalex-api"></a>`crossref_openalex_api` | exact Crossref/OpenAlex route and response envelope; HTTP → structured API owner |
+
+See [the v0.3 authentication and API guide](v0.3-authentication-foundation.md) for the provider
+contracts, approval model, parser limits, failure semantics, and verification surface.
+
 ## Logic projections
 
 The optional logic backends receive generated, bounded projections of the manifest rather than

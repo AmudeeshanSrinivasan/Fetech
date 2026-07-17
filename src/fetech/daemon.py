@@ -9,20 +9,31 @@ from pathlib import Path
 from typing import Any
 from uuid import UUID
 
+from fetech.auth import CredentialProvider
+from fetech.auth_flows import FormSubmissionProvider, SessionProvider
 from fetech.context import ContextBroker
 from fetech.gateway import UniversalFetchGateway
 from fetech.logic.models import ReasoningResult
 from fetech.models import ContextBundle, FetchPlan, FetchRequest, FetchRun, InspectionResult
 
 
-def create_app() -> Any:
+def create_app(
+    *,
+    credential_provider: CredentialProvider | None = None,
+    session_provider: SessionProvider | None = None,
+    form_submission_provider: FormSubmissionProvider | None = None,
+) -> Any:
     try:
         from fastapi import FastAPI, HTTPException, Query
         from fastapi.responses import Response, StreamingResponse
     except ImportError as exc:
         raise RuntimeError("install fetech[server] to run the daemon") from exc
 
-    gateway = UniversalFetchGateway()
+    gateway = UniversalFetchGateway(
+        credential_provider=credential_provider,
+        session_provider=session_provider,
+        form_submission_provider=form_submission_provider,
+    )
     repository = Path(os.environ.get("FETECH_REPOSITORY", Path.cwd())).resolve()
     vault_value = os.environ.get("FETECH_OBSIDIAN_VAULT")
     broker = ContextBroker(repository, vault=Path(vault_value) if vault_value else None)
@@ -35,7 +46,7 @@ def create_app() -> Any:
         finally:
             await gateway.close()
 
-    app = FastAPI(title="Fetech", version="0.2.0a0", lifespan=lifespan)
+    app = FastAPI(title="Fetech", version="0.3.0a0", lifespan=lifespan)
     app.state.gateway = gateway
 
     @app.post("/v1/fetch", response_model=FetchRun, status_code=202)
@@ -48,7 +59,13 @@ def create_app() -> Any:
 
     @app.post("/v1/plan", response_model=FetchPlan)
     async def plan(request: FetchRequest) -> FetchPlan:
-        return await gateway.plan_async(request)
+        try:
+            return await gateway.plan_async(request)
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=422,
+                detail="request could not produce a valid execution plan",
+            ) from exc
 
     @app.get("/v1/capabilities/{capability_id}/explanation", response_model=ReasoningResult)
     async def explain_capability(capability_id: str) -> ReasoningResult:
@@ -66,7 +83,13 @@ def create_app() -> Any:
 
     @app.post("/v1/inspect", response_model=InspectionResult)
     async def inspect(request: FetchRequest) -> InspectionResult:
-        return await gateway.inspect(request)
+        try:
+            return await gateway.inspect(request)
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=422,
+                detail="request could not be inspected safely",
+            ) from exc
 
     @app.get("/v1/runs/{run_id}", response_model=FetchRun)
     async def get_run(run_id: UUID) -> FetchRun:
@@ -76,7 +99,7 @@ def create_app() -> Any:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
 
     @app.get("/v1/runs/{run_id}/events")
-    async def events(run_id: UUID) -> StreamingResponse:
+    async def events(run_id: UUID) -> Any:
         async def stream() -> AsyncIterator[str]:
             try:
                 async for event in gateway.ledger.stream(run_id):

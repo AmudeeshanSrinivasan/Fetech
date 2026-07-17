@@ -7,15 +7,24 @@ from contextlib import suppress
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
+from fetech.adapters.api import APIAdapter
 from fetech.adapters.archive import ArchiveAdapter
+from fetech.adapters.auth import AuthAdapter
 from fetech.adapters.base import Adapter, ExecutionContext
 from fetech.adapters.browser import BrowserAdapter
 from fetech.adapters.discovery import DiscoveryAdapter
 from fetech.adapters.documents import DocumentAdapter
 from fetech.adapters.http import HTTPAdapter
 from fetech.adapters.reader import ReaderAdapter
-from fetech.adapters.structured import OptionalAdapter, StructuredAdapter
+from fetech.adapters.structured import OptionalAdapter
 from fetech.adapters.variants import VariantAdapter
+from fetech.auth import CredentialProvider, NullCredentialProvider
+from fetech.auth_flows import (
+    FormSubmissionProvider,
+    NullFormSubmissionProvider,
+    NullSessionProvider,
+    SessionProvider,
+)
 from fetech.browser_render import BrowserRenderWorker, RemoteBrowserConnector
 from fetech.config import Settings
 from fetech.executor import ExecutionEngine
@@ -25,6 +34,7 @@ from fetech.logic.models import PlanProposal
 from fetech.models import (
     Artifact,
     CapabilityOutcomeStatus,
+    Diagnostic,
     FetchPlan,
     FetchRequest,
     FetchResult,
@@ -32,19 +42,37 @@ from fetech.models import (
     InspectionResult,
     PlanNode,
     ProvenanceEvent,
+    ResultStatus,
     RunState,
 )
 from fetech.planning import DeterministicPlanner, classify_target
 from fetech.provenance import build_runtime_graph
 from fetech.registry import CapabilityRegistry
 from fetech.search import HTTPSearchProvider
-from fetech.security import PolicyBlockedError, SafeURLPolicy, normalize_url
+from fetech.security import (
+    PolicyBlockedError,
+    SafeURLPolicy,
+    normalize_url,
+    sanitize_output_for_request,
+)
 from fetech.storage import FileSystemCAS
 
 
 class UniversalFetchGateway:
-    def __init__(self, settings: Settings | None = None) -> None:
+    def __init__(
+        self,
+        settings: Settings | None = None,
+        *,
+        credential_provider: CredentialProvider | None = None,
+        session_provider: SessionProvider | None = None,
+        form_submission_provider: FormSubmissionProvider | None = None,
+    ) -> None:
         self.settings = settings or Settings.from_environment()
+        self.credential_provider = credential_provider or NullCredentialProvider()
+        self.session_provider = session_provider or NullSessionProvider()
+        self.form_submission_provider = (
+            form_submission_provider or NullFormSubmissionProvider()
+        )
         self.registry = CapabilityRegistry()
         self.planner = DeterministicPlanner(self.registry)
         self.logic = LogicCoordinator(self.settings, self.registry, self.planner)
@@ -54,6 +82,7 @@ class UniversalFetchGateway:
         http_adapter = HTTPAdapter(
             user_agent=self.settings.user_agent,
             policy=self.policy,
+            credential_provider=self.credential_provider,
             global_concurrency=self.settings.global_concurrency,
             per_host_concurrency=self.settings.per_host_concurrency,
             per_host_min_interval_seconds=self.settings.per_host_min_interval_seconds,
@@ -84,7 +113,13 @@ class UniversalFetchGateway:
                 user_agent=self.settings.user_agent,
             ),
             "variants": VariantAdapter(http_adapter),
-            "api": StructuredAdapter(),
+            "auth": AuthAdapter(
+                http_adapter,
+                credential_provider=self.credential_provider,
+                session_provider=self.session_provider,
+                form_submission_provider=self.form_submission_provider,
+            ),
+            "api": APIAdapter(),
             "browser": BrowserAdapter(
                 BrowserRenderWorker(),
                 remote_renderers=remote_browsers,
@@ -136,11 +171,14 @@ class UniversalFetchGateway:
         except PolicyBlockedError as exc:
             decisions = exc.decisions
         plan = await self.plan_async(request)
-        return InspectionResult(
+        inspection = InspectionResult(
             normalized_target=normalized,
             family=family,
             policy_decisions=decisions,
             suggested_capabilities=tuple(node.capability_id for node in plan.nodes),
+        )
+        return InspectionResult.model_validate(
+            sanitize_output_for_request(inspection.model_dump(mode="python"), request)
         )
 
     async def submit(self, request: FetchRequest) -> FetchRun:
@@ -151,8 +189,13 @@ class UniversalFetchGateway:
         try:
             proposal = await self.logic.plan(request)
         except Exception:
-            await self.ledger.update_run(run_id, RunState.FINISHED)
-            raise
+            result = await self._record_planning_failure(run_id, request)
+            return FetchRun(
+                run_id=run_id,
+                state=RunState.FINISHED,
+                submitted_at=submitted_at,
+                result=result,
+            )
         await self._record_plan(run_id, proposal)
         plan = proposal.plan
         task = asyncio.create_task(self._execute_and_project(run_id, plan), name=f"fetech:{run_id}")
@@ -162,6 +205,8 @@ class UniversalFetchGateway:
 
     async def fetch(self, request: FetchRequest) -> FetchResult:
         run = await self.submit(request)
+        if run.result is not None:
+            return run.result
         task = self._tasks[run.run_id]
         return await task
 
@@ -186,10 +231,78 @@ class UniversalFetchGateway:
             raise KeyError(f"unknown artifact: {artifact_id}") from exc
 
     async def _execute_and_project(self, run_id: UUID, plan: FetchPlan) -> FetchResult:
-        result = await self.executor.execute(run_id, plan)
+        try:
+            result = await self.executor.execute(run_id, plan)
+        except asyncio.CancelledError:
+            await self._record_terminal_failure(
+                run_id,
+                plan,
+                code="run_cancelled",
+                message="fetch execution was cancelled",
+            )
+            raise
+        except Exception:
+            result = await self._record_terminal_failure(
+                run_id,
+                plan,
+                code="internal_error",
+                message="fetch execution failed at an internal boundary",
+            )
         self._artifacts.update({artifact.artifact_id: artifact for artifact in result.artifacts})
-        with suppress(OSError):
+        with suppress(Exception):
             await build_runtime_graph(self.ledger, self.settings.runtime_graph_path)
+        return result
+
+    async def _record_terminal_failure(
+        self,
+        run_id: UUID,
+        plan: FetchPlan,
+        *,
+        code: str,
+        message: str,
+    ) -> FetchResult:
+        event = ProvenanceEvent(
+            run_id=run_id,
+            event_type="run.failed",
+            actor="gateway",
+            payload={"code": code},
+        )
+        await self.ledger.append(event)
+        result = FetchResult(
+            run_id=run_id,
+            status=ResultStatus.FAILED,
+            diagnostics=(Diagnostic(code=code, message=message),),
+            provenance_event_ids=(event.event_id,),
+            remaining_budget=plan.request.budget,
+        )
+        await self.ledger.update_run(run_id, RunState.FINISHED, result)
+        return result
+
+    async def _record_planning_failure(
+        self,
+        run_id: UUID,
+        request: FetchRequest,
+    ) -> FetchResult:
+        event = ProvenanceEvent(
+            run_id=run_id,
+            event_type="run.planning_failed",
+            actor="planner",
+            payload={"code": "planning_failed"},
+        )
+        await self.ledger.append(event)
+        result = FetchResult(
+            run_id=run_id,
+            status=ResultStatus.FAILED,
+            diagnostics=(
+                Diagnostic(
+                    code="planning_failed",
+                    message="request could not produce a valid execution plan",
+                ),
+            ),
+            provenance_event_ids=(event.event_id,),
+            remaining_budget=request.budget,
+        )
+        await self.ledger.update_run(run_id, RunState.FINISHED, result)
         return result
 
     async def _record_plan(self, run_id: UUID, proposal: PlanProposal) -> None:

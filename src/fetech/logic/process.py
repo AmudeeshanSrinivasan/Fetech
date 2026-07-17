@@ -10,6 +10,7 @@ import sys
 from contextlib import suppress
 from dataclasses import dataclass
 from functools import partial
+from pathlib import Path
 
 from fetech.logic.base import BackendExecutionError, BackendOutputError
 
@@ -33,6 +34,10 @@ async def run_bounded(
         "PATH": os.environ.get("PATH", "/usr/bin:/bin"),
         "LANG": os.environ.get("LANG", "C.UTF-8"),
         "LC_ALL": os.environ.get("LC_ALL", "C.UTF-8"),
+        # Use only the reviewed Fetech package root, never the caller's
+        # PYTHONPATH. This keeps Python workers importable from both an
+        # installed wheel and a source checkout without widening module search.
+        "PYTHONPATH": str(Path(__file__).resolve().parents[2]),
     }
     if os.name == "posix":
         process = await asyncio.create_subprocess_exec(

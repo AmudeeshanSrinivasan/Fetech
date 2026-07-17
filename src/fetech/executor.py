@@ -6,10 +6,12 @@ import asyncio
 import json
 from collections.abc import Awaitable, Callable
 from time import monotonic
+from typing import Any
 from uuid import UUID
 
 from fetech.adapters.base import (
     Adapter,
+    AdapterAuthExpiredError,
     AdapterAuthRequiredError,
     AdapterDependencyError,
     AdapterExecutionError,
@@ -24,13 +26,14 @@ from fetech.models import (
     FetchPlan,
     FetchResult,
     PlanNode,
+    PolicyDecision,
     ProvenanceEvent,
     ResourceBudget,
     ResultStatus,
     RunState,
     utc_now,
 )
-from fetech.security import PolicyBlockedError
+from fetech.security import PolicyBlockedError, sanitize_output_for_request, sanitize_url
 from fetech.storage import FileSystemCAS
 
 
@@ -42,8 +45,9 @@ class ExecutionEngine:
 
     async def execute(self, run_id: UUID, plan: FetchPlan) -> FetchResult:
         execution_started = monotonic()
+        execution_request = plan.execution_request
         await self.ledger.update_run(run_id, RunState.RUNNING)
-        context = ExecutionContext(run_id=run_id, request=plan.request, cas=self.cas)
+        context = ExecutionContext(run_id=run_id, request=execution_request, cas=self.cas)
         root = await self._emit(
             run_id,
             "plan.started",
@@ -99,7 +103,9 @@ class ExecutionEngine:
                 (root.event_id,),
             )
             outcome_count = len(context.capability_outcomes)
+            runtime_event_count = len(context.pending_events)
             try:
+                self._enforce_approval(plan, node)
                 remaining_deadline = plan.request.budget.deadline_seconds - (
                     monotonic() - execution_started
                 )
@@ -164,18 +170,38 @@ class ExecutionEngine:
                     {"capability_id": node.capability_id},
                     (event.event_id,),
                 )
-                completed.add(node.id)
                 continue
-            except AdapterAuthRequiredError as exc:
+            except AdapterAuthExpiredError:
                 auth_required = True
-                self._mark_running_attempt_failed(context, "auth_required")
-                context.diagnostics.append(Diagnostic(code="auth_required", message=str(exc)))
+                self._mark_running_attempt_failed(context, "auth_expired")
+                message = "credential material is expired or was rejected as expired"
+                context.diagnostics.append(Diagnostic(code="auth_expired", message=message))
                 self._ensure_outcome(
                     context,
                     node,
                     outcome_count,
                     CapabilityOutcomeStatus.FAILED,
-                    reason=str(exc),
+                    reason=message,
+                )
+                await self._emit(
+                    run_id,
+                    "attempt.auth_expired",
+                    node.adapter,
+                    {"capability_id": node.capability_id},
+                    (event.event_id,),
+                )
+                break
+            except AdapterAuthRequiredError:
+                auth_required = True
+                self._mark_running_attempt_failed(context, "auth_required")
+                message = "authentication is required or the supplied material was rejected"
+                context.diagnostics.append(Diagnostic(code="auth_required", message=message))
+                self._ensure_outcome(
+                    context,
+                    node,
+                    outcome_count,
+                    CapabilityOutcomeStatus.FAILED,
+                    reason=message,
                 )
                 await self._emit(
                     run_id,
@@ -245,8 +271,14 @@ class ExecutionEngine:
                     {"capability_id": node.capability_id, "code": type(exc).__name__},
                     (event.event_id,),
                 )
-                completed.add(node.id)
                 continue
+            finally:
+                await self._flush_pending_events(
+                    run_id,
+                    context,
+                    runtime_event_count,
+                    event.event_id,
+                )
             self._ensure_outcome(
                 context,
                 node,
@@ -306,8 +338,47 @@ class ExecutionEngine:
         result = result.model_copy(
             update={"provenance_event_ids": (*result.provenance_event_ids, final.event_id)}
         )
+        result = FetchResult.model_validate(
+            sanitize_output_for_request(
+                result.model_dump(mode="python"),
+                execution_request,
+            )
+        )
         await self.ledger.update_run(run_id, RunState.FINISHED, result)
         return result
+
+    @staticmethod
+    def _enforce_approval(plan: FetchPlan, node: PlanNode) -> None:
+        if not node.requires_approval:
+            return
+        request = plan.request
+        legacy_approval = (
+            request.metadata.get(f"{node.capability_id}_approved", "").casefold() == "true"
+        )
+        if node.capability_id in request.approved_capabilities or legacy_approval:
+            return
+        reason = f"{node.capability_id} requires explicit approval"
+        raise PolicyBlockedError(
+            reason,
+            (
+                PolicyDecision(
+                    policy_id="capability_approval",
+                    allowed=False,
+                    reason=reason,
+                    destination=sanitize_url(request.target),
+                ),
+            ),
+        )
+
+    async def _flush_pending_events(
+        self,
+        run_id: UUID,
+        context: ExecutionContext,
+        start: int,
+        parent_event_id: UUID,
+    ) -> None:
+        for event_type, actor, payload in context.pending_events[start:]:
+            await self._emit(run_id, event_type, actor, payload, (parent_event_id,))
 
     @staticmethod
     async def _with_retries(
@@ -343,7 +414,7 @@ class ExecutionEngine:
         if context.accepted:
             return (
                 ResultStatus.PARTIAL
-                if failed or dependency_missing or budget_exhausted
+                if failed or dependency_missing or budget_exhausted or auth_required
                 else ResultStatus.SUCCEEDED
             )
         if policy_blocked:
@@ -423,7 +494,7 @@ class ExecutionEngine:
         run_id: UUID,
         event_type: str,
         actor: str,
-        payload: dict[str, str],
+        payload: dict[str, Any],
         parents: tuple[UUID, ...] = (),
     ) -> ProvenanceEvent:
         event = ProvenanceEvent(

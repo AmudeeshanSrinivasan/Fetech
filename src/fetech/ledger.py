@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from fetech.models import FetchResult, ProvenanceEvent, RunState
-from fetech.security import sanitize_url
+from fetech.security import sanitize_authenticated_text, sanitize_url
 
 
 class Base(DeclarativeBase):
@@ -50,6 +50,7 @@ class EventLedger:
         self.engine: AsyncEngine = create_async_engine(database_url)
         self.sessions = async_sessionmaker(self.engine, expire_on_commit=False)
         self._subscribers: dict[UUID, set[asyncio.Queue[ProvenanceEvent | None]]] = {}
+        self._authenticated_runs: set[UUID] = set()
 
     @classmethod
     def sqlite(cls, path: Path) -> EventLedger:
@@ -60,14 +61,28 @@ class EventLedger:
     async def initialize(self) -> None:
         async with self.engine.begin() as connection:
             await connection.run_sync(Base.metadata.create_all)
+        async with self.sessions() as session:
+            rows = (await session.scalars(select(RunRow))).all()
+        for row in rows:
+            try:
+                request = json.loads(row.request_json)
+            except (json.JSONDecodeError, TypeError):
+                continue
+            if request.get("authentication_ref") is not None:
+                self._authenticated_runs.add(UUID(row.run_id))
 
     async def close(self) -> None:
         await self.engine.dispose()
+        self._authenticated_runs.clear()
 
     async def create_run(
         self, run_id: UUID, request_document: dict[str, Any], submitted_at: datetime
     ) -> None:
-        sanitized_request = _sanitize_payload(request_document)
+        authenticated = request_document.get("authentication_ref") is not None
+        sanitized_request = _sanitize_payload(
+            request_document,
+            authenticated=authenticated,
+        )
         async with self.sessions() as session:
             session.add(
                 RunRow(
@@ -78,6 +93,8 @@ class EventLedger:
                 )
             )
             await session.commit()
+        if authenticated:
+            self._authenticated_runs.add(run_id)
 
     async def update_run(self, run_id: UUID, state: RunState, result: FetchResult | None = None) -> None:
         async with self.sessions() as session:
@@ -86,7 +103,14 @@ class EventLedger:
                 raise KeyError(f"unknown run: {run_id}")
             row.state = state.value
             if result is not None:
-                row.result_json = result.model_dump_json()
+                row.result_json = json.dumps(
+                    _sanitize_payload(
+                        result.model_dump(mode="json"),
+                        authenticated=run_id in self._authenticated_runs,
+                    ),
+                    sort_keys=True,
+                    default=str,
+                )
             await session.commit()
         if state == RunState.FINISHED:
             for queue in self._subscribers.get(run_id, set()):
@@ -101,7 +125,10 @@ class EventLedger:
             return RunState(row.state), row.submitted_at, result
 
     async def append(self, event: ProvenanceEvent) -> None:
-        payload = _sanitize_payload(event.payload)
+        payload = _sanitize_payload(
+            event.payload,
+            authenticated=event.run_id in self._authenticated_runs,
+        )
         async with self.sessions() as session:
             session.add(
                 EventRow(
@@ -164,26 +191,88 @@ def _event_from_row(row: EventRow) -> ProvenanceEvent:
     )
 
 
-def _sanitize_payload(value: Any, *, key: str = "") -> Any:
-    sensitive = {"authorization", "body", "cookie", "cookies", "password", "secret", "token"}
-    if key.lower() in sensitive or any(fragment in key.lower() for fragment in ("credential", "api_key")):
+def _sanitize_payload(
+    value: Any,
+    *,
+    key: str = "",
+    authenticated: bool = False,
+) -> Any:
+    lowered_key = key.lower()
+    normalized_key = lowered_key.replace("-", "_").replace(" ", "_")
+    compact_key = normalized_key.replace("_", "")
+    safe_token_metric = normalized_key in {
+        "estimated_tokens",
+        "graphify_tokens",
+        "input_tokens",
+        "model_tokens",
+        "output_tokens",
+        "qmd_tokens",
+        "source_tokens",
+        "token_budget",
+        "token_limit",
+        "token_usage",
+        "tokens_used",
+        "total_tokens",
+    }
+    auth_component = (
+        normalized_key == "auth"
+        or normalized_key.startswith("auth_")
+        or normalized_key.endswith("_auth")
+        or "_auth_" in normalized_key
+    )
+    if (
+        normalized_key == "body"
+        or auth_component
+        or (not safe_token_metric and any(
+            fragment in compact_key
+            for fragment in (
+                "authentication",
+                "authorization",
+                "credential",
+                "apikey",
+                "token",
+                "cookie",
+                "password",
+                "secret",
+            )
+        ))
+    ):
         return "[REDACTED]"
     if isinstance(value, dict):
         return {
-            str(child_key): _sanitize_payload(child, key=str(child_key)) for child_key, child in value.items()
+            str(child_key): _sanitize_payload(
+                child,
+                key=str(child_key),
+                authenticated=authenticated,
+            )
+            for child_key, child in value.items()
         }
     if isinstance(value, list | tuple):
-        return [_sanitize_payload(child, key=key) for child in value]
+        return [
+            _sanitize_payload(
+                child,
+                key=key,
+                authenticated=authenticated,
+            )
+            for child in value
+        ]
     if isinstance(value, str) and key.lower() in {
         "authority_url",
+        "candidate",
         "canonical_url",
         "destination",
+        "normalized_target",
+        "parent_url",
         "requested_url",
+        "root_url",
+        "source_url",
         "target",
         "url",
     }:
         try:
-            return sanitize_url(value)
+            return sanitize_url(value, redact_query=authenticated)
         except ValueError:
             return "[REDACTED_INVALID_URL]"
+    if isinstance(value, str) and authenticated:
+        return sanitize_authenticated_text(value)
     return value

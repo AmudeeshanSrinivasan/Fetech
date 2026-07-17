@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from enum import StrEnum
-from typing import Any
+from typing import Any, Literal
 from uuid import UUID, uuid4
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, model_validator
 
 
 def utc_now() -> datetime:
@@ -128,14 +128,21 @@ class FetchRequest(ContractModel):
     target: str
     intent: str = "retrieve"
     output_requirements: tuple[str, ...] = ("clean_text",)
-    authentication_ref: str | None = None
-    privacy_profile: str = "public"
+    authentication_ref: str | None = Field(default=None, min_length=1, max_length=2_048, repr=False)
+    privacy_profile: Literal["public", "private"] = Field(
+        default="public",
+        description=(
+            "Use 'public' for ordinary acquisition and 'private' for explicitly "
+            "authorized private-workspace execution."
+        ),
+    )
     policy_profile: str = "default"
     freshness_seconds: int | None = Field(default=None, ge=0)
     language: str | None = None
     region: str | None = None
     allow_capabilities: frozenset[str] = frozenset()
     deny_capabilities: frozenset[str] = frozenset()
+    approved_capabilities: frozenset[str] = frozenset()
     budget: ResourceBudget = Field(default_factory=ResourceBudget)
     metadata: dict[str, str] = Field(default_factory=dict)
 
@@ -144,10 +151,23 @@ class FetchRequest(ContractModel):
         overlap = self.allow_capabilities & self.deny_capabilities
         if overlap:
             raise ValueError(f"capabilities cannot be both allowed and denied: {sorted(overlap)}")
+        denied_approvals = self.approved_capabilities & self.deny_capabilities
+        if denied_approvals:
+            raise ValueError(
+                "capabilities cannot be both approved and denied: "
+                f"{sorted(denied_approvals)}"
+            )
         if self.budget.attempts == 0:
             raise ValueError("request budget must allow at least one attempt")
         if self.budget.bytes == 0 or self.budget.decompressed_bytes == 0:
             raise ValueError("request byte budgets must be greater than zero")
+        if self.authentication_ref is not None and not self.authentication_ref.strip():
+            raise ValueError("authentication_ref cannot be blank")
+        if (
+            self.authentication_ref is not None
+            and len(self.authentication_ref.encode("utf-8")) > 2_048
+        ):
+            raise ValueError("authentication_ref exceeds the bounded byte limit")
         return self
 
 
@@ -180,12 +200,54 @@ class FetchPlan(ContractModel):
     deterministic: bool = True
     classifier: str = "rules-v1"
     warnings: tuple[str, ...] = ()
+    _execution_request: FetchRequest | None = PrivateAttr(default=None)
+
+    @property
+    def execution_request(self) -> FetchRequest:
+        """Return the non-persisted request used by adapters.
+
+        Authenticated serialized plans intentionally cannot be replayed because
+        their query values have been redacted. They must be rebound from a new
+        in-memory request before execution.
+        """
+
+        if self._execution_request is not None:
+            return self._execution_request
+        if self.request.authentication_ref is not None:
+            raise ValueError(
+                "authenticated plan has no in-memory execution request; "
+                "resubmit the original FetchRequest"
+            )
+        return self.request
+
+    def bind_execution_request(self, request: FetchRequest) -> FetchPlan:
+        """Bind raw transport input without adding it to model serialization."""
+
+        from fetech.security import normalize_url, sanitize_url_for_request
+
+        normalized = request.model_copy(
+            update={"target": normalize_url(request.target)}
+        )
+        public_request = normalized.model_copy(
+            update={
+                "target": sanitize_url_for_request(
+                    normalized.target,
+                    normalized,
+                )
+            }
+        )
+        if public_request != self.request:
+            raise ValueError(
+                "execution request does not match the serialized fetch plan"
+            )
+        self._execution_request = normalized
+        return self
 
 
 class FetchAttempt(ContractModel):
     attempt_id: UUID = Field(default_factory=uuid4)
     capability_id: str
-    adapter_version: str = "0.2.0"
+    adapter_version: str = "0.3.0a0"
     started_at: datetime = Field(default_factory=utc_now)
     finished_at: datetime | None = None
     sanitized_destination: str

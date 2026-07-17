@@ -3,18 +3,20 @@
 Fetech is an Apache-2.0, policy-aware content-acquisition runtime. It registers 155 capabilities
 across 13 categories and selects only the capabilities needed for a request.
 
-The current v0.2 alpha implements the canonical registry and contracts, deterministic planning,
+The current v0.3 alpha implements the canonical registry and contracts, deterministic planning,
 SSRF-safe HTTP acquisition, bounded crawling, deterministic URL alternatives, isolated browser
 rendering, typed artifacts, a SQLite event ledger, content-addressed storage, quality validation,
-runtime provenance projection, Python SDK, CLI, REST, MCP, and a bounded Graphify/QMD context broker.
-Document, media, OCR, and browser binaries remain optional extras.
+runtime provenance projection, Python SDK, CLI, REST, MCP, a bounded Graphify/QMD context broker,
+origin-scoped authentication sessions, approved form submission, and bounded structured API/feed
+normalization. Document, media, and OCR capability closure remains scheduled for v0.4; browser
+binaries remain optional extras for the already implemented browser paths.
 
-The v0.1 closure set contains 56 capabilities and v0.2 adds 40, for 96 cumulative implementation
-paths. The checked-in v0.2 conformance report contains 36 native and four optional paths. HTTP/3 is
-an optional bounded
-`curl --http3-only` path and returns `DEPENDENCY_MISSING` when the configured
-curl build lacks HTTP/3. `GET /v1/capabilities` and `fetech capabilities` expose the same release report; the
-project does not infer availability from manifest registration alone.
+The v0.1 closure set contains 56 capabilities, v0.2 adds 40, and v0.3 adds 23, for 119 cumulative
+implementation paths. The v0.3 overlay reports 21 native paths and two configured optional
+connectors (`sso` and `private_workspace`) with no planned gaps. HTTP/3 is an optional bounded
+`curl --http3-only` path and returns `DEPENDENCY_MISSING` when the configured curl build lacks
+HTTP/3. `GET /v1/capabilities` and `fetech capabilities` expose the same release reports; the project
+does not infer availability from manifest registration alone.
 
 Fetech uses a deliberately narrow polyglot design. Python 3.12 is the required runtime and remains
 authoritative for public APIs, security, budgets, adapters, artifacts, and persistence. A pure-Python
@@ -82,6 +84,36 @@ Puppeteer and Selenium are optional isolated connector paths. Configure
 already-fetched HTML and an `offline` network policy, never credentials. Search discovery is likewise
 disabled until `FETECH_SEARCH_PROVIDER_TEMPLATE` contains a `{query}` placeholder and a crawl uses
 `policy_profile=allow_search_discovery` (the CLI `--search` flag).
+
+Authenticated library requests use an injected `CredentialProvider`. `FetchRequest` carries only an
+opaque reference; resolved headers and cookies remain in memory, require an exact HTTPS origin, and
+are rebuilt per redirect hop. Cross-origin redirects receive no credentials and `robots.txt` is
+always fetched without authentication. High-level login, OAuth, SSO, and private-workspace requests
+also require a trusted `SessionProvider` descriptor whose capability, opaque reference, exact
+origin, issuer/scopes, and optional connector identity are validated before HTTP use. Defaults fail
+closed. Descriptor-authorized OAuth/SSO bearer sessions may refresh at most once for an idempotent
+retrieval; sanitized refresh lifecycle events enter the ledger.
+
+The packaged CLI and the zero-argument daemon/MCP entry points deliberately use null providers.
+Authenticated execution in v0.3 therefore uses the Python SDK or an embedded
+`create_app(...)`/`build_server(...)` with explicitly injected providers; unconfigured entry points
+return typed authentication or dependency failures.
+
+Mutating form operations require both `approved_capabilities={"form_submit"}` and a short-lived,
+exact-target `FormSubmissionApproval` supplied through an injected `FormSubmissionProvider`. Form
+proposals are consumed once per run. Fields and CSRF values remain ephemeral and are never placed in
+`FetchRequest`, plans, diagnostics, or events. A successful approved POST may carry bounded Secure
+cookies across a same-origin 301/302/303 login redirect for that request chain only; the cookies are
+scrubbed before the response returns. Body-preserving redirects are blocked without a new
+exact-target approval. Provider-supplied CSRF material is accepted only when it exactly matches the
+token and source lineage extracted in the current run.
+
+The v0.3 API adapter consumes only raw artifacts already acquired by the HTTP boundary. It supports
+bounded REST, GraphQL response, JSON, XML, RSS, Atom, sitemap, OpenAPI, GitHub, Semantic Scholar,
+arXiv, OpenReview, and Crossref/OpenAlex normalization with original-source authority and parent
+lineage. XML DTD/entity declarations, excessive nesting, duplicate JSON keys, unsafe OpenAPI YAML
+aliases, wrong named-API origins, and unrecognized named schemas fail closed. See
+[the v0.3 authentication and API conformance guide](docs/v0.3-authentication-foundation.md).
 
 The local logic runner is bounded by input/output, CPU, and wall time; Linux also applies an
 address-space limit. It is not a full OS sandbox. Deployments must isolate solver processes to deny

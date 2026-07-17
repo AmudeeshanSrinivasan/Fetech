@@ -115,7 +115,7 @@ async def _render(payload: dict[str, Any]) -> dict[str, Any]:
                 context = await browser.new_context(
                     java_script_enabled=True,
                     service_workers="block",
-                    user_agent=str(payload.get("user_agent", "Fetech/0.2")),
+                    user_agent=str(payload.get("user_agent", "Fetech/0.3")),
                 )
                 await context.set_offline(True)
                 page = await context.new_page()

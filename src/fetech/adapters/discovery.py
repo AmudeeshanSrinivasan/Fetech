@@ -24,7 +24,11 @@ from fetech.models import (
     QualityAssessment,
 )
 from fetech.search import SearchProvider
-from fetech.security import PolicyBlockedError, normalize_url, sanitize_url
+from fetech.security import (
+    PolicyBlockedError,
+    normalize_url,
+    sanitize_url_for_request,
+)
 from fetech.storage import build_artifact
 from fetech.variants import generate_variants
 
@@ -59,7 +63,10 @@ class DiscoveryAdapter:
         attempt_index = len(context.attempts)
         attempt = FetchAttempt(
             capability_id=node.capability_id,
-            sanitized_destination=sanitize_url(context.request.target),
+            sanitized_destination=sanitize_url_for_request(
+                context.request.target,
+                context.request,
+            ),
             status=AttemptStatus.RUNNING,
         )
         context.attempts.append(attempt)
@@ -73,7 +80,7 @@ class DiscoveryAdapter:
         frontier: deque[_FrontierItem] = deque()
         targets: list[DiscoveredTarget] = [
             DiscoveredTarget(
-                url=sanitize_url(root),
+                url=sanitize_url_for_request(root, context.request),
                 depth=0,
                 relation="root",
                 fetched=True,
@@ -166,9 +173,19 @@ class DiscoveryAdapter:
                     pages_failed += 1
                     targets.append(
                         DiscoveredTarget(
-                            url=sanitize_url(item.url),
+                            url=sanitize_url_for_request(
+                                item.url,
+                                context.request,
+                            ),
                             depth=item.depth,
-                            parent_url=sanitize_url(item.parent_url) if item.parent_url else None,
+                            parent_url=(
+                                sanitize_url_for_request(
+                                    item.parent_url,
+                                    context.request,
+                                )
+                                if item.parent_url
+                                else None
+                            ),
                             relation=item.relation,
                             failure_code=type(error).__name__ if error else "empty_response",
                         )
@@ -179,9 +196,19 @@ class DiscoveryAdapter:
                 accepted = bool(artifact and artifact.quality.accepted)
                 targets.append(
                     DiscoveredTarget(
-                        url=sanitize_url(item.url),
+                        url=sanitize_url_for_request(
+                            item.url,
+                            context.request,
+                        ),
                         depth=item.depth,
-                        parent_url=sanitize_url(item.parent_url) if item.parent_url else None,
+                        parent_url=(
+                            sanitize_url_for_request(
+                                item.parent_url,
+                                context.request,
+                            )
+                            if item.parent_url
+                            else None
+                        ),
                         relation=item.relation,
                         fetched=True,
                         accepted=accepted,
@@ -198,7 +225,7 @@ class DiscoveryAdapter:
                 )
 
         report = CrawlReport(
-            root_url=sanitize_url(root),
+            root_url=sanitize_url_for_request(root, context.request),
             targets=tuple(targets),
             pages_fetched=pages_fetched,
             pages_failed=pages_failed,

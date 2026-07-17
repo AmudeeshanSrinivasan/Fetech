@@ -13,7 +13,7 @@ class Settings:
     database_path: Path
     artifact_dir: Path
     runtime_graph_path: Path
-    user_agent: str = "Fetech/0.2 (+https://github.com/fetech-runtime/fetech)"
+    user_agent: str = "Fetech/0.3 (+https://github.com/fetech-runtime/fetech)"
     global_concurrency: int = 8
     per_host_concurrency: int = 2
     per_host_min_interval_seconds: float = 0.1
@@ -39,7 +39,7 @@ class Settings:
             artifact_dir=data_dir / "artifacts",
             runtime_graph_path=data_dir / "runtime-graphify" / "graph.json",
             user_agent=os.environ.get(
-                "FETECH_USER_AGENT", "Fetech/0.2 (+https://github.com/fetech-runtime/fetech)"
+                "FETECH_USER_AGENT", "Fetech/0.3 (+https://github.com/fetech-runtime/fetech)"
             ),
             global_concurrency=max(1, int(os.environ.get("FETECH_GLOBAL_CONCURRENCY", "8"))),
             per_host_concurrency=max(1, int(os.environ.get("FETECH_PER_HOST_CONCURRENCY", "2"))),

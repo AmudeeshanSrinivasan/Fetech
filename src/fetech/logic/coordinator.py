@@ -43,12 +43,13 @@ class LogicCoordinator:
         try:
             proposal = await backend.propose(request, baseline, self.registry)
             self._validate_plan(proposal.plan, request)
+            proposal.plan.bind_execution_request(baseline.execution_request)
             return proposal
         except (LogicBackendError, ValueError) as exc:
             if not self.settings.logic_fallback or backend.name == "python":
                 raise
             fallback = await self.python_planner.propose(request, baseline, self.registry)
-            return fallback.model_copy(
+            fallback = fallback.model_copy(
                 update={
                     "status": BackendStatus.FALLBACK,
                     "diagnostics": (f"{backend.name} fallback: {exc}",),
@@ -59,6 +60,8 @@ class LogicCoordinator:
                     ),
                 }
             )
+            fallback.plan.bind_execution_request(baseline.execution_request)
+            return fallback
 
     async def explain(self, query: ReasoningQuery) -> ReasoningResult:
         backend = self._reasoner_backend()

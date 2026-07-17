@@ -4,11 +4,14 @@ from __future__ import annotations
 
 import asyncio
 import ipaddress
+import re
 import socket
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from typing import Any
 from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
-from fetech.models import PolicyDecision
+from fetech.models import FetchRequest, PolicyDecision
 
 BLOCKED_HOSTNAMES = {"localhost", "localhost.localdomain", "metadata.google.internal"}
 SENSITIVE_QUERY_KEYS = {
@@ -24,6 +27,21 @@ SENSITIVE_QUERY_KEYS = {
     "token",
 }
 DEFAULT_ALLOWED_PORTS = {80, 443}
+_URL_IN_TEXT = re.compile(r"https?://[^\s<>\"']+", re.IGNORECASE)
+_URL_FIELD_NAMES = {
+    "action",
+    "authority_url",
+    "candidate",
+    "canonical_url",
+    "destination",
+    "normalized_target",
+    "parent_url",
+    "requested_url",
+    "root_url",
+    "source_url",
+    "target",
+    "url",
+}
 
 
 class PolicyBlockedError(PermissionError):
@@ -33,18 +51,99 @@ class PolicyBlockedError(PermissionError):
         self.decisions = decisions
 
 
-def sanitize_url(url: str) -> str:
+def sanitize_url(url: str, *, redact_query: bool = False) -> str:
+    """Return a fragment-free URL safe for logs and public contracts.
+
+    Ordinary public URLs retain non-sensitive query values. Callers handling an
+    authenticated request must set ``redact_query`` so every query value is
+    removed, including values whose parameter names are not in the static
+    sensitive-key list.
+    """
+
     parts = urlsplit(url)
     hostname = parts.hostname or ""
     port = f":{parts.port}" if parts.port else ""
     netloc = f"{hostname}{port}"
     query = urlencode(
         [
-            (key, "[REDACTED]" if key.lower() in SENSITIVE_QUERY_KEYS else value)
+            (
+                key,
+                (
+                    "[REDACTED]"
+                    if redact_query or key.lower() in SENSITIVE_QUERY_KEYS
+                    else value
+                ),
+            )
             for key, value in parse_qsl(parts.query)
         ]
     )
     return urlunsplit((parts.scheme, netloc, parts.path, query, ""))
+
+
+def sanitize_url_for_request(url: str, request: FetchRequest) -> str:
+    """Sanitize a URL according to whether the request carries authentication."""
+
+    return sanitize_url(url, redact_query=request.authentication_ref is not None)
+
+
+def sanitize_output_for_request(value: Any, request: FetchRequest, *, key: str = "") -> Any:
+    """Recursively sanitize an externally visible document for a request.
+
+    Authenticated targets treat every query value as sensitive. Besides known
+    URL fields and URL-shaped substrings are scrubbed so exception messages and
+    adapter details cannot leak a value under an unrecognized parameter name.
+    """
+
+    if isinstance(value, Mapping):
+        return {
+            str(child_key): sanitize_output_for_request(
+                child,
+                request,
+                key=str(child_key),
+            )
+            for child_key, child in value.items()
+        }
+    if isinstance(value, tuple):
+        return tuple(
+            sanitize_output_for_request(child, request, key=key) for child in value
+        )
+    if isinstance(value, list):
+        return [
+            sanitize_output_for_request(child, request, key=key) for child in value
+        ]
+    if isinstance(value, Sequence) and not isinstance(value, str | bytes | bytearray):
+        return [
+            sanitize_output_for_request(child, request, key=key) for child in value
+        ]
+    if not isinstance(value, str):
+        return value
+
+    normalized_key = key.casefold().replace("-", "_").replace(" ", "_")
+    if normalized_key in _URL_FIELD_NAMES or normalized_key.endswith("_url"):
+        try:
+            return sanitize_url_for_request(value, request)
+        except ValueError:
+            return "[REDACTED_INVALID_URL]"
+    if request.authentication_ref is None:
+        return value
+    return sanitize_authenticated_text(value)
+
+
+def sanitize_authenticated_text(value: str) -> str:
+    """Scrub every query value from URL substrings in authenticated output."""
+
+    def replace_url(match: re.Match[str]) -> str:
+        candidate = match.group(0)
+        trailing = ""
+        while candidate and candidate[-1] in ".,;)]}":
+            trailing = candidate[-1] + trailing
+            candidate = candidate[:-1]
+        try:
+            return sanitize_url(candidate, redact_query=True) + trailing
+        except ValueError:
+            return "[REDACTED_INVALID_URL]" + trailing
+
+    return _URL_IN_TEXT.sub(replace_url, value)
 
 
 def normalize_url(target: str) -> str:

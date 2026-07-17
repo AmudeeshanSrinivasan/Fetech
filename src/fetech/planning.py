@@ -5,9 +5,10 @@ from __future__ import annotations
 from pathlib import PurePosixPath
 from urllib.parse import urlsplit
 
+from fetech.adapters.api import API_CAPABILITIES, detect_named_api
 from fetech.models import FetchPlan, FetchRequest, PlanNode, RetryRule
 from fetech.registry import CapabilityRegistry
-from fetech.security import normalize_url
+from fetech.security import normalize_url, sanitize_url_for_request
 
 DOCUMENT_EXTENSIONS = {".csv", ".docx", ".epub", ".pdf", ".pptx", ".txt", ".xls", ".xlsx"}
 MEDIA_EXTENSIONS = {".aac", ".flac", ".gif", ".jpeg", ".jpg", ".m4a", ".mp3", ".mp4", ".png", ".wav", ".webm"}
@@ -43,12 +44,35 @@ BROWSER_CAPABILITIES = (
     "spa_route_handling",
 )
 BROWSER_ENGINES = ("playwright", "puppeteer", "selenium", "cdp")
+API_CAPABILITY_ORDER = (
+    "rest",
+    "graphql",
+    "json_endpoint",
+    "xml_endpoint",
+    "rss",
+    "atom",
+    "sitemap_xml",
+    "openapi_discovery",
+    "github_api",
+    "semantic_scholar_api",
+    "arxiv_api",
+    "openreview_api",
+    "crossref_openalex_api",
+)
+AUTH_SESSION_CAPABILITIES = (
+    "login_session",
+    "oauth",
+    "sso",
+    "private_workspace",
+)
 
 
 def classify_target(target: str, outputs: tuple[str, ...]) -> str:
     path = PurePosixPath(urlsplit(target).path.lower())
     suffix = path.suffix
     requested = set(outputs)
+    if requested & API_CAPABILITIES or detect_named_api(target) is not None:
+        return "api"
     if suffix in DOCUMENT_EXTENSIONS or requested & {"document", "tables", "ocr", "slides"}:
         return "document"
     if suffix in MEDIA_EXTENSIONS or requested & {
@@ -73,7 +97,10 @@ class DeterministicPlanner:
 
     def plan(self, request: FetchRequest) -> FetchPlan:
         target = normalize_url(request.target)
-        normalized_request = request.model_copy(update={"target": target})
+        execution_request = request.model_copy(update={"target": target})
+        public_request = execution_request.model_copy(
+            update={"target": sanitize_url_for_request(target, execution_request)}
+        )
         family = classify_target(target, request.output_requirements)
         http_capability = self._http_capability(request)
         nodes: list[PlanNode] = [
@@ -85,24 +112,70 @@ class DeterministicPlanner:
                 dependencies=("normalize",),
                 reserved_budget={"deadline_seconds": 2},
             ),
+        ]
+        requested_sessions = [
+            capability_id
+            for capability_id in AUTH_SESSION_CAPABILITIES
+            if capability_id in request.output_requirements
+        ]
+        if len(requested_sessions) > 1:
+            raise ValueError("only one high-level authentication session may be requested")
+        http_dependency = "policy"
+        if requested_sessions:
+            session_capability = requested_sessions[0]
+            nodes.append(
+                PlanNode(
+                    id=f"auth-{session_capability.replace('_', '-')}",
+                    capability_id=session_capability,
+                    adapter="auth",
+                    dependencies=("policy",),
+                    retry=RetryRule(maximum=0),
+                )
+            )
+            http_dependency = nodes[-1].id
+        nodes.append(
             PlanNode(
                 id="http",
                 capability_id=http_capability,
                 adapter="http",
-                dependencies=("policy",),
-                retry=RetryRule(maximum=2),
+                dependencies=(http_dependency,),
+                retry=RetryRule(maximum=0 if http_capability == "http_post" else 2),
                 stop_on_acceptance=family in {"api", "document", "media", "archive"},
                 requires_approval=http_capability == "http_post",
                 reserved_budget={"bytes": request.budget.bytes},
-            ),
-        ]
+            )
+        )
+        acquired_dependency = "http"
+        if "csrf_token" in request.output_requirements:
+            nodes.append(
+                PlanNode(
+                    id="auth-csrf-token",
+                    capability_id="csrf_token",
+                    adapter="auth",
+                    dependencies=(acquired_dependency,),
+                    retry=RetryRule(maximum=0),
+                )
+            )
+            acquired_dependency = nodes[-1].id
+        if "form_submit" in request.output_requirements:
+            nodes.append(
+                PlanNode(
+                    id="auth-form-submit",
+                    capability_id="form_submit",
+                    adapter="auth",
+                    dependencies=(acquired_dependency,),
+                    retry=RetryRule(maximum=0),
+                    requires_approval=True,
+                )
+            )
+            acquired_dependency = nodes[-1].id
         if request.intent == "crawl":
             nodes.append(
                 PlanNode(
                     id="crawl",
                     capability_id="depth_limited_crawl",
                     adapter="discovery",
-                    dependencies=("http",),
+                    dependencies=(acquired_dependency,),
                     stop_on_acceptance=True,
                     reserved_budget={
                         "attempts": request.budget.attempts,
@@ -112,15 +185,18 @@ class DeterministicPlanner:
                 )
             )
         elif family == "web" and http_capability != "http_head":
-            nodes.append(
-                PlanNode(
-                    id="alternatives",
-                    capability_id="candidate_url_expansion",
-                    adapter="variants",
-                    dependencies=("http",),
+            reader_dependency = acquired_dependency
+            if request.authentication_ref is None:
+                nodes.append(
+                    PlanNode(
+                        id="alternatives",
+                        capability_id="candidate_url_expansion",
+                        adapter="variants",
+                        dependencies=(acquired_dependency,),
+                    )
                 )
-            )
-            reader_nodes = self._reader_nodes(request, dependency="alternatives")
+                reader_dependency = "alternatives"
+            reader_nodes = self._reader_nodes(request, dependency=reader_dependency)
             nodes.extend(reader_nodes)
             if self.registry.get("playwright").available:
                 terminal_reader = reader_nodes[-1].id
@@ -151,7 +227,7 @@ class DeterministicPlanner:
                     id="document",
                     capability_id=capability,
                     adapter="documents",
-                    dependencies=("http",),
+                    dependencies=(acquired_dependency,),
                     stop_on_acceptance=True,
                 )
             )
@@ -169,7 +245,7 @@ class DeterministicPlanner:
                     id="media",
                     capability_id=capability,
                     adapter="media",
-                    dependencies=("http",),
+                    dependencies=(acquired_dependency,),
                     stop_on_acceptance=True,
                 )
             )
@@ -179,19 +255,18 @@ class DeterministicPlanner:
                     id="archive",
                     capability_id="zip_archive",
                     adapter="cache",
-                    dependencies=("http",),
+                    dependencies=(acquired_dependency,),
                     stop_on_acceptance=True,
                 )
             )
         elif family == "api":
-            suffix = PurePosixPath(urlsplit(target).path.lower()).suffix
-            capability = "xml_endpoint" if suffix == ".xml" else "json_endpoint"
+            capability = self._api_capability(target, request)
             nodes.append(
                 PlanNode(
                     id="structured",
                     capability_id=capability,
                     adapter="api",
-                    dependencies=("http",),
+                    dependencies=(acquired_dependency,),
                     stop_on_acceptance=True,
                 )
             )
@@ -203,7 +278,26 @@ class DeterministicPlanner:
         ):
             raise ValueError("the request capability policy denies the required HTTP operation")
         self._validate_nodes(filtered)
-        return FetchPlan(request=normalized_request, nodes=filtered)
+        return FetchPlan(request=public_request, nodes=filtered).bind_execution_request(
+            execution_request
+        )
+
+    @staticmethod
+    def _api_capability(target: str, request: FetchRequest) -> str:
+        requested = [
+            capability_id
+            for capability_id in API_CAPABILITY_ORDER
+            if capability_id in request.output_requirements
+        ]
+        if len(requested) > 1:
+            raise ValueError("only one primary structured API capability may be requested")
+        if requested:
+            return requested[0]
+        named = detect_named_api(target)
+        if named is not None:
+            return named
+        suffix = PurePosixPath(urlsplit(target).path.lower()).suffix
+        return "xml_endpoint" if suffix == ".xml" else "json_endpoint"
 
     @staticmethod
     def _document_capability(target: str) -> str:

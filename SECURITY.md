@@ -19,8 +19,47 @@ instruction as untrusted input.
 - Explicit HTTP/3 requests use only HTTPS, pin curl to a Python-validated public address, require
   `--http3-only`, bound process time and output, and fail rather than negotiate an older protocol.
 - URL credentials are rejected. Sensitive query values and headers are removed from diagnostics.
-- Authenticated and public cache scopes are distinct.
-- Credentials are opaque references and never enter plans, logs, graphs, artifacts, or Obsidian.
+- Resolved credentials require an exact HTTPS origin. They are applied per validated request hop,
+  stripped from cross-origin redirects, omitted from `robots.txt`, and never stored in shared HTTP
+  client defaults or durable cookie state.
+- Opaque references, credential header/cookie counts, individual values, and aggregate in-memory
+  credential material are byte-bounded before use.
+- Authenticated and public cache scopes are distinct. Authenticated keys contain a domain-separated
+  digest of the opaque reference, not the reference or credential value.
+- Requests and in-memory plans may contain only opaque authentication references. References are
+  redacted from the event ledger and runtime graph; resolved headers, cookies, and tokens never enter
+  plans, logs, events, graphs, artifacts, or Obsidian.
+- Serialized authenticated plans, results, events, runtime graphs, and runtime-generated derived
+  artifact documents redact every query value, including values under unknown parameter names. The
+  raw normalized query remains only in the private in-memory transport view.
+- Unknown references fail as `AUTH_REQUIRED`, provider outages fail as `DEPENDENCY_MISSING`, known
+  expiry emits an `auth_expired` diagnostic, and authenticated HTTP/3 fails closed until a
+  secret-safe transport channel exists.
+- High-level session capabilities require a separate trusted `SessionProvider` descriptor. Python
+  validates its capability, opaque reference, exact HTTPS origin, issuer/scopes, and connector
+  identity before resolving or refreshing credential material.
+- OAuth/SSO bearer refresh is descriptor-authorized, provider-mediated, and attempted at most once
+  for GET or HEAD. Refresh references and material never enter plans or events; the ledger receives
+  only sanitized lifecycle status.
+- `PlanNode.requires_approval` is enforced centrally before adapter execution. Mutating forms also
+  require a short-lived approval bound to the exact HTTPS action and method. Form fields and derived
+  CSRF material remain ephemeral; they never enter plan parameters, request metadata, diagnostics,
+  events, or submitted-body artifacts. In-memory proposal providers consume mutations once.
+- A 303, or a 301/302 after POST, switches to GET and drops the body. Every body-preserving redirect,
+  including same-origin 307/308, is blocked without a new exact-target approval.
+- Approved form login may retain bounded Secure, exact-origin/path cookies across a same-origin
+  301/302/303 redirect for one request chain. Cookies are destroyed on an origin change and scrubbed
+  from returned responses.
+- Private-workspace execution requires the explicit `private` privacy profile. SSO and private-workspace
+  connectors are fail-closed and optional; they do not automate passwords, MFA, CAPTCHA, or IdP
+  interaction.
+- Structured API parsing occurs only after a successful HTTP acquisition. JSON nesting/nodes and
+  XML nesting/nodes are bounded; duplicate JSON keys, non-finite values, XML DTD/entities, and
+  OpenAPI YAML anchors/aliases are rejected.
+- Named API connectors require exact approved official origins and recognizable response schemas.
+  The explicit public arXiv HTTP endpoint remains subject to the ordinary public-HTTP policy.
+  OpenAPI references, feed links, sitemap URLs, and pagination links are normalized as evidence but
+  are not followed automatically by the API adapter.
 - Browser, document, OCR, archive, and media engines are expected to run in bounded workers.
 - Archive extraction rejects traversal, links, nested archives, excessive members, excessive
   expansion, and suspicious compression ratios.

@@ -26,7 +26,7 @@ class HTTPSearchProvider:
         *,
         policy: SafeURLPolicy | None = None,
         transport: httpx.AsyncBaseTransport | None = None,
-        user_agent: str = "Fetech/0.2",
+        user_agent: str = "Fetech/0.3",
     ) -> None:
         if "{query}" not in template:
             raise ValueError("search provider template must contain {query}")

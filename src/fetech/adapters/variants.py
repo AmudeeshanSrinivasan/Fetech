@@ -18,7 +18,11 @@ from fetech.models import (
     ResourceBudget,
 )
 from fetech.quality import assess_text
-from fetech.security import PolicyBlockedError, sanitize_url
+from fetech.security import (
+    PolicyBlockedError,
+    sanitize_url,
+    sanitize_url_for_request,
+)
 from fetech.storage import build_artifact
 from fetech.variants import generate_variant_map
 
@@ -36,7 +40,10 @@ class VariantAdapter:
         attempt_index = len(context.attempts)
         attempt = FetchAttempt(
             capability_id=node.capability_id,
-            sanitized_destination=sanitize_url(context.request.target),
+            sanitized_destination=sanitize_url_for_request(
+                context.request.target,
+                context.request,
+            ),
             status=AttemptStatus.RUNNING,
         )
         context.attempts.append(attempt)
@@ -48,7 +55,11 @@ class VariantAdapter:
             canonical_url=canonical,
         )
         sanitized = {
-            capability_id: sanitize_url(candidate) if candidate else None
+            capability_id: (
+                sanitize_url_for_request(candidate, context.request)
+                if candidate
+                else None
+            )
             for capability_id, candidate in candidates.items()
         }
         encoded = json.dumps(sanitized, indent=2, sort_keys=True).encode()
@@ -94,7 +105,11 @@ class VariantAdapter:
                         else CapabilityOutcomeStatus.NOT_APPLICABLE
                     ),
                     "variants",
-                    candidate=sanitize_url(candidate) if candidate else None,
+                    candidate=(
+                        sanitize_url_for_request(candidate, context.request)
+                        if candidate
+                        else None
+                    ),
                 )
         context.record_outcome(
             "candidate_url_expansion",
@@ -178,7 +193,12 @@ class VariantAdapter:
             for resource in subcontext.resources:
                 context.resources.append(
                     resource.model_copy(
-                        update={"authority_url": sanitize_url(context.request.target)}
+                        update={
+                            "authority_url": sanitize_url_for_request(
+                                context.request.target,
+                                context.request,
+                            )
+                        }
                     )
                 )
             context.artifacts.extend(subcontext.artifacts)

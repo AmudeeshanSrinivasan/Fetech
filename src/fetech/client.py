@@ -5,6 +5,8 @@ from __future__ import annotations
 from collections.abc import AsyncIterator
 from uuid import UUID
 
+from fetech.auth import CredentialProvider
+from fetech.auth_flows import FormSubmissionProvider, SessionProvider
 from fetech.config import Settings
 from fetech.gateway import UniversalFetchGateway
 from fetech.logic.models import ReasoningResult
@@ -28,8 +30,20 @@ class FetchHandle:
 
 
 class FetechClient:
-    def __init__(self, settings: Settings | None = None) -> None:
-        self.gateway = UniversalFetchGateway(settings)
+    def __init__(
+        self,
+        settings: Settings | None = None,
+        *,
+        credential_provider: CredentialProvider | None = None,
+        session_provider: SessionProvider | None = None,
+        form_submission_provider: FormSubmissionProvider | None = None,
+    ) -> None:
+        self.gateway = UniversalFetchGateway(
+            settings,
+            credential_provider=credential_provider,
+            session_provider=session_provider,
+            form_submission_provider=form_submission_provider,
+        )
 
     async def __aenter__(self) -> FetechClient:
         await self.gateway.initialize()
