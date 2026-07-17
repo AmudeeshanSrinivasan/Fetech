@@ -19,7 +19,11 @@ from fetech.models import FetchRequest, ResourceBudget
 from fetech.provenance import build_runtime_graph
 from fetech.registry import CapabilityRegistry
 
-app = typer.Typer(no_args_is_help=True, help="Policy-aware universal content acquisition.")
+app = typer.Typer(
+    no_args_is_help=True,
+    help="Policy-aware universal content acquisition.",
+    rich_markup_mode=None,
+)
 DEFAULT_REPOSITORY = Path.cwd()
 
 

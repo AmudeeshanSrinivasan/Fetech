@@ -6,6 +6,7 @@ import json
 import sys
 
 from fetech.adapters.base import AdapterDependencyError, AdapterExecutionError
+from fetech.browser_worker import BROWSER_WORKER_ADDRESS_SPACE_MB
 from fetech.logic.base import LogicBackendError
 from fetech.logic.process import run_bounded
 
@@ -40,16 +41,28 @@ class BrowserReaderWorker:
                 (sys.executable, "-m", "fetech.browser_worker"),
                 payload,
                 timeout_seconds=timeout_seconds,
-                memory_mb=768,
+                memory_mb=BROWSER_WORKER_ADDRESS_SPACE_MB,
                 maximum_output_bytes=worker_byte_limit + 4_096,
             )
         except LogicBackendError as exc:
             raise AdapterExecutionError("bounded browser reader process failed") from exc
+        if result.returncode == 2:
+            raise AdapterDependencyError(
+                "browser_reader_mode requires fetech[browser] and an installed Chromium binary"
+            )
+        if not result.stdout:
+            raise AdapterExecutionError("browser reader exited without output")
         try:
             response = json.loads(result.stdout)
         except json.JSONDecodeError as exc:
+            if result.returncode != 0:
+                raise AdapterExecutionError("offline browser reader failed") from exc
             raise AdapterExecutionError("browser reader returned malformed output") from exc
-        if result.returncode == 2 or response.get("error") == "dependency_missing":
+        if not isinstance(response, dict):
+            if result.returncode != 0:
+                raise AdapterExecutionError("offline browser reader failed")
+            raise AdapterExecutionError("browser reader response must be an object")
+        if response.get("error") == "dependency_missing":
             raise AdapterDependencyError(
                 "browser_reader_mode requires fetech[browser] and an installed Chromium binary"
             )

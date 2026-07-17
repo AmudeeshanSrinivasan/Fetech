@@ -39,7 +39,7 @@ async def test_sdk_crawl_sets_canonical_intent(
 
 
 def test_cli_exposes_bounded_crawl_command() -> None:
-    result = CliRunner().invoke(app, ["crawl", "--help"])
+    result = CliRunner(env={"COLUMNS": "30"}).invoke(app, ["crawl", "--help"])
     assert result.exit_code == 0
     assert "--max-pages" in result.stdout
     assert "--max-depth" in result.stdout

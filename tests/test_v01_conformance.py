@@ -435,6 +435,71 @@ async def test_browser_reader_reports_missing_optional_dependency() -> None:
 
 
 @pytest.mark.asyncio
+async def test_browser_reader_exit_two_without_json_is_dependency_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from fetech.adapters.base import AdapterDependencyError
+    from fetech.logic.process import ProcessResult
+
+    async def missing_worker(
+        arguments: tuple[str, ...],
+        stdin: bytes,
+        *,
+        timeout_seconds: float,
+        memory_mb: int,
+        maximum_output_bytes: int,
+    ) -> ProcessResult:
+        del arguments, stdin, timeout_seconds, memory_mb, maximum_output_bytes
+        return ProcessResult(returncode=2, stdout=b"", stderr=b"private worker detail")
+
+    monkeypatch.setattr("fetech.browser_reader.run_bounded", missing_worker)
+    with pytest.raises(AdapterDependencyError, match=r"installed Chromium binary") as caught:
+        await BrowserReaderWorker().extract(
+            "<main>offline document</main>",
+            target="https://example.com",
+            user_agent="Fetech/test",
+            timeout_seconds=3,
+            maximum_bytes=10_000,
+        )
+    assert "private worker detail" not in str(caught.value)
+
+
+@pytest.mark.asyncio
+async def test_browser_reader_crash_is_typed_bounded_and_does_not_leak_stderr(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from fetech.adapters.base import AdapterExecutionError
+    from fetech.logic.process import ProcessResult
+
+    observed_memory_mb = 0
+
+    async def crashed_worker(
+        arguments: tuple[str, ...],
+        stdin: bytes,
+        *,
+        timeout_seconds: float,
+        memory_mb: int,
+        maximum_output_bytes: int,
+    ) -> ProcessResult:
+        del arguments, stdin, timeout_seconds, maximum_output_bytes
+        nonlocal observed_memory_mb
+        observed_memory_mb = memory_mb
+        return ProcessResult(returncode=-9, stdout=b"", stderr=b"private worker detail")
+
+    monkeypatch.setattr("fetech.browser_reader.run_bounded", crashed_worker)
+    with pytest.raises(AdapterExecutionError, match=r"exited without output") as caught:
+        await BrowserReaderWorker().extract(
+            "<main>offline document</main>",
+            target="https://example.com",
+            user_agent="Fetech/test",
+            timeout_seconds=3,
+            maximum_bytes=10_000,
+        )
+    assert observed_memory_mb == 16 * 1024
+    assert "private worker detail" not in str(caught.value)
+
+
+@pytest.mark.asyncio
 async def test_configured_remote_reader_is_policy_scoped(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

@@ -8,7 +8,7 @@ from pathlib import Path
 import httpx
 import pytest
 
-from fetech.adapters.base import AdapterDependencyError
+from fetech.adapters.base import AdapterDependencyError, AdapterExecutionError
 from fetech.adapters.browser import BROWSER_CAPABILITIES, BrowserAdapter
 from fetech.adapters.discovery import DiscoveryAdapter
 from fetech.adapters.http import HTTPAdapter
@@ -20,6 +20,7 @@ from fetech.browser_render import (
 )
 from fetech.config import Settings
 from fetech.gateway import UniversalFetchGateway
+from fetech.logic.process import ProcessResult
 from fetech.models import CapabilityOutcomeStatus, FetchRequest, ResultStatus
 from fetech.security import SafeURLPolicy
 
@@ -78,6 +79,71 @@ async def test_local_browser_renderer_reports_missing_optional_dependency() -> N
             wait_selector="body",
             scroll_steps=1,
         )
+
+
+@pytest.mark.asyncio
+async def test_browser_worker_exit_two_without_json_is_dependency_missing(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def missing_worker(
+        arguments: tuple[str, ...],
+        stdin: bytes,
+        *,
+        timeout_seconds: float,
+        memory_mb: int,
+        maximum_output_bytes: int,
+    ) -> ProcessResult:
+        del arguments, stdin, timeout_seconds, memory_mb, maximum_output_bytes
+        return ProcessResult(returncode=2, stdout=b"", stderr=b"private worker detail")
+
+    monkeypatch.setattr("fetech.browser_render.run_bounded", missing_worker)
+    with pytest.raises(AdapterDependencyError, match=r"installed Chromium binary") as caught:
+        await BrowserRenderWorker().render(
+            "<main>offline browser fixture</main>",
+            target="https://example.com",
+            user_agent="Fetech/test",
+            timeout_seconds=3,
+            maximum_bytes=10_000,
+            operations=frozenset({"visible_text"}),
+            wait_selector="body",
+            scroll_steps=1,
+        )
+    assert "private worker detail" not in str(caught.value)
+
+
+@pytest.mark.asyncio
+async def test_browser_worker_crash_is_typed_bounded_and_does_not_leak_stderr(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    observed_memory_mb = 0
+
+    async def crashed_worker(
+        arguments: tuple[str, ...],
+        stdin: bytes,
+        *,
+        timeout_seconds: float,
+        memory_mb: int,
+        maximum_output_bytes: int,
+    ) -> ProcessResult:
+        del arguments, stdin, timeout_seconds, maximum_output_bytes
+        nonlocal observed_memory_mb
+        observed_memory_mb = memory_mb
+        return ProcessResult(returncode=-9, stdout=b"", stderr=b"private worker detail")
+
+    monkeypatch.setattr("fetech.browser_render.run_bounded", crashed_worker)
+    with pytest.raises(AdapterExecutionError, match=r"exited without output") as caught:
+        await BrowserRenderWorker().render(
+            "<main>offline browser fixture</main>",
+            target="https://example.com",
+            user_agent="Fetech/test",
+            timeout_seconds=3,
+            maximum_bytes=10_000,
+            operations=frozenset({"visible_text"}),
+            wait_selector="body",
+            scroll_steps=1,
+        )
+    assert observed_memory_mb == 16 * 1024
+    assert "private worker detail" not in str(caught.value)
 
 
 @pytest.mark.skipif(find_spec("playwright") is None, reason="Playwright is not installed")

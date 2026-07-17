@@ -156,7 +156,7 @@ async def test_missing_prolog_falls_back_to_python(tmp_path: Path) -> None:
 
 @pytest.mark.asyncio
 async def test_sensitive_prolog_facts_are_rejected_before_execution() -> None:
-    backend = PrologReasonerBackend()
+    backend = PrologReasonerBackend(executable="/definitely/missing/swipl")
     query = ReasoningQuery(capability_id="http_get", facts={"api_token": 123})
     with pytest.raises(BackendOutputError, match="sensitive reasoning fact"):
         await backend.explain(query)

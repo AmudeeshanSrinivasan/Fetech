@@ -170,7 +170,7 @@ async def test_mcp_fetch_content_exposes_scoped_v03_request_parameters(
 
 
 def test_cli_plan_and_fetch_expose_strict_v03_options() -> None:
-    runner = CliRunner()
+    runner = CliRunner(env={"COLUMNS": "30"})
 
     for command in ("plan", "fetch"):
         help_result = runner.invoke(cli_app, [command, "--help"])

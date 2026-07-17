@@ -34,10 +34,10 @@ class PrologReasonerBackend:
         self.rules_path = rules_path or Path(__file__).parent / "rules" / "reasoner.pl"
 
     async def explain(self, query: ReasoningQuery) -> ReasoningResult:
+        _reject_sensitive_facts(query.facts)
         executable = shutil.which(self.executable)
         if executable is None:
             raise BackendUnavailableError(f"SWI-Prolog executable not found: {self.executable}")
-        _reject_sensitive_facts(query.facts)
         rules = self.rules_path.read_bytes()
         payload = query.model_dump_json().encode()
         if len(payload) > 65_536:

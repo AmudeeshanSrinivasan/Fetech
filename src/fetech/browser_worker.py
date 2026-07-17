@@ -8,6 +8,13 @@ import json
 import sys
 from typing import Any
 
+# Linux RLIMIT_AS measures reserved virtual address space rather than resident
+# memory. A low ceiling prevents Playwright's Node driver and 64-bit Chromium
+# from starting even for small pages, so both local entry points share this
+# finite compatibility ceiling. Production deployments still need an external
+# aggregate resident-memory limit.
+BROWSER_WORKER_ADDRESS_SPACE_MB = 16 * 1024
+
 
 async def _extract(payload: dict[str, Any]) -> str:
     try:

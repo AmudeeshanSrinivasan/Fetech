@@ -12,6 +12,7 @@ from typing import Protocol
 import httpx
 
 from fetech.adapters.base import AdapterDependencyError, AdapterExecutionError
+from fetech.browser_worker import BROWSER_WORKER_ADDRESS_SPACE_MB
 from fetech.logic.base import LogicBackendError
 from fetech.logic.process import run_bounded
 from fetech.security import SafeURLPolicy, sanitize_url
@@ -78,16 +79,28 @@ class BrowserRenderWorker:
                 (sys.executable, "-m", "fetech.browser_worker"),
                 payload,
                 timeout_seconds=timeout_seconds,
-                memory_mb=768,
+                memory_mb=BROWSER_WORKER_ADDRESS_SPACE_MB,
                 maximum_output_bytes=min(100_000_000, worker_byte_limit * 2 + 8_192),
             )
         except LogicBackendError as exc:
             raise AdapterExecutionError("bounded browser render process failed") from exc
+        if process.returncode == 2:
+            raise AdapterDependencyError(
+                "playwright rendering requires fetech[browser] and an installed Chromium binary"
+            )
+        if not process.stdout:
+            raise AdapterExecutionError("browser renderer exited without output")
         try:
             response = json.loads(process.stdout)
         except json.JSONDecodeError as exc:
+            if process.returncode != 0:
+                raise AdapterExecutionError("offline browser rendering failed") from exc
             raise AdapterExecutionError("browser renderer returned malformed output") from exc
-        if process.returncode == 2 or response.get("error") == "dependency_missing":
+        if not isinstance(response, dict):
+            if process.returncode != 0:
+                raise AdapterExecutionError("offline browser rendering failed")
+            raise AdapterExecutionError("browser renderer response must be an object")
+        if response.get("error") == "dependency_missing":
             raise AdapterDependencyError(
                 "playwright rendering requires fetech[browser] and an installed Chromium binary"
             )

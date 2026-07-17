@@ -271,6 +271,9 @@ HTML, starts its context offline, blocks service workers, aborts every page
 route, and applies bounded readiness and interaction rules. Reader mode disables
 JavaScript; render mode permits JavaScript. These controls restrict page
 behavior but do not create an operating-system sandbox for the browser process.
+Linux `RLIMIT_AS` is a per-process virtual-address ceiling, not an aggregate
+resident-memory limit for Chromium's process tree. Production browser workers
+therefore still require a container or service-level memory limit.
 
 Linux is the reference daemon platform, but a production operator must still
 add container or service-level isolation, a dedicated unprivileged account,
