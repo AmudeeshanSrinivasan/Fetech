@@ -273,7 +273,10 @@ JavaScript; render mode permits JavaScript. These controls restrict page
 behavior but do not create an operating-system sandbox for the browser process.
 Linux `RLIMIT_AS` is a per-process virtual-address ceiling, not an aggregate
 resident-memory limit for Chromium's process tree. Production browser workers
-therefore still require a container or service-level memory limit.
+therefore still require a container or service-level memory limit. The local
+ceiling allows V8's
+[one-terabyte sandbox and guard regions](https://chromium.googlesource.com/v8/v8/+/refs/heads/main/include/v8-internal.h#188)
+to initialize; it does not permit that amount of resident memory.
 
 Linux is the reference daemon platform, but a production operator must still
 add container or service-level isolation, a dedicated unprivileged account,

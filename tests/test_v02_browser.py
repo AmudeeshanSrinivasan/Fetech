@@ -142,7 +142,7 @@ async def test_browser_worker_crash_is_typed_bounded_and_does_not_leak_stderr(
             wait_selector="body",
             scroll_steps=1,
         )
-    assert observed_memory_mb == 16 * 1024
+    assert observed_memory_mb == 2 * 1024 * 1024
     assert "private worker detail" not in str(caught.value)
 
 
