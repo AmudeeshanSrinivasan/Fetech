@@ -89,6 +89,8 @@ include = [
   "/capabilities",
   "/tests",
   "/docs",
+  "/release",
+  "/scripts",
   "/README.md",
   "/LICENSE",
   "/SECURITY.md",

@@ -109,5 +109,10 @@ instruction as untrusted input.
 Rules, facts, answer sets, and explanations are sanitized before logging or provenance projection.
 They are never copied automatically into Obsidian.
 
+The implementation-grounded [v0.3 threat model](docs/security-threat-model.md) records trust
+boundaries, deployment assumptions, STRIDE analysis, platform isolation differences, and residual
+risks. In particular, keep the single-tenant daemon on loopback or behind an authenticating and
+authorizing reverse proxy, and treat the complete data directory as potentially confidential.
+
 Report vulnerabilities privately to the project maintainers. Do not include credentials, private
 URLs, or sensitive response bodies in reports.

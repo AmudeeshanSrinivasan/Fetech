@@ -125,8 +125,16 @@ network and unrestricted filesystem/process access as described in the security 
 uv run pytest
 uv run ruff check .
 uv run mypy src/fetech
+uv run python scripts/generate_release_evidence.py --check
+uv build
 git diff --check
 ```
 
-See [the architecture](docs/architecture.md), [security model](SECURITY.md), and
-[capability catalogue](docs/capability-catalog.md).
+See [the architecture](docs/architecture.md), [security policy](SECURITY.md),
+[v0.3 threat model](docs/security-threat-model.md),
+[capability catalogue](docs/capability-catalog.md), and
+[v0.3 release notes](docs/releases/v0.3.0a0.md). The tracked
+[SPDX SBOM](release/fetech-0.3.0a0.spdx.json),
+[dependency-license report](release/dependency-licenses.md), and
+[competitor matrix](docs/competitor-matrix.md) are release evidence, not claims of certification or
+market superiority.

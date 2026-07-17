@@ -1,0 +1,3949 @@
+{
+  "SPDXID": "SPDXRef-DOCUMENT",
+  "comment": "Deterministic release SBOM generated from pyproject.toml, uv.lock, and scripts/release_license_catalog.toml. It describes the universal lock across all declared extras and platform markers, not one installed environment.",
+  "creationInfo": {
+    "created": "2026-07-17T00:00:00Z",
+    "creators": [
+      "Tool: fetech-release-evidence-generator/1"
+    ]
+  },
+  "dataLicense": "CC0-1.0",
+  "documentDescribes": [
+    "SPDXRef-Package-fetech"
+  ],
+  "documentNamespace": "https://github.com/AmudeeshanSrinivasan/Fetech/spdx/fetech-0.3.0a0-b0f149e119743287a45a95405ffd417005b395c7b810e42a9da8edc152d364ea",
+  "hasExtractedLicensingInfos": [
+    {
+      "comment": "The package metadata contains only the short reference “BSD License”; it does not identify the clause variant.",
+      "extractedText": "BSD License",
+      "licenseId": "LicenseRef-BSD-Unknown",
+      "name": "Unidentified BSD license variant",
+      "seeAlsos": [
+        "https://pypi.org/project/sgmllib3k/1.0.0/"
+      ]
+    }
+  ],
+  "name": "fetech-0.3.0a0-universal-lock",
+  "packages": [
+    {
+      "SPDXID": "SPDXRef-Package-fetech",
+      "comment": "Root package metadata from pyproject.toml and uv.lock. uv.lock SHA-256: b0f149e119743287a45a95405ffd417005b395c7b810e42a9da8edc152d364ea.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "NOASSERTION",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/fetech@0.3.0a0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "Apache-2.0",
+      "licenseDeclared": "Apache-2.0",
+      "name": "fetech",
+      "primaryPackagePurpose": "APPLICATION",
+      "versionInfo": "0.3.0a0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-aiosqlite-0.22.1",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "043e0bd78d32888c0a9ca90fc788b38796843360c855a7262a532813133a0650"
+        }
+      ],
+      "comment": "Universal-lock scopes: runtime. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/4e/8a/64761f4005f17809769d23e518d915db74e6310474e733e3593cfc854ef1/aiosqlite-0.22.1.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/aiosqlite@0.22.1",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "aiosqlite",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "0.22.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-annotated-doc-0.0.4",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "fbcda96e87e9c92ad167c2e53839e57503ecfda18804ea28102353485033faa4"
+        }
+      ],
+      "comment": "Universal-lock scopes: runtime, extra:all, extra:server. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/57/ba/046ceea27344560984e26a590f90bc7f4a75b06701f653222458922b558c/annotated_doc-0.0.4.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/annotated-doc@0.0.4",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "annotated-doc",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "0.0.4"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-annotated-types-0.7.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "aff07c09a53a08bc8cfccb9c85b05f1aa9a2a6f23728d790723543408344ce89"
+        }
+      ],
+      "comment": "Universal-lock scopes: runtime, extra:all, extra:mcp, extra:server. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/ee/67/531ea369ba64dcff5ec9c3402f9f51bf748cec26dde048a2f973a4eea7f5/annotated_types-0.7.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/annotated-types@0.7.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "annotated-types",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "0.7.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-anyio-4.14.2",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "cfa139f3ed1a23ee8f88a145ddb5ac7605b8bbfd8592baacd7ce3d8bb4313c7f"
+        }
+      ],
+      "comment": "Universal-lock scopes: runtime, extra:all, extra:mcp, extra:server. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/61/cc/a381afa6efea9f496eff839d4a6a1aed3bfafc7b3ab4b0d1b243a12573dd/anyio-4.14.2.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/anyio@4.14.2",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "anyio",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "4.14.2"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-ast-serialize-0.6.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "aadd3ffcf4858c9726bf3515f7b199c7eadbe504f96028e4a87172c0da65a8fe"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:dev. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/58/ad/0d70a3a2d6e01968d985415259e8ec7ad3f777903f9b1c1f3c8c44642c60/ast_serialize-0.6.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/ast-serialize@0.6.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "ast-serialize",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "0.6.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-attrs-26.1.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d03ceb89cb322a8fd706d4fb91940737b6642aa36998fe130a9bc96c985eff32"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:browser, extra:mcp. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/9a/8e/82a0fe20a541c03148528be8cac2408564a6c9a0cc7e9171802bc1d26985/attrs-26.1.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/attrs@26.1.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "attrs",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "26.1.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-babel-2.18.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "b80b99a14bd085fcacfa15c9165f651fbb3406e66cc603abf11c5750937c992d"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:web. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/7d/b2/51899539b6ceeeb420d40ed3cd4b7a40519404f9baf3d4ac99dc413a834b/babel-2.18.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/babel@2.18.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "BSD-3-Clause",
+      "name": "babel",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "2.18.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-beautifulsoup4-4.15.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "288e3ca7d54b06f2ac191970bc275c1939cb46d450b255bf6718b04aa37ab4f7"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:web. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/43/65/318323f98dbee45d42dff61d8f047181bc6f2268a9068cfad035a46be5af/beautifulsoup4-4.15.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/beautifulsoup4@4.15.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "beautifulsoup4",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "4.15.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-certifi-2026.6.17",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "024c88eeec92ca068db80f02b8b07c9cef7b9fe261d1d535abfd5abd6f6af432"
+        }
+      ],
+      "comment": "Universal-lock scopes: runtime, extra:all, extra:browser, extra:mcp, extra:web. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/c9/c7/424b75da314c1045981bd9777432fad05a9e0c69daa4ed7e308bbaffe405/certifi-2026.6.17.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/certifi@2026.6.17",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MPL-2.0",
+      "name": "certifi",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "2026.6.17"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-cffi-2.1.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "efc1cdd798b1aaf39b4610bba7aad28c9bea9b910f25c784ccf9ec1fa719d1f9"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:browser, extra:logic, extra:mcp. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/57/5f/ff100cae70ebe9d8df1c01a00e510e45d9adb5c1fdda84791b199141de97/cffi-2.1.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/cffi@2.1.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT-0",
+      "name": "cffi",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "2.1.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-cfgv-3.5.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d5b1034354820651caa73ede66a6294d6e95c1b00acc5e9b098e917404669132"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:dev. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/4e/b5/721b8799b04bf9afe054a3899c6cf4e880fcf8563cc71c15610242490a0c/cfgv-3.5.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/cfgv@3.5.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "cfgv",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "3.5.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-chardet-7.4.3",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "cc1d4eb92a4ec1c2df3b490836ffa46922e599d34ce0bb75cf41fd2bf6303d56"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:web. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/19/b6/9df434a8eeba2e6628c465a1dfa31034228ef79b26f76f46278f4ef7e49d/chardet-7.4.3.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/chardet@7.4.3",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "0BSD",
+      "name": "chardet",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "7.4.3"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-charset-normalizer-3.4.9",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "673611bbd43f0810bec0b0f028ddeaaa501190339cac411f347ac76917c3ae7b"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:web. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/bd/2a/23f34ec9d04624958e137efdc394888716353190e75f25dd22c7a2c7a8aa/charset_normalizer-3.4.9.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/charset-normalizer@3.4.9",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "charset-normalizer",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "3.4.9"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-click-8.4.2",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "9a6cea6e60b17ebe0a44c5cc636d94f09bd66142c1cd7d8b4cd731c4917a15f6"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:mcp, extra:server. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/76/d4/81420972a676e8ffea40450d8c8c92943e7218a78fe9b64359836cc9876b/click-8.4.2.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/click@8.4.2",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "BSD-3-Clause",
+      "name": "click",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "8.4.2"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-clingo-5.8.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "e557d0ab209bfe185e4ae9dde531ca777be1b72a1a13a5d169926a1f9e4c4480"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:logic. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/f0/05/1a8a34eea27e73e4c6f7c9d0654b4fd7f509a5fbbb7b3eae7735e5ecd1c2/clingo-5.8.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/clingo@5.8.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "clingo",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "5.8.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-colorama-0.4.6",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "08695f5cb7ed6e0531a20572697297273c47b8cae5a63ffc6d6ed5c201be6e44"
+        }
+      ],
+      "comment": "Universal-lock scopes: runtime, extra:all, extra:dev, extra:mcp, extra:server. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/d8/53/6f443c9a4a8358a93a6792e2acffb9d9d5cb0a5cfd8802644b7b1c9a02e4/colorama-0.4.6.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/colorama@0.4.6",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "BSD-3-Clause",
+      "name": "colorama",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "0.4.6"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-courlan-1.4.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "fbbac7b7fcde2195ea08e707609503c81cf39c891e8d26cdb1fed4585782d63d"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:web. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/bb/16/2a771612ee0b3acaa95ac21cc7e8a3319e815d6360f8ffc5987d1ce28499/courlan-1.4.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/courlan@1.4.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "name": "courlan",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "1.4.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-coverage-7.15.2",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "3df60dc267f0a2ca23cb7a9ab1109c62b9335ffbf519fcfe167157c28c09b81d"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:dev. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/76/d0/55fe630f4cf94e3fcba868240fad8c8cdd1f764e2a932f8926347e6ec4cd/coverage-7.15.2.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/coverage@7.15.2",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "name": "coverage",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "7.15.2"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-cryptography-49.0.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "f89660a348f4f78a92366240a61404e337586ef7f5909a2fef59ca88ef505493"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:mcp. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/1f/99/d1c90d6041656cc6ee229dc99cd67fd0cd5aec3c5f7d72fffc27cc750054/cryptography-49.0.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/cryptography@49.0.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0 OR BSD-3-Clause",
+      "name": "cryptography",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "49.0.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-cssselect-1.4.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "fdaf0a1425e17dfe8c5cf66191d211b357cf7872ae8afc4c6762ddd8ac47fc92"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:web. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/ec/2e/cdfd8b01c37cbf4f9482eefd455853a3cf9c995029a46acd31dfaa9c1dd6/cssselect-1.4.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/cssselect@1.4.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "BSD-3-Clause",
+      "name": "cssselect",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "1.4.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-dateparser-1.4.1",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "f265df13c0380e2e07543ba74b67c0681aaa1096981ffcd35227e1aa0cb81c7c"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:web. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/d3/f4/561c49bca97af561d34eed27e3e831135eb5cb88e754c1150be41820f5c6/dateparser-1.4.1.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/dateparser@1.4.1",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "BSD-3-Clause",
+      "name": "dateparser",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "1.4.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-distlib-0.4.3",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "f152097224a0ae24be5a0f6bae1b9359af82133bce63f98a95f86cae1aede9ed"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:dev. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/c9/02/bd72be9134d25ed783ecbbc38a539ffaefbf90c78418c7fb7229600dbac7/distlib-0.4.3.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/distlib@0.4.3",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "PSF-2.0",
+      "name": "distlib",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "0.4.3"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-et-xmlfile-2.0.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "dab3f4764309081ce75662649be815c4c9081e88f0837825f90fd28317d4da54"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:documents. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/d3/38/af70d7ab1ae9d4da450eeec1fa3918940a5fafb9055e934af8d6eb0c2313/et_xmlfile-2.0.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/et-xmlfile@2.0.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "et-xmlfile",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "2.0.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-fastapi-0.139.1",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "99461bde7ac3fc34c78443da1f4dad3ca8f3182580029a2827692db216a8d7ae"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:server. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/d0/71/f4cfcd72fd94af40d1c76141b69c3d27acaa3641e8fd64872929ff6998b9/fastapi-0.139.1.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/fastapi@0.139.1",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "fastapi",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "0.139.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-feedparser-6.0.12",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "64f76ce90ae3e8ef5d1ede0f8d3b50ce26bcce71dd8ae5e82b1cd2d4a5f94228"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:web. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/dc/79/db7edb5e77d6dfbc54d7d9df72828be4318275b2e580549ff45a962f6461/feedparser-6.0.12.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/feedparser@6.0.12",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "BSD-2-Clause",
+      "name": "feedparser",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "6.0.12"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-filelock-3.30.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "1774e682dbe443bd60f9609162fc596e2c80dc84ffc2957068953406d0520090"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:dev. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/83/2b/8b6480a70a647035334a604d0931926de4b5cd1f57835d45ad5eed2b1a1e/filelock-3.30.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/filelock@3.30.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "filelock",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "3.30.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-greenlet-3.5.3",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "a61efc018fd3eb317eeca31aba90ee9e7f26f22884a79b6c6ec715bf71bb62f1"
+        }
+      ],
+      "comment": "Universal-lock scopes: runtime, extra:all, extra:browser. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/e2/f1/fbbfef6af0bad0548f09bc28948ea3c275b4edb19e17fc5ca9900a6a634d/greenlet-3.5.3.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/greenlet@3.5.3",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT AND PSF-2.0",
+      "name": "greenlet",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "3.5.3"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-h11-0.16.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "4e35b956cf45792e4caa5885e69fba00bdbc6ffafbfa020300e549b208ee5ff1"
+        }
+      ],
+      "comment": "Universal-lock scopes: runtime, extra:all, extra:browser, extra:mcp, extra:server. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/01/ee/02a2c011bdab74c6fb3c75474d40b3052059d95df7e73351460c8588d963/h11-0.16.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/h11@0.16.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "h11",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "0.16.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-h2-4.3.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "6c59efe4323fa18b47a632221a1888bd7fde6249819beda254aeca909f221bf1"
+        }
+      ],
+      "comment": "Universal-lock scopes: runtime. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/1d/17/afa56379f94ad0fe8defd37d6eb3f89a25404ffc71d4d848893d270325fc/h2-4.3.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/h2@4.3.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "h2",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "4.3.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-hpack-4.2.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "0895cfa3b5531fc65fe439c05eb65144f123bf7a394fcaa56aa423548d8e45c0"
+        }
+      ],
+      "comment": "Universal-lock scopes: runtime. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/26/5b/fcabf6028144a8723726318b07a32c2f3314acdff6265743cf08a344b18e/hpack-4.2.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/hpack@4.2.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "hpack",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "4.2.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-htmldate-1.10.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "a38df10772ab5d7dbb11896e3f6a852a8491fb1b0965465bc174e23fc2baae58"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:web. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/ad/1f/e7cf83e23d7b68105de8b874a8b36ba23b450d6f71388583e4ca3ce475ca/htmldate-1.10.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/htmldate@1.10.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "name": "htmldate",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "1.10.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-httpcore-1.0.9",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "6e34463af53fd2ab5d807f399a9b45ea31c3dfa2276f15a2c3f00afff6e176e8"
+        }
+      ],
+      "comment": "Universal-lock scopes: runtime, extra:all, extra:mcp. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/06/94/82699a10bca87a5556c9c59b5963f2d039dbd239f25bc2a63907a05a14cb/httpcore-1.0.9.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/httpcore@1.0.9",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "BSD-3-Clause",
+      "name": "httpcore",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "1.0.9"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-httpx-0.28.1",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "75e98c5f16b0f35b567856f597f06ff2270a374470a5c2392242528e3e3e42fc"
+        }
+      ],
+      "comment": "Universal-lock scopes: runtime, extra:all, extra:mcp. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/b1/df/48c586a5fe32a0f01324ee087459e112ebb7224f646c0b5023f5e79e9956/httpx-0.28.1.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/httpx@0.28.1",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "BSD-3-Clause",
+      "name": "httpx",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "0.28.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-httpx-sse-0.4.3",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "9b1ed0127459a66014aec3c56bebd93da3c1bc8bb6618c8082039a44889a755d"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:mcp. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/0f/4c/751061ffa58615a32c31b2d82e8482be8dd4a89154f003147acee90f2be9/httpx_sse-0.4.3.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/httpx-sse@0.4.3",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "httpx-sse",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "0.4.3"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-hyperframe-6.1.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "f630908a00854a7adeabd6382b43923a4c4cd4b821fcb527e6ab9e15382a3b08"
+        }
+      ],
+      "comment": "Universal-lock scopes: runtime. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/02/e7/94f8232d4a74cc99514c13a9f995811485a6903d48e5d952771ef6322e30/hyperframe-6.1.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/hyperframe@6.1.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "hyperframe",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "6.1.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-identify-2.6.19",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "6be5020c38fcb07da56c53733538a3081ea5aa70d36a156f83044bfbf9173842"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:dev. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/52/63/51723b5f116cc04b061cb6f5a561790abf249d25931d515cd375e063e0f4/identify-2.6.19.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/identify@2.6.19",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "identify",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "2.6.19"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-idna-3.18",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "ffb385a7e039654cef1ab9ef32c6fafe283c0c0467bba1d9029738ce4a14a848"
+        }
+      ],
+      "comment": "Universal-lock scopes: runtime, extra:all, extra:browser, extra:mcp, extra:server. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/cd/63/9496c57188a2ee585e0f1db071d75089a11e98aa86eb99d9d7618fc1edce/idna-3.18.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/idna@3.18",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "BSD-3-Clause",
+      "name": "idna",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "3.18"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-iniconfig-2.3.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "c76315c77db068650d49c5b56314774a7804df16fee4402c1f19d6d15d8c4730"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:dev. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/72/34/14ca021ce8e5dfedc35312d08ba8bf51fdd999c576889fc2c24cb97f4f10/iniconfig-2.3.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/iniconfig@2.3.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "iniconfig",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "2.3.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-jsonschema-4.26.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "0c26707e2efad8aa1bfc5b7ce170f3fccc2e4918ff85989ba9ffa9facb2be326"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:mcp. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/b3/fc/e067678238fa451312d4c62bf6e6cf5ec56375422aee02f9cb5f909b3047/jsonschema-4.26.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/jsonschema@4.26.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "jsonschema",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "4.26.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-jsonschema-specifications-2025.9.1",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "b540987f239e745613c7a9176f3edb72b832a4ac465cf02712288397832b5e8d"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:mcp. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/19/74/a633ee74eb36c44aa6d1095e7cc5569bebf04342ee146178e2d36600708b/jsonschema_specifications-2025.9.1.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/jsonschema-specifications@2025.9.1",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "jsonschema-specifications",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "2025.9.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-justext-3.0.2",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "13496a450c44c4cd5b5a75a5efcd9996066d2a189794ea99a49949685a0beb05"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:web. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/49/f3/45890c1b314f0d04e19c1c83d534e611513150939a7cf039664d9ab1e649/justext-3.0.2.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/justext@3.0.2",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "BSD-2-Clause",
+      "name": "justext",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "3.0.2"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-librt-0.13.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "1d2a610c14ac0d0750ee0a3ab8548e83155258387891caaca04def4bf7289781"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:dev. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/dc/2f/3908645ddddab7120b46295e541ead308109fa48dbec7d67d7a778870d60/librt-0.13.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/librt@0.13.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "librt",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "0.13.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-lxml-6.1.1",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "ba96ae44888e0185281e937633a743ea90d5a196c6000f82565ebb0580012d40"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:documents, extra:web. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/05/3b/aab6728cae887456f409b4d75e8a01856e4f04bd510de38052a47768b680/lxml-6.1.1.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/lxml@6.1.1",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "BSD-3-Clause",
+      "name": "lxml",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "6.1.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-lxml-html-clean-0.4.5",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "e2a4c7d5beedd17cd7b484d848a0571e54baa239a4f9df5546e3acba7f990560"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:web. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/0a/63/195dfdde380a84df309e3bccf4384b034b745dba43426886f7ae623b4fba/lxml_html_clean-0.4.5.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/lxml-html-clean@0.4.5",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "BSD-3-Clause",
+      "name": "lxml-html-clean",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "0.4.5"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-markdown-it-py-4.2.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "04a21681d6fbb623de53f6f364d352309d4094dd4194040a10fd51833e418d49"
+        }
+      ],
+      "comment": "Universal-lock scopes: runtime. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/06/ff/7841249c247aa650a76b9ee4bbaeae59370dc8bfd2f6c01f3630c35eb134/markdown_it_py-4.2.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/markdown-it-py@4.2.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "markdown-it-py",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "4.2.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-mcp-1.28.1",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d51e36a5f5644faea4f85ea649bfffa6bc6c26770d42798ad6a3de3d2ba69683"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:mcp. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/6e/77/9450b8f251a13affb6281997d0523c4615f8a8b35d0b21ff30db3a5aac9d/mcp-1.28.1.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/mcp@1.28.1",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "mcp",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "1.28.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-mdurl-0.1.2",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "bb413d29f5eea38f31dd4754dd7377d4465116fb207585f97bf925588687c1ba"
+        }
+      ],
+      "comment": "Universal-lock scopes: runtime. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/d6/54/cfe61301667036ec958cb99bd3efefba235e65cdeb9c84d24a8293ba1d90/mdurl-0.1.2.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/mdurl@0.1.2",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "mdurl",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "0.1.2"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-mypy-2.3.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "465965d41cd9a2726694e983e8ce7113259327bec798115d1e1dfa2a52fb666e"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:dev. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/12/af/4e516a05d3ca2eb9283e9ec45b2c02225c1514dd6da49fd3c9eaa6639370/mypy-2.3.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/mypy@2.3.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "mypy",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "2.3.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-mypy-extensions-1.1.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "52e68efc3284861e772bbcd66823fde5ae21fd2fdb51c62a211403730b916558"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:dev. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/a2/6e/371856a3fb9d31ca8dac321cda606860fa4548858c0cc45d9d1d4ca2628b/mypy_extensions-1.1.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/mypy-extensions@1.1.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "mypy-extensions",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "1.1.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-nodeenv-1.10.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "996c191ad80897d076bdfba80a41994c2b47c68e224c542b48feba42ba00f8bb"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:dev. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/24/bf/d1bda4f6168e0b2e9e5958945e01910052158313224ada5ce1fb2e1113b8/nodeenv-1.10.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/nodeenv@1.10.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "BSD-3-Clause",
+      "name": "nodeenv",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "1.10.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-openpyxl-3.1.5",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "cf0e3cf56142039133628b5acffe8ef0c12bc902d2aadd3e0fe5878dc08d1050"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:documents. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/3d/f9/88d94a75de065ea32619465d2f77b29a0469500e99012523b91cc4141cd1/openpyxl-3.1.5.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/openpyxl@3.1.5",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "openpyxl",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "3.1.5"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-outcome-1.3.0.post0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "9dcf02e65f2971b80047b377468e72a268e15c0af3cf1238e6ff14f7f91143b8"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:browser. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/98/df/77698abfac98571e65ffeb0c1fba8ffd692ab8458d617a0eed7d9a8d38f2/outcome-1.3.0.post0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/outcome@1.3.0.post0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT OR Apache-2.0",
+      "name": "outcome",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "1.3.0.post0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-packaging-26.2",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "ff452ff5a3e828ce110190feff1178bb1f2ea2281fa2075aadb987c2fb221661"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:dev. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/d7/f1/e7a6dd94a8d4a5626c03e4e99c87f241ba9e350cd9e6d75123f992427270/packaging-26.2.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/packaging@26.2",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0 OR BSD-2-Clause",
+      "name": "packaging",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "26.2"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-pathspec-1.1.1",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "17db5ecd524104a120e173814c90367a96a98d07c45b2e10c2f3919fff91bf5a"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:dev. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/5a/82/42f767fc1c1143d6fd36efb827202a2d997a375e160a71eb2888a925aac1/pathspec-1.1.1.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/pathspec@1.1.1",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MPL-2.0",
+      "name": "pathspec",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "1.1.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-pillow-12.3.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "3b8182a766685eaa002637e28b4ec8d6b18819a0c71f579bf0dbaa5830297cce"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:documents, extra:media. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/1c/3d/bb7fca845737cf9d7dbde16ed1843984665ff2e0a518f5db43e77ec540b9/pillow-12.3.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/pillow@12.3.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT-CMU",
+      "name": "pillow",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "12.3.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-platformdirs-4.10.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "31e761a6a0ca04faf7353ea759bdba55652be214725111e5aac52dfa29d4bef7"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:dev. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/d7/47/e4501f49c178ae1d9f4a75073fda4204f52647993f075a9db4d14930e0c5/platformdirs-4.10.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/platformdirs@4.10.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "platformdirs",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "4.10.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-playwright-1.61.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "ff138c3a604f69911e9d42fd036e55c2a171e5616edf04c1e7f60a2a285540b0"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:browser. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/44/ee/31e4e0db36588b817a10b299a0285082545fde7d36543c2abe498bb3d61a/playwright-1.61.0-py3-none-macosx_10_13_x86_64.whl",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/playwright@1.61.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "name": "playwright",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "1.61.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-pluggy-1.6.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "7dcc130b76258d33b90f61b658791dede3486c3e6bfb003ee5c9bfb396dd22f3"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:dev. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/f9/e2/3e91f31a7d2b083fe6ef3fa267035b518369d9511ffab804f839851d2779/pluggy-1.6.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/pluggy@1.6.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "pluggy",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "1.6.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-pre-commit-4.6.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "718d2208cef53fdc38206e40524a6d4d9576d103eb16f0fec11c875e7716e9d9"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:dev. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/8e/22/2de9408ac81acbb8a7d05d4cc064a152ccf33b3d480ebe0cd292153db239/pre_commit-4.6.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/pre-commit@4.6.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "pre-commit",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "4.6.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-pycparser-3.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "600f49d217304a5902ac3c37e1281c9fe94e4d0489de643a9504c5cdfdfc6b29"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:browser, extra:logic, extra:mcp. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/1b/7d/92392ff7815c21062bea51aa7b87d45576f649f16458d78b7cf94b9ab2e6/pycparser-3.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/pycparser@3.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "BSD-3-Clause",
+      "name": "pycparser",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "3.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-pydantic-2.13.4",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "c40756b57adaa8b1efeeced5c196f3f3b7c435f90e84ea7f443901bec8099ef6"
+        }
+      ],
+      "comment": "Universal-lock scopes: runtime, extra:all, extra:mcp, extra:server. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/18/a5/b60d21ac674192f8ab0ba4e9fd860690f9b4a6e51ca5df118733b487d8d6/pydantic-2.13.4.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/pydantic@2.13.4",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "pydantic",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "2.13.4"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-pydantic-core-2.46.4",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "62f875393d7f270851f20523dd2e29f082bcc82292d66db2b64ea71f64b6e1c1"
+        }
+      ],
+      "comment": "Universal-lock scopes: runtime, extra:all, extra:mcp, extra:server. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/9d/56/921726b776ace8d8f5db44c4ef961006580d91dc52b803c489fafd1aa249/pydantic_core-2.46.4.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/pydantic-core@2.46.4",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "pydantic-core",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "2.46.4"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-pydantic-settings-2.14.2",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "c19dd64b19097f1de80184f0cc7b0272a13ae6e170cbf240a3e27e381ed14a5f"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:mcp. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/5c/b5/8f48e906c3e0205276e8bd8cb7512217a87b2685304d64be27cad5b3019f/pydantic_settings-2.14.2.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/pydantic-settings@2.14.2",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "pydantic-settings",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "2.14.2"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-pyee-13.0.1",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "0b931f7c14535667ed4c7e0d531716368715e860b988770fc7eb8578d1f67fc8"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:browser. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/8b/04/e7c1fe4dc78a6fdbfd6c337b1c3732ff543b8a397683ab38378447baa331/pyee-13.0.1.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/pyee@13.0.1",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "pyee",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "13.0.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-pygments-2.20.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "6757cd03768053ff99f3039c1a36d6c0aa0b263438fcab17520b30a303a82b5f"
+        }
+      ],
+      "comment": "Universal-lock scopes: runtime, extra:dev. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/c3/b2/bc9c9196916376152d655522fdcebac55e66de6603a76a02bca1b6414f6c/pygments-2.20.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/pygments@2.20.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "BSD-2-Clause",
+      "name": "pygments",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "2.20.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-pyjwt-2.13.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "41571c89ca91598c79e8ef18a2d07367d4810fbbd6f637794879baf1b7703423"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:mcp. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/3b/81/58d0ac84e1ef3a3843791d6954d94c0b33d526c75eeb1efbce9d0a4c4077/pyjwt-2.13.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/pyjwt@2.13.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "pyjwt",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "2.13.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-pypdf-6.14.2",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "7873f502fe4385e79539b21d872392dc0c4e3714327c15881cbc7fbfd1f95b25"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:documents. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/03/72/7dfd5ff1c9c37de97a731701f51af091325f123d9d4270361c9c69e4431f/pypdf-6.14.2.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/pypdf@6.14.2",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "BSD-3-Clause",
+      "name": "pypdf",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "6.14.2"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-pysocks-1.7.1",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "3f8804571ebe159c380ac6de37643bb4685970655d3bba243530d6558b799aa0"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:browser. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/bd/11/293dd436aea955d45fc4e8a35b6ae7270f5b8e00b53cf6c024c83b657a11/PySocks-1.7.1.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/pysocks@1.7.1",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "BSD-3-Clause",
+      "name": "pysocks",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "1.7.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-pytest-9.1.1",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "1088fbde8f2b49d95a549a195707afa7a76a3ce9bcadc26b6d71f0ffda5fe313"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:dev. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/e4/47/b9efed96c114afcfa3c9d3fe98a76a1d14c74a9e266d397cf6eb64be5e01/pytest-9.1.1.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/pytest@9.1.1",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "pytest",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "9.1.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-pytest-asyncio-1.4.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "c6c0d2259945122819f171a32ecea2c349ead889ee28176caaf492143424be42"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:dev. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/43/7c/d36d04db312ecf4298932ef77e6e4a9e8ad017906e24e34f0b0c361a2473/pytest_asyncio-1.4.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/pytest-asyncio@1.4.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "name": "pytest-asyncio",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "1.4.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-python-dateutil-2.9.0.post0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:web. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/66/c0/0c8b6ad9f17a802ee498c46e004a0eb49bc148f2fd230864601a86dcf6db/python-dateutil-2.9.0.post0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/python-dateutil@2.9.0.post0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0 OR BSD-3-Clause",
+      "name": "python-dateutil",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "2.9.0.post0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-python-discovery-1.4.4",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "5cad33982d412c1f3ffb8f9ca4ea292c9680bca3942451d30b69c37fce53a4a3"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:dev. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/4c/81/58c70036dffeccb7fe7d79d6260c69f7a28272bbd3909c29a01ea9422744/python_discovery-1.4.4.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/python-discovery@1.4.4",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "python-discovery",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "1.4.4"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-python-docx-1.2.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "7bc9d7b7d8a69c9c02ca09216118c86552704edc23bac179283f2e38f86220ce"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:documents. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/a9/f7/eddfe33871520adab45aaa1a71f0402a2252050c14c7e3009446c8f4701c/python_docx-1.2.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/python-docx@1.2.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "python-docx",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "1.2.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-python-dotenv-1.2.2",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "2c371a91fbd7ba082c2c1dc1f8bf89ca22564a087c2c287cd9b662adde799cf3"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:mcp. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/82/ed/0301aeeac3e5353ef3d94b6ec08bbcabd04a72018415dcb29e588514bba8/python_dotenv-1.2.2.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/python-dotenv@1.2.2",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "BSD-3-Clause",
+      "name": "python-dotenv",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "1.2.2"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-python-multipart-0.0.32",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "be54b7f3fa167bb83e4fcd936b887b708f4e57fe75911c02aebf53efaf8d938e"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:mcp. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/5b/42/55c32bb9b12693c092ad250a0e82edb5b31ddeda6eb772de5f308b3804ad/python_multipart-0.0.32.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/python-multipart@0.0.32",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "name": "python-multipart",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "0.0.32"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-python-pptx-1.0.2",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "479a8af0eaf0f0d76b6f00b0887732874ad2e3188230315290cd1f9dd9cc7095"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:documents. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/52/a9/0c0db8d37b2b8a645666f7fd8accea4c6224e013c42b1d5c17c93590cd06/python_pptx-1.0.2.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/python-pptx@1.0.2",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "python-pptx",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "1.0.2"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-pytz-2026.2",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "0e60b47b29f21574376f218fe21abc009894a2321ea16c6754f3cad6eb7cdd6a"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:web. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/ff/46/dd499ec9038423421951e4fad73051febaa13d2df82b4064f87af8b8c0c3/pytz-2026.2.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/pytz@2026.2",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "pytz",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "2026.2"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-pywin32-312",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "dab4f65ac9c4e48400a2a0530c46c3c579cd5905ecd11b80692373915269208b"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:mcp. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion. Review note: Upstream states that files use a mixture of licenses; PSF-2.0 is package metadata, and bundled notices remain authoritative.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/83/ff/32aa7d2ed0ab12b323aaa64f9b75e6ad4f8fd09f9ccfc28c79414d46838d/pywin32-312-cp312-cp312-win32.whl",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/pywin32@312",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "PSF-2.0",
+      "name": "pywin32",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "312"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-pyyaml-6.0.3",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d76623373421df22fb4cf8817020cbb7ef15c725b9d5e45f17e189bfc384190f"
+        }
+      ],
+      "comment": "Universal-lock scopes: runtime, extra:dev. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/05/8e/961c0007c59b8dd7729d542c61a4d537767a59645b82a0b521206e1e25c2/pyyaml-6.0.3.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/pyyaml@6.0.3",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "pyyaml",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "6.0.3"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-readability-lxml-0.8.4.1",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "9d2924f5942dd7f37fb4da353263b22a3e877ccf922d0e45e348e4177b035a53"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:web. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/55/3e/dc87d97532ddad58af786ec89c7036182e352574c1cba37bf2bf783d2b15/readability_lxml-0.8.4.1.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/readability-lxml@0.8.4.1",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "name": "readability-lxml",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "0.8.4.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-referencing-0.37.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "44aefc3142c5b842538163acb373e24cce6632bd54bdb01b21ad5863489f50d8"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:mcp. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/22/f5/df4e9027acead3ecc63e50fe1e36aca1523e1719559c499951bb4b53188f/referencing-0.37.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/referencing@0.37.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "referencing",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "0.37.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-regex-2026.7.10",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "1050fedf0a8a92e843971120c2f57c3a99bea86c0dfa1d63a9fac053fe54b135"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:web. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/7b/37/451aaddbf50922f34d744ad5ca919ae1fcfac112123885d9728f52a484b3/regex-2026.7.10.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/regex@2026.7.10",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0 AND CNRI-Python",
+      "name": "regex",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "2026.7.10"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-rich-15.0.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "edd07a4824c6b40189fb7ac9bc4c52536e9780fbbfbddf6f1e2502c31b068c36"
+        }
+      ],
+      "comment": "Universal-lock scopes: runtime. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/c0/8f/0722ca900cc807c13a6a0c696dacf35430f72e0ec571c4275d2371fca3e9/rich-15.0.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/rich@15.0.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "rich",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "15.0.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-rpds-py-2026.6.3",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "1cebd1337c242e4ec2293e541f712b2da849b29f48f0c293684b71c0632625d4"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:mcp. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/aa/2a/9618a122aeb2a169a28b03889a2995fe297588964333d4a7d67bdf46e147/rpds_py-2026.6.3.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/rpds-py@2026.6.3",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "rpds-py",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "2026.6.3"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-ruff-0.15.21",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d0cfc841c572283c36548f82664a54ce6565567f1b0d5b4cf2caac693d8b7500"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:dev. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/0f/36/6f65aa9989acdec45d417192d8f4e7921931d8a6cf87ac74bce3eed98a8e/ruff-0.15.21.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/ruff@0.15.21",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "ruff",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "0.15.21"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-selenium-4.46.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "54f7e1a4df5f7508ac8c38ce2ea584db1b27083dd79962b22524219219df5cbe"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:browser. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/a0/53/053df98ef0c38535a74ea732217eb2dbfddc7ff5442a47a4b315ba577f85/selenium-4.46.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/selenium@4.46.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "name": "selenium",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "4.46.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-sgmllib3k-1.0.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "7868fb1c8bfa764c1ac563d3cf369c381d1325d36124933a726f29fcdaa812e9"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:web. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion. Review note: PyPI declares only BSD License without identifying the exact BSD variant; resolve the variant before redistribution.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/9e/bd/3704a8c3e0942d711c1299ebf7b9091930adae6675d7c8f476a7ce48653c/sgmllib3k-1.0.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/sgmllib3k@1.0.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "LicenseRef-BSD-Unknown",
+      "name": "sgmllib3k",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "1.0.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-shellingham-1.5.4",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "8dbca0739d487e5bd35ab3ca4b36e11c4078f3a234bfce294b0a0291363404de"
+        }
+      ],
+      "comment": "Universal-lock scopes: runtime. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/58/15/8b3609fd3830ef7b27b655beb4b4e9c62313a4e8da8c676e142cc210d58e/shellingham-1.5.4.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/shellingham@1.5.4",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "ISC",
+      "name": "shellingham",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "1.5.4"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-six-1.17.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "ff70335d468e7eb6ec65b95b99d3a2836546063f63acc5171de367e834932a81"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:web. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/94/e7/b2c673351809dca68a0e064b6af791aa332cf192da575fd474ed7d6f16a2/six-1.17.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/six@1.17.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "six",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "1.17.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-sniffio-1.3.1",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "f4324edc670a0f49750a81b895f35c3adb843cca46f0530f79fc1babb23789dc"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:browser. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/a2/87/a6771e1546d97e7e041b6ae58d80074f81b7d5121207425c964ddf5cfdbd/sniffio-1.3.1.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/sniffio@1.3.1",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT OR Apache-2.0",
+      "name": "sniffio",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "1.3.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-sortedcontainers-2.4.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "25caa5a06cc30b6b83d11423433f65d1f9d76c4c6a0c90e3379eaa43b9bfdb88"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:browser. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/e8/c4/ba2f8066cceb6f23394729afe52f3bf7adec04bf9ed2c820b39e19299111/sortedcontainers-2.4.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/sortedcontainers@2.4.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "name": "sortedcontainers",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "2.4.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-soupsieve-2.8.4",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "e121fd02e975c695e4e9e8774a5ee35d74714b59307868dcc5319ad2d9e3328e"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:web. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/47/2c/0a5f6f8ee0d5589e48c7640213ed5175d52cf540a06725b628cc1a45d6ce/soupsieve-2.8.4.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/soupsieve@2.8.4",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "soupsieve",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "2.8.4"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-sqlalchemy-2.0.51",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "804dccd8a4a6242c4e30ad961e540e18a588f6527202f2d6791b01845d59fdc9"
+        }
+      ],
+      "comment": "Universal-lock scopes: runtime. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/02/f1/a7a892f18d4d224e6b26f706531eafccc41e37594d37d304786969ee13cb/sqlalchemy-2.0.51.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/sqlalchemy@2.0.51",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "sqlalchemy",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "2.0.51"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-sse-starlette-3.4.5",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "83072538bc211a2f68b7b0422226c4af3e9b62e106e07034664b832ca019842a"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:mcp. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/d2/1b/bc9e3e7a72dcdad7dc7888758f5d00f56f8909ed5cfdff822bd72bb4c520/sse_starlette-3.4.5.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/sse-starlette@3.4.5",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "BSD-3-Clause",
+      "name": "sse-starlette",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "3.4.5"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-starlette-1.3.1",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "05d0213193f2fbaae60e2ecb593b4add4262ad4e46536b54abe36f11a71724e0"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:mcp, extra:server. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/eb/e3/7c1dc7381d9f8ab7d854328ebfa884e62cb3f3d8549ddfd37c7814f42afa/starlette-1.3.1.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/starlette@1.3.1",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "BSD-3-Clause",
+      "name": "starlette",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "1.3.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-tld-0.13.2",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d983fa92b9d717400742fca844e29d5e18271079c7bcfabf66d01b39b4a14345"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:web. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion. Review note: The upstream declaration is a disjunctive choice that includes GPL and LGPL alternatives; preserve the chosen license and notices when redistributing.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/5c/5d/76b4383ac4e5b5e254e50c09807b3e13820bed6d6c11cd540264988d6802/tld-0.13.2.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/tld@0.13.2",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MPL-1.1 OR GPL-2.0-only OR LGPL-2.1-or-later",
+      "name": "tld",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "0.13.2"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-trafilatura-2.1.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "f689e2116fc89c7bc0b9a296d01dcfe2eb0b5455f8c371a77dc0db1f06a05643"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:web. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/e8/19/24833e905df2d80e3bb67424f95febcc17709a1f61a522120bc438afca70/trafilatura-2.1.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/trafilatura@2.1.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "name": "trafilatura",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "2.1.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-trio-0.33.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "a29b92b73f09d4b48ed249acd91073281a7f1063f09caba5dc70465b5c7aa970"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:browser. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/52/b6/c744031c6f89b18b3f5f4f7338603ab381d740a7f45938c4607b2302481f/trio-0.33.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/trio@0.33.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT OR Apache-2.0",
+      "name": "trio",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "0.33.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-trio-websocket-0.12.2",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "22c72c436f3d1e264d0910a3951934798dcc5b00ae56fc4ee079d46c7cf20fae"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:browser. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/d1/3c/8b4358e81f2f2cfe71b66a267f023a91db20a817b9425dd964873796980a/trio_websocket-0.12.2.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/trio-websocket@0.12.2",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "trio-websocket",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "0.12.2"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-typer-0.27.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "629bd12ea5d13a17148125d9a264f949eb171fb3f120f9b04d85873cab054fa5"
+        }
+      ],
+      "comment": "Universal-lock scopes: runtime. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/37/78/fda3361b56efc27944f24225f6ecd13d96d6fcfe37bd0eb34e2f4c63f9fc/typer-0.27.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/typer@0.27.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "typer",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "0.27.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-types-openpyxl-3.1.5.20260518",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "da9cd644e4e80215a3f60a8c2c2c8e980e941a9b581cffa3876285aa791ca5af"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:dev. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/f5/d1/a1e23040a758746ad5bb6b8849a011c3c901775618bc7e1fec3a1a8b7142/types_openpyxl-3.1.5.20260518.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/types-openpyxl@3.1.5.20260518",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "name": "types-openpyxl",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "3.1.5.20260518"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-types-pyyaml-6.0.12.20260518",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "d917f83fb38462550338c1297faedd860b3ec83912b96b1e3d73255f7473e466"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:dev. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/b8/83/4a1afc3fbfcf5b8d46fc390cd95ed6b0dc9010a265f4e9f46314efffa37a/types_pyyaml-6.0.12.20260518.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/types-pyyaml@6.0.12.20260518",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "name": "types-pyyaml",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "6.0.12.20260518"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-typing-extensions-4.16.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "dc983d19a509c94dba722ee6abd33940f7c05a89e243c47e907eb4db6f1a43e5"
+        }
+      ],
+      "comment": "Universal-lock scopes: runtime, extra:all, extra:browser, extra:dev, extra:documents, extra:mcp, extra:server, extra:web. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/f6/cc/6253133b5bb138fc3306cebfbda2c520f545d36b5be2c7255cc528bb45d6/typing_extensions-4.16.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/typing-extensions@4.16.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "PSF-2.0",
+      "name": "typing-extensions",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "4.16.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-typing-inspection-0.4.2",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "ba561c48a67c5958007083d386c3295464928b01faa735ab8547c5692e87f464"
+        }
+      ],
+      "comment": "Universal-lock scopes: runtime, extra:all, extra:mcp, extra:server. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/55/e3/70399cb7dd41c10ac53367ae42139cf4b1ca5f36bb3dc6c9d33acdb43655/typing_inspection-0.4.2.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/typing-inspection@0.4.2",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "typing-inspection",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "0.4.2"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-tzdata-2026.3",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "4a1518b8993086a7982523e071643f3c0e5f213e75b21318e78bcabfff9d1415"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:web. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/92/ff/5a28bdfd8c3ebec42564ac7d0e54ca3db65044a9314a97f9564fa7a1e926/tzdata-2026.3.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/tzdata@2026.3",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "name": "tzdata",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "2026.3"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-tzlocal-5.4.4",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "8dbb8660838688a7b6ba4fed31d18dedf842afb4d47ca050d6d891c2c15f3be4"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:web. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/81/5b/879b2f932adfa7a053c360d50bc896c977fa6426109185f7c12ebdd0cb9d/tzlocal-5.4.4.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/tzlocal@5.4.4",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "tzlocal",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "5.4.4"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-urllib3-2.7.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "231e0ec3b63ceb14667c67be60f2f2c40a518cb38b03af60abc813da26505f4c"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:browser, extra:web. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/53/0c/06f8b233b8fd13b9e5ee11424ef85419ba0d8ba0b3138bf360be2ff56953/urllib3-2.7.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/urllib3@2.7.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "urllib3",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "2.7.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-uvicorn-0.51.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "f6f4b69b657c312f516dd2d268ab9ae6f254b11e4bac504f37b2ab58b24dd0b0"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:mcp, extra:server. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/a2/65/b7c6c443ccc58678c91e1e973bbe2a878591538655d6e1d47f24ba1c51f3/uvicorn-0.51.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/uvicorn@0.51.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "BSD-3-Clause",
+      "name": "uvicorn",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "0.51.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-virtualenv-21.6.1",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "15f978b7cd329f24855ff4a0c4b4899cc7678589f49adbdcbbb4d3232e641128"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:dev. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/34/d9/b477fddb68840b570af8b22afe9b035cbc277b5fb7b33dea390617a8b10f/virtualenv-21.6.1.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/virtualenv@21.6.1",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "virtualenv",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "21.6.1"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-websocket-client-1.9.0",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "9e813624b6eb619999a97dc7958469217c3176312b3a16a4bd1bc7e08a46ec98"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:browser. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/2c/41/aa4bf9664e4cda14c3b39865b12251e8e7d239f4cd0e3cc1b6c2ccde25c1/websocket_client-1.9.0.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/websocket-client@1.9.0",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Apache-2.0",
+      "name": "websocket-client",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "1.9.0"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-wsproto-1.3.2",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "b86885dcf294e15204919950f666e06ffc6c7c114ca900b060d6e16293528294"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:browser. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/c7/79/12135bdf8b9c9367b8701c2c19a14c913c120b882d50b014ca0d38083c2c/wsproto-1.3.2.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/wsproto@1.3.2",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "MIT",
+      "name": "wsproto",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "1.3.2"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-xlsxwriter-3.2.9",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "254b1c37a368c444eac6e2f867405cc9e461b0ed97a3233b2ac1e574efb4140c"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:documents. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/46/2c/c06ef49dc36e7954e55b802a8b231770d286a9758b3d936bd1e04ce5ba88/xlsxwriter-3.2.9.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/xlsxwriter@3.2.9",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "BSD-2-Clause",
+      "name": "xlsxwriter",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "3.2.9"
+    },
+    {
+      "SPDXID": "SPDXRef-Package-yt-dlp-2026.7.4",
+      "checksums": [
+        {
+          "algorithm": "SHA256",
+          "checksumValue": "b094813404f87a9dd2186f00815231df32e5fd8a5403be0f807b3bb2d21a4432"
+        }
+      ],
+      "comment": "Universal-lock scopes: extra:all, extra:media. LicenseConcluded remains NOASSERTION because this engineering inventory is not a legal conclusion.",
+      "copyrightText": "NOASSERTION",
+      "downloadLocation": "https://files.pythonhosted.org/packages/47/c5/9972af4b472b0d55badf841ebafd2f98944cb0ae0f46e11d01f363ea5b91/yt_dlp-2026.7.4.tar.gz",
+      "externalRefs": [
+        {
+          "referenceCategory": "PACKAGE-MANAGER",
+          "referenceLocator": "pkg:pypi/yt-dlp@2026.7.4",
+          "referenceType": "purl"
+        }
+      ],
+      "filesAnalyzed": false,
+      "licenseConcluded": "NOASSERTION",
+      "licenseDeclared": "Unlicense",
+      "name": "yt-dlp",
+      "primaryPackagePurpose": "LIBRARY",
+      "versionInfo": "2026.7.4"
+    }
+  ],
+  "relationships": [
+    {
+      "relatedSpdxElement": "SPDXRef-Package-fetech",
+      "relationshipType": "DESCRIBES",
+      "spdxElementId": "SPDXRef-DOCUMENT"
+    },
+    {
+      "comment": "Direct dependency scopes: runtime.",
+      "relatedSpdxElement": "SPDXRef-Package-aiosqlite-0.22.1",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-fetech"
+    },
+    {
+      "comment": "Direct dependency scopes: extra:all, extra:web.",
+      "relatedSpdxElement": "SPDXRef-Package-fetech",
+      "relationshipType": "OPTIONAL_DEPENDENCY_OF",
+      "spdxElementId": "SPDXRef-Package-beautifulsoup4-4.15.0"
+    },
+    {
+      "comment": "Direct dependency scopes: extra:all, extra:logic.",
+      "relatedSpdxElement": "SPDXRef-Package-fetech",
+      "relationshipType": "OPTIONAL_DEPENDENCY_OF",
+      "spdxElementId": "SPDXRef-Package-clingo-5.8.0"
+    },
+    {
+      "comment": "Direct dependency scopes: extra:dev.",
+      "relatedSpdxElement": "SPDXRef-Package-fetech",
+      "relationshipType": "DEV_DEPENDENCY_OF",
+      "spdxElementId": "SPDXRef-Package-coverage-7.15.2"
+    },
+    {
+      "comment": "Direct dependency scopes: extra:all, extra:server.",
+      "relatedSpdxElement": "SPDXRef-Package-fetech",
+      "relationshipType": "OPTIONAL_DEPENDENCY_OF",
+      "spdxElementId": "SPDXRef-Package-fastapi-0.139.1"
+    },
+    {
+      "comment": "Direct dependency scopes: extra:all, extra:web.",
+      "relatedSpdxElement": "SPDXRef-Package-fetech",
+      "relationshipType": "OPTIONAL_DEPENDENCY_OF",
+      "spdxElementId": "SPDXRef-Package-feedparser-6.0.12"
+    },
+    {
+      "comment": "Direct dependency scopes: runtime.",
+      "relatedSpdxElement": "SPDXRef-Package-httpx-0.28.1",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-fetech"
+    },
+    {
+      "comment": "Direct dependency scopes: extra:all, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-fetech",
+      "relationshipType": "OPTIONAL_DEPENDENCY_OF",
+      "spdxElementId": "SPDXRef-Package-mcp-1.28.1"
+    },
+    {
+      "comment": "Direct dependency scopes: extra:dev.",
+      "relatedSpdxElement": "SPDXRef-Package-fetech",
+      "relationshipType": "DEV_DEPENDENCY_OF",
+      "spdxElementId": "SPDXRef-Package-mypy-2.3.0"
+    },
+    {
+      "comment": "Direct dependency scopes: extra:all, extra:documents.",
+      "relatedSpdxElement": "SPDXRef-Package-fetech",
+      "relationshipType": "OPTIONAL_DEPENDENCY_OF",
+      "spdxElementId": "SPDXRef-Package-openpyxl-3.1.5"
+    },
+    {
+      "comment": "Direct dependency scopes: extra:all, extra:media.",
+      "relatedSpdxElement": "SPDXRef-Package-fetech",
+      "relationshipType": "OPTIONAL_DEPENDENCY_OF",
+      "spdxElementId": "SPDXRef-Package-pillow-12.3.0"
+    },
+    {
+      "comment": "Direct dependency scopes: extra:all, extra:browser.",
+      "relatedSpdxElement": "SPDXRef-Package-fetech",
+      "relationshipType": "OPTIONAL_DEPENDENCY_OF",
+      "spdxElementId": "SPDXRef-Package-playwright-1.61.0"
+    },
+    {
+      "comment": "Direct dependency scopes: extra:dev.",
+      "relatedSpdxElement": "SPDXRef-Package-fetech",
+      "relationshipType": "DEV_DEPENDENCY_OF",
+      "spdxElementId": "SPDXRef-Package-pre-commit-4.6.0"
+    },
+    {
+      "comment": "Direct dependency scopes: runtime.",
+      "relatedSpdxElement": "SPDXRef-Package-pydantic-2.13.4",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-fetech"
+    },
+    {
+      "comment": "Direct dependency scopes: extra:all, extra:documents.",
+      "relatedSpdxElement": "SPDXRef-Package-fetech",
+      "relationshipType": "OPTIONAL_DEPENDENCY_OF",
+      "spdxElementId": "SPDXRef-Package-pypdf-6.14.2"
+    },
+    {
+      "comment": "Direct dependency scopes: extra:dev.",
+      "relatedSpdxElement": "SPDXRef-Package-fetech",
+      "relationshipType": "DEV_DEPENDENCY_OF",
+      "spdxElementId": "SPDXRef-Package-pytest-9.1.1"
+    },
+    {
+      "comment": "Direct dependency scopes: extra:dev.",
+      "relatedSpdxElement": "SPDXRef-Package-fetech",
+      "relationshipType": "DEV_DEPENDENCY_OF",
+      "spdxElementId": "SPDXRef-Package-pytest-asyncio-1.4.0"
+    },
+    {
+      "comment": "Direct dependency scopes: extra:all, extra:documents.",
+      "relatedSpdxElement": "SPDXRef-Package-fetech",
+      "relationshipType": "OPTIONAL_DEPENDENCY_OF",
+      "spdxElementId": "SPDXRef-Package-python-docx-1.2.0"
+    },
+    {
+      "comment": "Direct dependency scopes: extra:all, extra:documents.",
+      "relatedSpdxElement": "SPDXRef-Package-fetech",
+      "relationshipType": "OPTIONAL_DEPENDENCY_OF",
+      "spdxElementId": "SPDXRef-Package-python-pptx-1.0.2"
+    },
+    {
+      "comment": "Direct dependency scopes: runtime.",
+      "relatedSpdxElement": "SPDXRef-Package-pyyaml-6.0.3",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-fetech"
+    },
+    {
+      "comment": "Direct dependency scopes: extra:all, extra:web.",
+      "relatedSpdxElement": "SPDXRef-Package-fetech",
+      "relationshipType": "OPTIONAL_DEPENDENCY_OF",
+      "spdxElementId": "SPDXRef-Package-readability-lxml-0.8.4.1"
+    },
+    {
+      "comment": "Direct dependency scopes: extra:dev.",
+      "relatedSpdxElement": "SPDXRef-Package-fetech",
+      "relationshipType": "DEV_DEPENDENCY_OF",
+      "spdxElementId": "SPDXRef-Package-ruff-0.15.21"
+    },
+    {
+      "comment": "Direct dependency scopes: extra:all, extra:browser.",
+      "relatedSpdxElement": "SPDXRef-Package-fetech",
+      "relationshipType": "OPTIONAL_DEPENDENCY_OF",
+      "spdxElementId": "SPDXRef-Package-selenium-4.46.0"
+    },
+    {
+      "comment": "Direct dependency scopes: runtime.",
+      "relatedSpdxElement": "SPDXRef-Package-sqlalchemy-2.0.51",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-fetech"
+    },
+    {
+      "comment": "Direct dependency scopes: extra:all, extra:web.",
+      "relatedSpdxElement": "SPDXRef-Package-fetech",
+      "relationshipType": "OPTIONAL_DEPENDENCY_OF",
+      "spdxElementId": "SPDXRef-Package-trafilatura-2.1.0"
+    },
+    {
+      "comment": "Direct dependency scopes: runtime.",
+      "relatedSpdxElement": "SPDXRef-Package-typer-0.27.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-fetech"
+    },
+    {
+      "comment": "Direct dependency scopes: extra:dev.",
+      "relatedSpdxElement": "SPDXRef-Package-fetech",
+      "relationshipType": "DEV_DEPENDENCY_OF",
+      "spdxElementId": "SPDXRef-Package-types-openpyxl-3.1.5.20260518"
+    },
+    {
+      "comment": "Direct dependency scopes: extra:dev.",
+      "relatedSpdxElement": "SPDXRef-Package-fetech",
+      "relationshipType": "DEV_DEPENDENCY_OF",
+      "spdxElementId": "SPDXRef-Package-types-pyyaml-6.0.12.20260518"
+    },
+    {
+      "comment": "Direct dependency scopes: extra:all, extra:server.",
+      "relatedSpdxElement": "SPDXRef-Package-fetech",
+      "relationshipType": "OPTIONAL_DEPENDENCY_OF",
+      "spdxElementId": "SPDXRef-Package-uvicorn-0.51.0"
+    },
+    {
+      "comment": "Direct dependency scopes: extra:all, extra:media.",
+      "relatedSpdxElement": "SPDXRef-Package-fetech",
+      "relationshipType": "OPTIONAL_DEPENDENCY_OF",
+      "spdxElementId": "SPDXRef-Package-yt-dlp-2026.7.4"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: runtime, extra:all, extra:mcp, extra:server.",
+      "relatedSpdxElement": "SPDXRef-Package-idna-3.18",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-anyio-4.14.2"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: runtime, extra:all, extra:mcp, extra:server.",
+      "relatedSpdxElement": "SPDXRef-Package-typing-extensions-4.16.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-anyio-4.14.2"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:web.",
+      "relatedSpdxElement": "SPDXRef-Package-soupsieve-2.8.4",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-beautifulsoup4-4.15.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:web.",
+      "relatedSpdxElement": "SPDXRef-Package-typing-extensions-4.16.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-beautifulsoup4-4.15.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:browser, extra:logic, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-pycparser-3.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-cffi-2.1.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:mcp, extra:server.",
+      "relatedSpdxElement": "SPDXRef-Package-colorama-0.4.6",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-click-8.4.2"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:logic.",
+      "relatedSpdxElement": "SPDXRef-Package-cffi-2.1.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-clingo-5.8.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:web.",
+      "relatedSpdxElement": "SPDXRef-Package-babel-2.18.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-courlan-1.4.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:web.",
+      "relatedSpdxElement": "SPDXRef-Package-tld-0.13.2",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-courlan-1.4.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:web.",
+      "relatedSpdxElement": "SPDXRef-Package-urllib3-2.7.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-courlan-1.4.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-cffi-2.1.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-cryptography-49.0.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:web.",
+      "relatedSpdxElement": "SPDXRef-Package-python-dateutil-2.9.0.post0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-dateparser-1.4.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:web.",
+      "relatedSpdxElement": "SPDXRef-Package-pytz-2026.2",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-dateparser-1.4.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:web.",
+      "relatedSpdxElement": "SPDXRef-Package-regex-2026.7.10",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-dateparser-1.4.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:web.",
+      "relatedSpdxElement": "SPDXRef-Package-tzlocal-5.4.4",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-dateparser-1.4.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:server.",
+      "relatedSpdxElement": "SPDXRef-Package-annotated-doc-0.0.4",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-fastapi-0.139.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:server.",
+      "relatedSpdxElement": "SPDXRef-Package-pydantic-2.13.4",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-fastapi-0.139.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:server.",
+      "relatedSpdxElement": "SPDXRef-Package-starlette-1.3.1",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-fastapi-0.139.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:server.",
+      "relatedSpdxElement": "SPDXRef-Package-typing-extensions-4.16.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-fastapi-0.139.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:server.",
+      "relatedSpdxElement": "SPDXRef-Package-typing-inspection-0.4.2",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-fastapi-0.139.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:web.",
+      "relatedSpdxElement": "SPDXRef-Package-sgmllib3k-1.0.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-feedparser-6.0.12"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: runtime.",
+      "relatedSpdxElement": "SPDXRef-Package-hpack-4.2.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-h2-4.3.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: runtime.",
+      "relatedSpdxElement": "SPDXRef-Package-hyperframe-6.1.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-h2-4.3.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:web.",
+      "relatedSpdxElement": "SPDXRef-Package-charset-normalizer-3.4.9",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-htmldate-1.10.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:web.",
+      "relatedSpdxElement": "SPDXRef-Package-dateparser-1.4.1",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-htmldate-1.10.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:web.",
+      "relatedSpdxElement": "SPDXRef-Package-lxml-6.1.1",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-htmldate-1.10.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:web.",
+      "relatedSpdxElement": "SPDXRef-Package-python-dateutil-2.9.0.post0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-htmldate-1.10.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:web.",
+      "relatedSpdxElement": "SPDXRef-Package-urllib3-2.7.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-htmldate-1.10.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: runtime, extra:all, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-certifi-2026.6.17",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-httpcore-1.0.9"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: runtime, extra:all, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-h11-0.16.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-httpcore-1.0.9"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: runtime, extra:all, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-anyio-4.14.2",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-httpx-0.28.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: runtime, extra:all, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-certifi-2026.6.17",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-httpx-0.28.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: runtime.",
+      "relatedSpdxElement": "SPDXRef-Package-h2-4.3.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-httpx-0.28.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: runtime, extra:all, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-httpcore-1.0.9",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-httpx-0.28.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: runtime, extra:all, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-idna-3.18",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-httpx-0.28.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-attrs-26.1.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-jsonschema-4.26.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-jsonschema-specifications-2025.9.1",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-jsonschema-4.26.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-referencing-0.37.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-jsonschema-4.26.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-rpds-py-2026.6.3",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-jsonschema-4.26.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-referencing-0.37.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-jsonschema-specifications-2025.9.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:web.",
+      "relatedSpdxElement": "SPDXRef-Package-lxml-6.1.1",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-justext-3.0.2"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:web.",
+      "relatedSpdxElement": "SPDXRef-Package-lxml-html-clean-0.4.5",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-lxml-6.1.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:web.",
+      "relatedSpdxElement": "SPDXRef-Package-lxml-6.1.1",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-lxml-html-clean-0.4.5"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: runtime.",
+      "relatedSpdxElement": "SPDXRef-Package-mdurl-0.1.2",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-markdown-it-py-4.2.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-anyio-4.14.2",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-mcp-1.28.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-httpx-0.28.1",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-mcp-1.28.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-httpx-sse-0.4.3",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-mcp-1.28.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-jsonschema-4.26.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-mcp-1.28.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-pydantic-2.13.4",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-mcp-1.28.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-pydantic-settings-2.14.2",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-mcp-1.28.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-pyjwt-2.13.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-mcp-1.28.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-python-multipart-0.0.32",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-mcp-1.28.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-pywin32-312",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-mcp-1.28.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-sse-starlette-3.4.5",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-mcp-1.28.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-starlette-1.3.1",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-mcp-1.28.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-typing-extensions-4.16.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-mcp-1.28.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-typing-inspection-0.4.2",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-mcp-1.28.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-uvicorn-0.51.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-mcp-1.28.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:dev.",
+      "relatedSpdxElement": "SPDXRef-Package-ast-serialize-0.6.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-mypy-2.3.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:dev.",
+      "relatedSpdxElement": "SPDXRef-Package-librt-0.13.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-mypy-2.3.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:dev.",
+      "relatedSpdxElement": "SPDXRef-Package-mypy-extensions-1.1.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-mypy-2.3.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:dev.",
+      "relatedSpdxElement": "SPDXRef-Package-pathspec-1.1.1",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-mypy-2.3.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:dev.",
+      "relatedSpdxElement": "SPDXRef-Package-typing-extensions-4.16.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-mypy-2.3.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:documents.",
+      "relatedSpdxElement": "SPDXRef-Package-et-xmlfile-2.0.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-openpyxl-3.1.5"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:browser.",
+      "relatedSpdxElement": "SPDXRef-Package-attrs-26.1.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-outcome-1.3.0.post0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:browser.",
+      "relatedSpdxElement": "SPDXRef-Package-greenlet-3.5.3",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-playwright-1.61.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:browser.",
+      "relatedSpdxElement": "SPDXRef-Package-pyee-13.0.1",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-playwright-1.61.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:dev.",
+      "relatedSpdxElement": "SPDXRef-Package-cfgv-3.5.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-pre-commit-4.6.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:dev.",
+      "relatedSpdxElement": "SPDXRef-Package-identify-2.6.19",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-pre-commit-4.6.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:dev.",
+      "relatedSpdxElement": "SPDXRef-Package-nodeenv-1.10.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-pre-commit-4.6.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:dev.",
+      "relatedSpdxElement": "SPDXRef-Package-pyyaml-6.0.3",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-pre-commit-4.6.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:dev.",
+      "relatedSpdxElement": "SPDXRef-Package-virtualenv-21.6.1",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-pre-commit-4.6.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: runtime, extra:all, extra:mcp, extra:server.",
+      "relatedSpdxElement": "SPDXRef-Package-annotated-types-0.7.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-pydantic-2.13.4"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: runtime, extra:all, extra:mcp, extra:server.",
+      "relatedSpdxElement": "SPDXRef-Package-pydantic-core-2.46.4",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-pydantic-2.13.4"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: runtime, extra:all, extra:mcp, extra:server.",
+      "relatedSpdxElement": "SPDXRef-Package-typing-extensions-4.16.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-pydantic-2.13.4"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: runtime, extra:all, extra:mcp, extra:server.",
+      "relatedSpdxElement": "SPDXRef-Package-typing-inspection-0.4.2",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-pydantic-2.13.4"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: runtime, extra:all, extra:mcp, extra:server.",
+      "relatedSpdxElement": "SPDXRef-Package-typing-extensions-4.16.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-pydantic-core-2.46.4"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-pydantic-2.13.4",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-pydantic-settings-2.14.2"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-python-dotenv-1.2.2",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-pydantic-settings-2.14.2"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-typing-inspection-0.4.2",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-pydantic-settings-2.14.2"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:browser.",
+      "relatedSpdxElement": "SPDXRef-Package-typing-extensions-4.16.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-pyee-13.0.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-cryptography-49.0.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-pyjwt-2.13.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:dev.",
+      "relatedSpdxElement": "SPDXRef-Package-colorama-0.4.6",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-pytest-9.1.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:dev.",
+      "relatedSpdxElement": "SPDXRef-Package-iniconfig-2.3.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-pytest-9.1.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:dev.",
+      "relatedSpdxElement": "SPDXRef-Package-packaging-26.2",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-pytest-9.1.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:dev.",
+      "relatedSpdxElement": "SPDXRef-Package-pluggy-1.6.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-pytest-9.1.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:dev.",
+      "relatedSpdxElement": "SPDXRef-Package-pygments-2.20.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-pytest-9.1.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:dev.",
+      "relatedSpdxElement": "SPDXRef-Package-pytest-9.1.1",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-pytest-asyncio-1.4.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:dev.",
+      "relatedSpdxElement": "SPDXRef-Package-typing-extensions-4.16.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-pytest-asyncio-1.4.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:web.",
+      "relatedSpdxElement": "SPDXRef-Package-six-1.17.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-python-dateutil-2.9.0.post0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:dev.",
+      "relatedSpdxElement": "SPDXRef-Package-filelock-3.30.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-python-discovery-1.4.4"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:dev.",
+      "relatedSpdxElement": "SPDXRef-Package-platformdirs-4.10.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-python-discovery-1.4.4"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:documents.",
+      "relatedSpdxElement": "SPDXRef-Package-lxml-6.1.1",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-python-docx-1.2.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:documents.",
+      "relatedSpdxElement": "SPDXRef-Package-typing-extensions-4.16.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-python-docx-1.2.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:documents.",
+      "relatedSpdxElement": "SPDXRef-Package-lxml-6.1.1",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-python-pptx-1.0.2"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:documents.",
+      "relatedSpdxElement": "SPDXRef-Package-pillow-12.3.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-python-pptx-1.0.2"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:documents.",
+      "relatedSpdxElement": "SPDXRef-Package-typing-extensions-4.16.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-python-pptx-1.0.2"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:documents.",
+      "relatedSpdxElement": "SPDXRef-Package-xlsxwriter-3.2.9",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-python-pptx-1.0.2"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:web.",
+      "relatedSpdxElement": "SPDXRef-Package-chardet-7.4.3",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-readability-lxml-0.8.4.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:web.",
+      "relatedSpdxElement": "SPDXRef-Package-cssselect-1.4.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-readability-lxml-0.8.4.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:web.",
+      "relatedSpdxElement": "SPDXRef-Package-lxml-6.1.1",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-readability-lxml-0.8.4.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-attrs-26.1.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-referencing-0.37.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-rpds-py-2026.6.3",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-referencing-0.37.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-typing-extensions-4.16.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-referencing-0.37.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: runtime.",
+      "relatedSpdxElement": "SPDXRef-Package-markdown-it-py-4.2.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-rich-15.0.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: runtime.",
+      "relatedSpdxElement": "SPDXRef-Package-pygments-2.20.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-rich-15.0.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:browser.",
+      "relatedSpdxElement": "SPDXRef-Package-certifi-2026.6.17",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-selenium-4.46.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:browser.",
+      "relatedSpdxElement": "SPDXRef-Package-trio-0.33.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-selenium-4.46.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:browser.",
+      "relatedSpdxElement": "SPDXRef-Package-trio-websocket-0.12.2",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-selenium-4.46.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:browser.",
+      "relatedSpdxElement": "SPDXRef-Package-typing-extensions-4.16.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-selenium-4.46.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:browser.",
+      "relatedSpdxElement": "SPDXRef-Package-urllib3-2.7.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-selenium-4.46.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:browser.",
+      "relatedSpdxElement": "SPDXRef-Package-websocket-client-1.9.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-selenium-4.46.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: runtime.",
+      "relatedSpdxElement": "SPDXRef-Package-greenlet-3.5.3",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-sqlalchemy-2.0.51"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: runtime.",
+      "relatedSpdxElement": "SPDXRef-Package-typing-extensions-4.16.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-sqlalchemy-2.0.51"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-anyio-4.14.2",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-sse-starlette-3.4.5"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:mcp.",
+      "relatedSpdxElement": "SPDXRef-Package-starlette-1.3.1",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-sse-starlette-3.4.5"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:mcp, extra:server.",
+      "relatedSpdxElement": "SPDXRef-Package-anyio-4.14.2",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-starlette-1.3.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:mcp, extra:server.",
+      "relatedSpdxElement": "SPDXRef-Package-typing-extensions-4.16.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-starlette-1.3.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:web.",
+      "relatedSpdxElement": "SPDXRef-Package-certifi-2026.6.17",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-trafilatura-2.1.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:web.",
+      "relatedSpdxElement": "SPDXRef-Package-charset-normalizer-3.4.9",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-trafilatura-2.1.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:web.",
+      "relatedSpdxElement": "SPDXRef-Package-courlan-1.4.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-trafilatura-2.1.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:web.",
+      "relatedSpdxElement": "SPDXRef-Package-htmldate-1.10.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-trafilatura-2.1.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:web.",
+      "relatedSpdxElement": "SPDXRef-Package-justext-3.0.2",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-trafilatura-2.1.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:web.",
+      "relatedSpdxElement": "SPDXRef-Package-lxml-6.1.1",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-trafilatura-2.1.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:web.",
+      "relatedSpdxElement": "SPDXRef-Package-urllib3-2.7.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-trafilatura-2.1.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:browser.",
+      "relatedSpdxElement": "SPDXRef-Package-attrs-26.1.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-trio-0.33.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:browser.",
+      "relatedSpdxElement": "SPDXRef-Package-cffi-2.1.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-trio-0.33.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:browser.",
+      "relatedSpdxElement": "SPDXRef-Package-idna-3.18",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-trio-0.33.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:browser.",
+      "relatedSpdxElement": "SPDXRef-Package-outcome-1.3.0.post0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-trio-0.33.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:browser.",
+      "relatedSpdxElement": "SPDXRef-Package-sniffio-1.3.1",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-trio-0.33.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:browser.",
+      "relatedSpdxElement": "SPDXRef-Package-sortedcontainers-2.4.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-trio-0.33.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:browser.",
+      "relatedSpdxElement": "SPDXRef-Package-outcome-1.3.0.post0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-trio-websocket-0.12.2"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:browser.",
+      "relatedSpdxElement": "SPDXRef-Package-trio-0.33.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-trio-websocket-0.12.2"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:browser.",
+      "relatedSpdxElement": "SPDXRef-Package-wsproto-1.3.2",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-trio-websocket-0.12.2"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: runtime.",
+      "relatedSpdxElement": "SPDXRef-Package-annotated-doc-0.0.4",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-typer-0.27.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: runtime.",
+      "relatedSpdxElement": "SPDXRef-Package-colorama-0.4.6",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-typer-0.27.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: runtime.",
+      "relatedSpdxElement": "SPDXRef-Package-rich-15.0.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-typer-0.27.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: runtime.",
+      "relatedSpdxElement": "SPDXRef-Package-shellingham-1.5.4",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-typer-0.27.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: runtime, extra:all, extra:mcp, extra:server.",
+      "relatedSpdxElement": "SPDXRef-Package-typing-extensions-4.16.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-typing-inspection-0.4.2"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:web.",
+      "relatedSpdxElement": "SPDXRef-Package-tzdata-2026.3",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-tzlocal-5.4.4"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:browser.",
+      "relatedSpdxElement": "SPDXRef-Package-pysocks-1.7.1",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-urllib3-2.7.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:mcp, extra:server.",
+      "relatedSpdxElement": "SPDXRef-Package-click-8.4.2",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-uvicorn-0.51.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:mcp, extra:server.",
+      "relatedSpdxElement": "SPDXRef-Package-h11-0.16.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-uvicorn-0.51.0"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:dev.",
+      "relatedSpdxElement": "SPDXRef-Package-distlib-0.4.3",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-virtualenv-21.6.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:dev.",
+      "relatedSpdxElement": "SPDXRef-Package-filelock-3.30.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-virtualenv-21.6.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:dev.",
+      "relatedSpdxElement": "SPDXRef-Package-platformdirs-4.10.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-virtualenv-21.6.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:dev.",
+      "relatedSpdxElement": "SPDXRef-Package-python-discovery-1.4.4",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-virtualenv-21.6.1"
+    },
+    {
+      "comment": "Resolved universal-lock scopes: extra:all, extra:browser.",
+      "relatedSpdxElement": "SPDXRef-Package-h11-0.16.0",
+      "relationshipType": "DEPENDS_ON",
+      "spdxElementId": "SPDXRef-Package-wsproto-1.3.2"
+    }
+  ],
+  "spdxVersion": "SPDX-2.3"
+}

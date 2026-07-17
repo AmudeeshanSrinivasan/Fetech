@@ -220,4 +220,8 @@ address-space limit. A production daemon must place logic engines in an isolated
 that denies network and unrestricted filesystem/process access.
 
 See [ADR 0001](adr/0001-polyglot-logic-backends.md), the [security policy](../SECURITY.md), and the
-[capability catalogue](capability-catalog.md).
+[implementation threat model](security-threat-model.md). Release evidence is reproducibly generated
+from the universal lock into the [SPDX SBOM](../release/fetech-0.3.0a0.spdx.json) and
+[dependency-license report](../release/dependency-licenses.md); the
+[competitor matrix](competitor-matrix.md) records source-bounded positioning without a superiority
+claim. See also the [capability catalogue](capability-catalog.md).

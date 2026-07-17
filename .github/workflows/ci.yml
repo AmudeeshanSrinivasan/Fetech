@@ -28,5 +28,7 @@ jobs:
         run: uv run --no-sync coverage run -m pytest -q
       - name: Coverage report
         run: uv run --no-sync coverage report -m
+      - name: Verify release evidence
+        run: uv run --no-sync python scripts/generate_release_evidence.py --check
       - name: Build distributions
         run: uv build
