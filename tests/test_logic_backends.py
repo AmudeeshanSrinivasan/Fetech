@@ -1,8 +1,13 @@
 from __future__ import annotations
 
+import asyncio
 import importlib.util
+import json
+import os
 import shutil
+import signal
 import sys
+from contextlib import suppress
 from dataclasses import replace
 from pathlib import Path
 
@@ -15,6 +20,7 @@ from fetech.cli import app
 from fetech.client import FetechClient
 from fetech.config import Settings
 from fetech.gateway import UniversalFetchGateway
+from fetech.logic import process as process_module
 from fetech.logic.base import BackendExecutionError, BackendOutputError, BackendUnavailableError
 from fetech.logic.clingo_backend import ClingoPlannerBackend
 from fetech.logic.coordinator import LogicCoordinator
@@ -212,7 +218,7 @@ async def test_structurally_mutated_logic_plan_falls_back_to_python(tmp_path: Pa
         ("https://example.com/feed.xml", "clean_text", "xml_endpoint"),
         ("https://example.com/movie.mp4", "video", "video_metadata"),
         ("https://example.com/song.mp3", "audio", "audio_metadata"),
-        ("https://example.com/picture.png", "image", "image_metadata"),
+        ("https://example.com/picture.png", "image", "image"),
         ("https://example.com/bundle.zip", "clean_text", "zip_archive"),
         ("https://example.com/file.txt", "clean_text", "txt"),
     ],
@@ -241,6 +247,132 @@ async def test_logic_subprocess_timeout_is_enforced() -> None:
 
 
 @pytest.mark.asyncio
+async def test_subprocess_spawn_phase_has_an_independent_deadline(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def stalled_spawn(*_arguments: object, **_keywords: object) -> None:
+        await asyncio.sleep(30)
+
+    monkeypatch.setattr(
+        process_module.asyncio,
+        "create_subprocess_exec",
+        stalled_spawn,
+    )
+    started = asyncio.get_running_loop().time()
+
+    with pytest.raises(BackendExecutionError, match="startup exceeded"):
+        await run_bounded(
+            (sys.executable, "-c", "pass"),
+            b"",
+            timeout_seconds=2,
+            startup_timeout_seconds=0.05,
+            memory_mb=256,
+        )
+
+    assert asyncio.get_running_loop().time() - started < 0.5
+
+
+@pytest.mark.asyncio
+@pytest.mark.skipif(os.name != "posix", reason="POSIX startup handshake is required")
+async def test_subprocess_startup_handshake_includes_target_exec() -> None:
+    with pytest.raises(
+        BackendExecutionError,
+        match="failed before completing guarded startup",
+    ):
+        await run_bounded(
+            ("/definitely/not/a/fetech-worker",),
+            b"",
+            timeout_seconds=1,
+            startup_timeout_seconds=0.5,
+            memory_mb=256,
+        )
+
+
+@pytest.mark.asyncio
+async def test_subprocess_early_exit_does_not_leak_broken_pipe() -> None:
+    result = await run_bounded(
+        (sys.executable, "-c", "raise SystemExit(127)"),
+        b"x" * 1_000_000,
+        timeout_seconds=2,
+        memory_mb=256,
+    )
+
+    assert result.returncode == 127
+    assert result.stdout == b""
+
+
+@pytest.mark.asyncio
+@pytest.mark.skipif(os.name != "posix", reason="POSIX process groups are required")
+async def test_subprocess_startup_timeout_kills_bootstrap_descendants(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    child_pid_path = tmp_path / "startup-child.pid"
+
+    def hanging_bootstrap(
+        _arguments: tuple[str, ...],
+        *,
+        ready_fd: int,
+        cpu_seconds: int,
+        memory_bytes: int,
+        file_bytes: int,
+        process_limit: int | None,
+        cgroup_procs_path: Path | None,
+        pass_readiness: bool,
+    ) -> tuple[str, ...]:
+        del (
+            ready_fd,
+            cpu_seconds,
+            memory_bytes,
+            file_bytes,
+            process_limit,
+            cgroup_procs_path,
+            pass_readiness,
+        )
+        probe = (
+            "import pathlib,subprocess,sys,time;"
+            "child=subprocess.Popen("
+            "[sys.executable,'-c','import time;time.sleep(30)'],"
+            "stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,"
+            "stderr=subprocess.DEVNULL"
+            ");"
+            "pathlib.Path(sys.argv[1]).write_text(str(child.pid));"
+            "time.sleep(30)"
+        )
+        return (sys.executable, "-c", probe, str(child_pid_path))
+
+    monkeypatch.setattr(
+        process_module,
+        "_limited_bootstrap_arguments",
+        hanging_bootstrap,
+    )
+
+    with pytest.raises(BackendExecutionError, match="startup exceeded"):
+        await run_bounded(
+            (sys.executable, "-c", "pass"),
+            b"",
+            timeout_seconds=3,
+            startup_timeout_seconds=0.5,
+            memory_mb=256,
+        )
+
+    assert child_pid_path.exists()
+    child_pid = int(child_pid_path.read_text())
+    try:
+        for _ in range(100):
+            try:
+                os.kill(child_pid, 0)
+            except ProcessLookupError:
+                break
+            await asyncio.sleep(0.01)
+        else:
+            pytest.fail("startup timeout left a bootstrap descendant running")
+    finally:
+        with suppress(ProcessLookupError):
+            os.kill(child_pid, signal.SIGKILL)
+
+
+@pytest.mark.asyncio
 async def test_logic_subprocess_output_limit_is_enforced() -> None:
     with pytest.raises(BackendOutputError, match="output exceeded"):
         await run_bounded(
@@ -249,6 +381,86 @@ async def test_logic_subprocess_output_limit_is_enforced() -> None:
             timeout_seconds=1,
             memory_mb=256,
             maximum_output_bytes=10,
+        )
+
+
+@pytest.mark.asyncio
+@pytest.mark.skipif(os.name != "posix", reason="POSIX rlimits are required")
+async def test_subprocess_limits_lower_the_child_hard_limits() -> None:
+    probe = (
+        "import json,resource;"
+        "print(json.dumps({"
+        "'core':resource.getrlimit(resource.RLIMIT_CORE),"
+        "'file':resource.getrlimit(resource.RLIMIT_FSIZE),"
+        "'nofile':resource.getrlimit(resource.RLIMIT_NOFILE)"
+        "},sort_keys=True))"
+    )
+    result = await run_bounded(
+        (sys.executable, "-c", probe),
+        b"",
+        timeout_seconds=2,
+        memory_mb=256,
+        maximum_output_bytes=4_096,
+        maximum_file_bytes=8_192,
+    )
+    limits = json.loads(result.stdout)
+
+    assert limits["core"] == [0, 0]
+    assert limits["file"][0] == limits["file"][1] <= 8_192
+    assert limits["nofile"][0] == limits["nofile"][1] <= 256
+
+
+@pytest.mark.asyncio
+@pytest.mark.skipif(os.name != "posix", reason="POSIX process groups are required")
+async def test_subprocess_runner_kills_descendants_after_the_leader_exits() -> None:
+    probe = (
+        "import subprocess,sys;"
+        "child=subprocess.Popen("
+        "[sys.executable,'-c','import time;time.sleep(30)'],"
+        "stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL"
+        ");"
+        "print(child.pid)"
+    )
+    result = await run_bounded(
+        (sys.executable, "-c", probe),
+        b"",
+        timeout_seconds=3,
+        memory_mb=256,
+        maximum_output_bytes=4_096,
+    )
+    child_pid = int(result.stdout)
+
+    try:
+        for _ in range(100):
+            try:
+                os.kill(child_pid, 0)
+            except ProcessLookupError:
+                break
+            await asyncio.sleep(0.01)
+        else:
+            pytest.fail("bounded subprocess left a descendant running")
+    finally:
+        with suppress(ProcessLookupError):
+            os.kill(child_pid, signal.SIGKILL)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("timeout_seconds", "memory_mb", "maximum_output_bytes"),
+    [(0.0, 256, 1_000), (1.0, 0, 1_000), (1.0, 256, 0)],
+)
+async def test_logic_subprocess_rejects_non_positive_resource_limits(
+    timeout_seconds: float,
+    memory_mb: int,
+    maximum_output_bytes: int,
+) -> None:
+    with pytest.raises(ValueError, match="limits must be positive"):
+        await run_bounded(
+            (sys.executable, "-c", "pass"),
+            b"",
+            timeout_seconds=timeout_seconds,
+            memory_mb=memory_mb,
+            maximum_output_bytes=maximum_output_bytes,
         )
 
 

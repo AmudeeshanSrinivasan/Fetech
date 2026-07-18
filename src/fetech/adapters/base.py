@@ -46,6 +46,55 @@ class ExecutionContext:
                 return artifact
         return None
 
+    def consumed_budget(self, name: str) -> int | float:
+        """Return cumulative adapter-reported consumption for one budget field."""
+
+        return sum(
+            attempt.consumed_budget.get(name, 0)
+            for attempt in self.attempts
+        )
+
+    def remaining_budget(self, name: str) -> int | float:
+        """Return the request ceiling minus cumulative consumption."""
+
+        ceiling = getattr(self.request.budget, name)
+        if not isinstance(ceiling, int | float):
+            raise ValueError(f"unknown numeric budget field: {name}")
+        return max(0, ceiling - self.consumed_budget(name))
+
+    def require_budget(self, name: str, amount: int | float) -> None:
+        if amount < 0:
+            raise ValueError("budget consumption cannot be negative")
+        if amount > self.remaining_budget(name):
+            raise AdapterBudgetExceededError(f"{name} budget exhausted")
+
+    def record_attempt_consumption(
+        self,
+        attempt_index: int,
+        **consumption: int | float,
+    ) -> None:
+        """Record resources already consumed by an in-flight adapter attempt.
+
+        External providers can return bytes that fail later validation. Those
+        bytes still count against the run budget and must remain visible if the
+        executor retries the node.
+        """
+
+        if not 0 <= attempt_index < len(self.attempts):
+            raise IndexError("attempt index is outside the execution context")
+        attempt = self.attempts[attempt_index]
+        updated = dict(attempt.consumed_budget)
+        for name, amount in consumption.items():
+            ceiling = getattr(self.request.budget, name, None)
+            if not isinstance(ceiling, int | float):
+                raise ValueError(f"unknown numeric budget field: {name}")
+            if amount < 0:
+                raise ValueError("budget consumption cannot be negative")
+            updated[name] = updated.get(name, 0) + amount
+        self.attempts[attempt_index] = attempt.model_copy(
+            update={"consumed_budget": updated}
+        )
+
     def record_outcome(
         self,
         capability_id: str,
@@ -123,6 +172,10 @@ class AdapterDependencyError(RuntimeError):
 
 class AdapterExecutionError(RuntimeError):
     pass
+
+
+class AdapterBudgetExceededError(AdapterExecutionError):
+    """An adapter cannot proceed within the run's remaining shared budget."""
 
 
 class AdapterNotFoundError(AdapterExecutionError):

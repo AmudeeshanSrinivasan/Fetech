@@ -3,11 +3,12 @@
 from __future__ import annotations
 
 import asyncio
+import errno
 import hashlib
 import json
 import os
+import stat
 import tempfile
-from contextlib import suppress
 from dataclasses import dataclass
 from dataclasses import field as dataclass_field
 from datetime import UTC, datetime
@@ -22,6 +23,10 @@ class ArtifactStore(Protocol):
     async def put(self, body: bytes) -> tuple[str, str, int]: ...
 
     async def get(self, uri: str, *, maximum_bytes: int | None = None) -> bytes: ...
+
+
+class CASIntegrityError(ValueError):
+    """A digest path is occupied by content other than the requested body."""
 
 
 class FileSystemCAS:
@@ -39,37 +44,199 @@ class FileSystemCAS:
     async def put(self, body: bytes) -> tuple[str, str, int]:
         digest = hashlib.sha256(body).hexdigest()
         target = self._path(digest)
-        if not target.exists():
-            await asyncio.to_thread(self._write_atomic, target, body)
+        await asyncio.to_thread(self._write_atomic, target, body, digest, self.root)
         return f"cas://sha256/{digest}", digest, len(body)
 
-    @staticmethod
-    def _write_atomic(target: Path, body: bytes) -> None:
+    @classmethod
+    def _write_atomic(
+        cls,
+        target: Path,
+        body: bytes,
+        digest: str,
+        durability_root: Path,
+    ) -> None:
         target.parent.mkdir(parents=True, exist_ok=True)
+
+        try:
+            cls._verify_existing(target, body, digest)
+        except FileNotFoundError:
+            pass
+        else:
+            cls._fsync_directory_chain(target.parent, durability_root)
+            return
+
         descriptor, temporary_name = tempfile.mkstemp(prefix=".write-", dir=target.parent)
         try:
             with os.fdopen(descriptor, "wb") as handle:
-                handle.write(body)
+                written = handle.write(body)
+                if written != len(body):
+                    raise OSError("short write while staging CAS content")
                 handle.flush()
                 os.fsync(handle.fileno())
-            with suppress(FileExistsError):
-                os.link(temporary_name, target)
+
+            for _attempt in range(2):
+                try:
+                    os.link(temporary_name, target, follow_symlinks=False)
+                except FileExistsError:
+                    try:
+                        cls._verify_existing(target, body, digest)
+                    except FileNotFoundError:
+                        continue
+                else:
+                    cls._verify_existing(target, body, digest)
+                cls._fsync_directory_chain(target.parent, durability_root)
+                return
+            raise CASIntegrityError("CAS target changed while content was being published")
         finally:
             Path(temporary_name).unlink(missing_ok=True)
+
+    @staticmethod
+    def _verify_existing(target: Path, body: bytes, digest: str) -> None:
+        try:
+            target_stat = target.lstat()
+        except FileNotFoundError:
+            raise
+        if not stat.S_ISREG(target_stat.st_mode):
+            raise CASIntegrityError("CAS digest path is not a regular file")
+
+        flags = os.O_RDONLY
+        flags |= getattr(os, "O_CLOEXEC", 0)
+        flags |= getattr(os, "O_NOFOLLOW", 0)
+        flags |= getattr(os, "O_NONBLOCK", 0)
+        try:
+            descriptor = os.open(target, flags)
+        except FileNotFoundError:
+            raise
+        except OSError as exc:
+            raise CASIntegrityError("CAS digest path could not be verified safely") from exc
+
+        hasher = hashlib.sha256()
+        offset = 0
+        try:
+            opened_stat = os.fstat(descriptor)
+            if not stat.S_ISREG(opened_stat.st_mode) or opened_stat.st_size != len(body):
+                raise CASIntegrityError("CAS digest path contains unexpected content")
+            with os.fdopen(descriptor, "rb", closefd=False) as handle:
+                while chunk := handle.read(1024 * 1024):
+                    hasher.update(chunk)
+                    end = offset + len(chunk)
+                    if chunk != body[offset:end]:
+                        raise CASIntegrityError("CAS digest path contains unexpected content")
+                    offset = end
+        finally:
+            os.close(descriptor)
+
+        if offset != len(body) or hasher.hexdigest() != digest:
+            raise CASIntegrityError("CAS digest path contains unexpected content")
+
+    @classmethod
+    def _fsync_directory_chain(cls, directory: Path, durability_root: Path) -> None:
+        current = directory
+        stop = durability_root
+        while True:
+            cls._fsync_directory(current)
+            if current == stop:
+                return
+            if current == current.parent or stop not in current.parents:
+                raise CASIntegrityError("CAS durability root does not contain the digest path")
+            current = current.parent
+
+    @staticmethod
+    def _fsync_directory(directory: Path) -> None:
+        if os.name == "nt":
+            return
+        flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0) | getattr(os, "O_CLOEXEC", 0)
+        descriptor = os.open(directory, flags)
+        try:
+            os.fsync(descriptor)
+        except OSError as exc:
+            unsupported = {
+                errno.EBADF,
+                errno.EINVAL,
+                getattr(errno, "ENOTSUP", errno.EINVAL),
+                getattr(errno, "EOPNOTSUPP", errno.EINVAL),
+            }
+            if exc.errno not in unsupported:
+                raise
+        finally:
+            os.close(descriptor)
 
     async def get(self, uri: str, *, maximum_bytes: int | None = None) -> bytes:
         prefix = "cas://sha256/"
         if not uri.startswith(prefix):
             raise ValueError("unsupported CAS URI")
-        path = self._path(uri.removeprefix(prefix))
-        body = await asyncio.to_thread(path.read_bytes)
-        if maximum_bytes is not None and len(body) > maximum_bytes:
-            raise ValueError("artifact exceeds the requested read bound")
-        return body
+        digest = uri.removeprefix(prefix)
+        path = self._path(digest)
+        return await asyncio.to_thread(self._read_verified, path, digest, maximum_bytes)
+
+    @staticmethod
+    def _read_verified(path: Path, digest: str, maximum_bytes: int | None) -> bytes:
+        if maximum_bytes is not None and maximum_bytes < 0:
+            raise CASIntegrityError("CAS read bound must be non-negative")
+
+        try:
+            path_stat = path.lstat()
+        except FileNotFoundError:
+            raise
+        if not stat.S_ISREG(path_stat.st_mode):
+            raise CASIntegrityError("CAS digest path is not a regular file")
+
+        flags = os.O_RDONLY
+        flags |= getattr(os, "O_CLOEXEC", 0)
+        flags |= getattr(os, "O_NOFOLLOW", 0)
+        flags |= getattr(os, "O_NONBLOCK", 0)
+        try:
+            descriptor = os.open(path, flags)
+        except FileNotFoundError:
+            raise
+        except OSError as exc:
+            raise CASIntegrityError("CAS digest path could not be opened safely") from exc
+
+        chunks: list[bytes] = []
+        hasher = hashlib.sha256()
+        total = 0
+        try:
+            opened_stat = os.fstat(descriptor)
+            if not stat.S_ISREG(opened_stat.st_mode):
+                raise CASIntegrityError("CAS digest path is not a regular file")
+            if (path_stat.st_dev, path_stat.st_ino) != (
+                opened_stat.st_dev,
+                opened_stat.st_ino,
+            ):
+                raise CASIntegrityError("CAS digest path changed while it was being opened")
+            if maximum_bytes is not None and opened_stat.st_size > maximum_bytes:
+                raise CASIntegrityError("CAS artifact exceeds the requested read bound")
+
+            expected_size = opened_stat.st_size
+            while True:
+                remaining = expected_size - total
+                chunk = os.read(descriptor, min(1024 * 1024, max(1, remaining + 1)))
+                if not chunk:
+                    break
+                total += len(chunk)
+                if total > expected_size or (
+                    maximum_bytes is not None and total > maximum_bytes
+                ):
+                    raise CASIntegrityError("CAS artifact exceeds the requested read bound")
+                hasher.update(chunk)
+                chunks.append(chunk)
+
+            final_stat = os.fstat(descriptor)
+            if total != expected_size or final_stat.st_size != expected_size:
+                raise CASIntegrityError("CAS digest path changed while it was being read")
+        finally:
+            os.close(descriptor)
+
+        if hasher.hexdigest() != digest:
+            raise CASIntegrityError("CAS artifact digest does not match its URI")
+        return b"".join(chunks)
 
     async def verify(self, uri: str) -> bool:
-        body = await self.get(uri)
-        return hashlib.sha256(body).hexdigest() == uri.rsplit("/", maxsplit=1)[-1]
+        try:
+            await self.get(uri)
+        except CASIntegrityError:
+            return False
+        return True
 
 
 @dataclass(frozen=True)
@@ -81,6 +248,7 @@ class CacheKey:
     language: str
     parser_version: str
     vary: tuple[tuple[str, str], ...] = ()
+    region: str = ""
 
     @classmethod
     def for_request(
@@ -101,6 +269,7 @@ class CacheKey:
             policy_profile=request.policy_profile,
             language=request.language or "",
             parser_version=parser_version,
+            region=request.region or "",
             vary=vary,
         )
 
@@ -113,6 +282,7 @@ class CacheKey:
             "policy_profile": self.policy_profile,
             "language": self.language,
             "parser_version": self.parser_version,
+            "region": self.region,
             "vary": self.vary,
         }
         encoded = json.dumps(document, sort_keys=True, separators=(",", ":")).encode()

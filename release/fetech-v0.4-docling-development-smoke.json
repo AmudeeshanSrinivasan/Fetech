@@ -1,0 +1,140 @@
+{
+  "checks": [
+    {
+      "detail": "files=6; bytes=171764371; models=docling-project/docling-layout-heron@8f39ad3c0b4c58e9c2d2c84a38465abf757272d8[apache-2.0]",
+      "id": "artifact:docling-models",
+      "sha256": "e9aab284777b02541f427ff10ff7e2f1b5656eda04afa3082b9b448d8201bd76",
+      "status": "passed",
+      "version": "2.113.0"
+    },
+    {
+      "detail": "pass --artifact",
+      "id": "artifact:wheel",
+      "status": "skipped"
+    },
+    {
+      "id": "executable:ffmpeg",
+      "status": "passed",
+      "version": "ffmpeg version 8.0.1 Copyright (c) 2000-2025 the FFmpeg developers"
+    },
+    {
+      "id": "executable:ffprobe",
+      "status": "passed",
+      "version": "ffprobe version 8.0.1 Copyright (c) 2007-2025 the FFmpeg developers"
+    },
+    {
+      "id": "executable:tesseract",
+      "status": "missing"
+    },
+    {
+      "id": "lock:uv",
+      "sha256": "46bc657e706f28318b563c70bb41da0000dabd6a97b48f60683fe254ff65515d",
+      "status": "passed"
+    },
+    {
+      "id": "package:docling-slim",
+      "status": "passed",
+      "version": "2.113.0"
+    },
+    {
+      "id": "package:fetech",
+      "status": "passed",
+      "version": "0.3.0a0"
+    },
+    {
+      "id": "package:openpyxl",
+      "status": "passed",
+      "version": "3.1.5"
+    },
+    {
+      "id": "package:pillow",
+      "status": "passed",
+      "version": "12.3.0"
+    },
+    {
+      "id": "package:playwright",
+      "status": "passed",
+      "version": "1.61.0"
+    },
+    {
+      "id": "package:pypdf",
+      "status": "passed",
+      "version": "6.14.2"
+    },
+    {
+      "id": "package:python-docx",
+      "status": "passed",
+      "version": "1.2.0"
+    },
+    {
+      "id": "package:python-pptx",
+      "status": "passed",
+      "version": "1.0.2"
+    },
+    {
+      "id": "package:selenium",
+      "status": "passed",
+      "version": "4.46.0"
+    },
+    {
+      "id": "package:yt-dlp",
+      "status": "passed",
+      "version": "2026.7.4"
+    },
+    {
+      "detail": "TargetClosedError",
+      "id": "smoke:browser",
+      "status": "failed"
+    },
+    {
+      "detail": "parser=docling; docling=unknown,docling-core=2.87.1,docling-ibm-models=3.13.3,docling-parse=7.8.0,docling-slim=2.113.0; artifact_bundle_sha256=e9aab284777b02541f427ff10ff7e2f1b5656eda04afa3082b9b448d8201bd76; models=docling-project/docling-layout-heron@8f39ad3c0b4c58e9c2d2c84a38465abf757272d8[apache-2.0]",
+      "id": "smoke:docling",
+      "status": "passed",
+      "version": "2.113.0"
+    },
+    {
+      "detail": "bounded first-frame extraction",
+      "id": "smoke:ffmpeg",
+      "status": "passed",
+      "version": "ffmpeg version 8.0.1 Copyright (c) 2000-2025 the FFmpeg developers"
+    },
+    {
+      "detail": "bounded WAV metadata probe",
+      "id": "smoke:ffprobe",
+      "status": "passed",
+      "version": "ffprobe version 8.0.1 Copyright (c) 2007-2025 the FFmpeg developers"
+    },
+    {
+      "detail": "AdapterDependencyError",
+      "id": "smoke:tesseract",
+      "status": "failed"
+    },
+    {
+      "detail": "rerun with --live-network",
+      "id": "smoke:wayback",
+      "service": "https://archive.org/wayback/available and https://web.archive.org",
+      "status": "skipped"
+    },
+    {
+      "detail": "rerun with --live-network",
+      "id": "smoke:yt-dlp",
+      "service": "YouTube HTTPS metadata endpoints via yt-dlp",
+      "status": "skipped"
+    },
+    {
+      "detail": "dirty",
+      "id": "source:git",
+      "status": "failed",
+      "version": "9a5da4dca17082d973d4add337a80f9224ba53bb"
+    }
+  ],
+  "generated_at": "2026-07-18T08:34:00.349648+00:00",
+  "network_smoke_requested": false,
+  "platform": {
+    "machine": "arm64",
+    "python": "3.12.11",
+    "system": "Darwin",
+    "system_release": "25.5.0"
+  },
+  "schema": "fetech.v0.4.smoke-evidence.v2"
+}

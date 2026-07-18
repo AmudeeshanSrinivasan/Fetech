@@ -105,7 +105,9 @@ class CapabilityManifestEntry(ContractModel):
     lifecycle_status: str = "registered"
     implementation_status: ImplementationStatus = ImplementationStatus.PLANNED
     implementation: str
-    available: bool = False
+    implementation_available: bool = False
+    runtime_available: bool = False
+    availability_reason: str = ""
 
 
 class ResourceBudget(ContractModel):

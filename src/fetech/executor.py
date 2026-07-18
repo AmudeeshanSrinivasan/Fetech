@@ -13,6 +13,7 @@ from fetech.adapters.base import (
     Adapter,
     AdapterAuthExpiredError,
     AdapterAuthRequiredError,
+    AdapterBudgetExceededError,
     AdapterDependencyError,
     AdapterExecutionError,
     AdapterNotFoundError,
@@ -23,6 +24,7 @@ from fetech.models import (
     AttemptStatus,
     CapabilityOutcomeStatus,
     Diagnostic,
+    FetchAttempt,
     FetchPlan,
     FetchResult,
     PlanNode,
@@ -33,7 +35,12 @@ from fetech.models import (
     RunState,
     utc_now,
 )
-from fetech.security import PolicyBlockedError, sanitize_output_for_request, sanitize_url
+from fetech.security import (
+    PolicyBlockedError,
+    sanitize_output_for_request,
+    sanitize_url,
+    sanitize_url_for_request,
+)
 from fetech.storage import FileSystemCAS
 
 
@@ -102,6 +109,7 @@ class ExecutionEngine:
                 {"capability_id": node.capability_id},
                 (root.event_id,),
             )
+            attempt_count = len(context.attempts)
             outcome_count = len(context.capability_outcomes)
             runtime_event_count = len(context.pending_events)
             try:
@@ -110,10 +118,15 @@ class ExecutionEngine:
                     monotonic() - execution_started
                 )
                 if remaining_deadline <= 0:
+                    self._ensure_deadline_attempt_failed(
+                        context,
+                        node,
+                        attempt_count,
+                    )
                     raise BudgetExhaustedError("run deadline budget exhausted")
                 async with asyncio.timeout(remaining_deadline):
                     await self._with_retries(adapter.execute, node, context, node.retry.maximum)
-            except BudgetExhaustedError as exc:
+            except (AdapterBudgetExceededError, BudgetExhaustedError) as exc:
                 budget_exhausted = True
                 self._mark_running_attempt_failed(context, "budget_exhausted")
                 context.diagnostics.append(Diagnostic(code="budget_exhausted", message=str(exc)))
@@ -231,23 +244,33 @@ class ExecutionEngine:
                 )
                 break
             except TimeoutError:
-                failed = True
-                self._mark_running_attempt_failed(context, "deadline")
+                budget_exhausted = True
+                self._ensure_deadline_attempt_failed(
+                    context,
+                    node,
+                    attempt_count,
+                )
                 context.diagnostics.append(
-                    Diagnostic(code="deadline", message=f"{node.id} exceeded the deadline")
+                    Diagnostic(
+                        code="budget_exhausted",
+                        message=f"{node.id} exhausted the deadline budget",
+                    )
                 )
                 self._ensure_outcome(
                     context,
                     node,
                     outcome_count,
                     CapabilityOutcomeStatus.FAILED,
-                    reason="deadline exceeded",
+                    reason="deadline budget exhausted",
                 )
                 await self._emit(
                     run_id,
-                    "attempt.failed",
+                    "attempt.budget_exhausted",
                     node.adapter,
-                    {"capability_id": node.capability_id, "code": "deadline"},
+                    {
+                        "capability_id": node.capability_id,
+                        "code": "budget_exhausted",
+                    },
                     (event.event_id,),
                 )
                 break
@@ -303,12 +326,16 @@ class ExecutionEngine:
             "executor",
             deadline_seconds=plan.request.budget.deadline_seconds,
         )
-        context.record_outcome(
-            "cache_expiry_check",
-            CapabilityOutcomeStatus.NOT_APPLICABLE,
-            "cache",
-            reason="no validated cache record was consulted",
-        )
+        if not any(
+            outcome.capability_id == "cache_expiry_check"
+            for outcome in context.capability_outcomes
+        ):
+            context.record_outcome(
+                "cache_expiry_check",
+                CapabilityOutcomeStatus.NOT_APPLICABLE,
+                "cache",
+                reason="no validated cache record was consulted",
+            )
         status = self._status(
             context,
             policy_blocked,
@@ -394,7 +421,11 @@ class ExecutionEngine:
             try:
                 await operation(node, context)
                 return
-            except (AdapterAuthRequiredError, AdapterNotFoundError):
+            except (
+                AdapterAuthRequiredError,
+                AdapterBudgetExceededError,
+                AdapterNotFoundError,
+            ):
                 raise
             except AdapterExecutionError as exc:
                 error = exc
@@ -459,6 +490,43 @@ class ExecutionEngine:
         )
 
     @staticmethod
+    def _ensure_deadline_attempt_failed(
+        context: ExecutionContext,
+        node: PlanNode,
+        attempt_count: int,
+    ) -> None:
+        if len(context.attempts) == attempt_count:
+            finished_at = utc_now()
+            context.attempts.append(
+                FetchAttempt(
+                    capability_id=node.capability_id,
+                    sanitized_destination=sanitize_url_for_request(
+                        context.request.target,
+                        context.request,
+                    ),
+                    status=AttemptStatus.FAILED,
+                    finished_at=finished_at,
+                    failure_code="budget_exhausted",
+                )
+            )
+            return
+
+        attempt = context.attempts[-1]
+        if attempt.status not in {
+            AttemptStatus.CANCELLED,
+            AttemptStatus.PLANNED,
+            AttemptStatus.RUNNING,
+        }:
+            return
+        context.attempts[-1] = attempt.model_copy(
+            update={
+                "status": AttemptStatus.FAILED,
+                "finished_at": utc_now(),
+                "failure_code": "budget_exhausted",
+            }
+        )
+
+    @staticmethod
     def _remaining_budget(
         plan: FetchPlan,
         context: ExecutionContext,
@@ -474,6 +542,22 @@ class ExecutionEngine:
         consumed_redirects = sum(
             int(attempt.consumed_budget.get("redirects", 0)) for attempt in context.attempts
         )
+        consumed_archive_members = sum(
+            int(attempt.consumed_budget.get("archive_members", 0))
+            for attempt in context.attempts
+        )
+        consumed_browser_seconds = sum(
+            float(attempt.consumed_budget.get("browser_seconds", 0))
+            for attempt in context.attempts
+        )
+        consumed_model_tokens = sum(
+            int(attempt.consumed_budget.get("model_tokens", 0))
+            for attempt in context.attempts
+        )
+        consumed_money = sum(
+            float(attempt.consumed_budget.get("monetary_ceiling", 0))
+            for attempt in context.attempts
+        )
         budget = plan.request.budget
         return budget.model_copy(
             update={
@@ -485,6 +569,16 @@ class ExecutionEngine:
                 "bytes": max(0, budget.bytes - consumed_bytes),
                 "decompressed_bytes": max(
                     0, budget.decompressed_bytes - consumed_decompressed
+                ),
+                "archive_members": max(
+                    0, budget.archive_members - consumed_archive_members
+                ),
+                "browser_seconds": max(
+                    0.0, budget.browser_seconds - consumed_browser_seconds
+                ),
+                "model_tokens": max(0, budget.model_tokens - consumed_model_tokens),
+                "monetary_ceiling": max(
+                    0.0, budget.monetary_ceiling - consumed_money
                 ),
             }
         )

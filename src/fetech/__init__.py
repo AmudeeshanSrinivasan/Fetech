@@ -1,5 +1,14 @@
 """Fetech public Python API."""
 
+from fetech.adapters.cache import ArchivedSnapshot, SnapshotConnector
+from fetech.adapters.documents import (
+    GitLFSResolvedObject,
+    GitLFSResolver,
+    GitLFSResolveRequest,
+    PDFOCRPage,
+    PDFOCRProvider,
+)
+from fetech.adapters.media import MediaAdapter, TranscriptProvider, YouTubeMetadataProvider
 from fetech.auth import (
     CredentialMaterial,
     CredentialNotFoundError,
@@ -35,8 +44,11 @@ from fetech.models import (
     ResourceBudget,
     ResultStatus,
 )
+from fetech.version import __version__
+from fetech.wayback import WaybackSnapshotConnector
 
 __all__ = [
+    "ArchivedSnapshot",
     "Artifact",
     "CapabilityOutcome",
     "CapabilityOutcomeStatus",
@@ -54,11 +66,17 @@ __all__ = [
     "FormSubmission",
     "FormSubmissionApproval",
     "FormSubmissionProvider",
+    "GitLFSResolveRequest",
+    "GitLFSResolvedObject",
+    "GitLFSResolver",
     "InMemoryCredentialProvider",
     "InMemoryFormSubmissionProvider",
     "InMemorySessionProvider",
+    "MediaAdapter",
     "NullSessionProvider",
     "OriginScopedSession",
+    "PDFOCRPage",
+    "PDFOCRProvider",
     "PrivateWorkspaceTarget",
     "ReasoningQuery",
     "ReasoningResult",
@@ -66,7 +84,10 @@ __all__ = [
     "ResourceBudget",
     "ResultStatus",
     "SessionProvider",
+    "SnapshotConnector",
+    "TranscriptProvider",
+    "WaybackSnapshotConnector",
+    "YouTubeMetadataProvider",
+    "__version__",
     "extract_csrf_token",
 ]
-
-__version__ = "0.3.0a0"

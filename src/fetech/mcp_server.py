@@ -3,10 +3,14 @@
 from __future__ import annotations
 
 import os
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Literal
 from uuid import UUID
 
+from fetech.adapters.cache import SnapshotConnector
+from fetech.adapters.documents import GitLFSResolver, PDFOCRProvider
+from fetech.adapters.media import MediaAdapter
 from fetech.auth import CredentialProvider
 from fetech.auth_flows import FormSubmissionProvider, SessionProvider
 from fetech.context import ContextBroker
@@ -19,6 +23,10 @@ def build_server(
     credential_provider: CredentialProvider | None = None,
     session_provider: SessionProvider | None = None,
     form_submission_provider: FormSubmissionProvider | None = None,
+    git_lfs_resolver: GitLFSResolver | None = None,
+    pdf_ocr_provider: PDFOCRProvider | None = None,
+    media_adapter: MediaAdapter | None = None,
+    snapshot_connectors: Mapping[str, SnapshotConnector] | None = None,
 ) -> object:
     """Build the scoped MCP server with configured opaque-material providers.
 
@@ -36,6 +44,10 @@ def build_server(
         credential_provider=credential_provider,
         session_provider=session_provider,
         form_submission_provider=form_submission_provider,
+        git_lfs_resolver=git_lfs_resolver,
+        pdf_ocr_provider=pdf_ocr_provider,
+        media_adapter=media_adapter,
+        snapshot_connectors=snapshot_connectors,
     )
     repository = Path(os.environ.get("FETECH_REPOSITORY", Path.cwd())).resolve()
     vault_value = os.environ.get("FETECH_OBSIDIAN_VAULT")

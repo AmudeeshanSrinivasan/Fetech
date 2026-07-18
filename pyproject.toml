@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "fetech"
-version = "0.3.0a0"
+version = "0.4.0a0"
 description = "Policy-aware universal agentic content-acquisition runtime"
 readme = "README.md"
 requires-python = ">=3.12"
@@ -37,12 +37,13 @@ mcp = ["mcp>=1.10"]
 logic = ["clingo>=5.7,<6"]
 browser = ["playwright>=1.50", "selenium>=4.28"]
 documents = [
+  "docling-slim[convert-core,format-pdf,models-local]==2.113.0",
   "openpyxl>=3.1",
   "pypdf>=5.0",
   "python-docx>=1.1",
   "python-pptx>=1.0",
 ]
-media = ["pillow>=11.0", "yt-dlp>=2025.1"]
+media = ["pillow>=11.0", "yt-dlp>=2026.7.4,<2026.8"]
 dev = [
   "coverage>=7.6",
   "mypy>=1.14",
@@ -64,12 +65,13 @@ all = [
   "clingo>=5.7,<6",
   "playwright>=1.50",
   "selenium>=4.28",
+  "docling-slim[convert-core,format-pdf,models-local]==2.113.0",
   "openpyxl>=3.1",
   "pypdf>=5.0",
   "python-docx>=1.1",
   "python-pptx>=1.0",
   "pillow>=11.0",
-  "yt-dlp>=2025.1",
+  "yt-dlp>=2026.7.4,<2026.8",
 ]
 
 [project.scripts]
@@ -104,6 +106,9 @@ addopts = "-ra --strict-markers"
 asyncio_mode = "auto"
 pythonpath = ["src"]
 testpaths = ["tests"]
+markers = [
+  "linux_containment: requires the configured Linux Bubblewrap and delegated cgroup-v2 backend",
+]
 
 [tool.ruff]
 line-length = 110

@@ -1,0 +1,258 @@
+[overlay]
+identifier = "v0.4.0a0-candidate"
+title = "v0.4.0a0 release candidate"
+package_version = "0.4.0a0"
+status = "unreleased-candidate"
+created = "2026-07-18T00:00:00Z"
+closure_release = "v0.4"
+capability_count = 36
+cumulative_capability_count = 155
+spdx_filename = "fetech-0.4.0a0-candidate.spdx.json"
+license_report_filename = "dependency-licenses-0.4.0a0-candidate.md"
+evidence_inputs = [
+  "README.md",
+  "SECURITY.md",
+  "CONTRIBUTING.md",
+  "pyproject.toml",
+  "uv.lock",
+  "capabilities/manifest.yaml",
+  ".github/workflows/ci.yml",
+  "deploy/systemd/fetech.service.example",
+  "docs/architecture.md",
+  "docs/capability-catalog.md",
+  "docs/competitor-matrix.md",
+  "docs/deployment-containment.md",
+  "docs/security-threat-model.md",
+  "docs/v0.4-conformance.md",
+  "docs/releases/v0.4.0a0.md",
+  "scripts/generate_release_evidence.py",
+  "scripts/check_v04_release_readiness.py",
+  "scripts/verify_v04_release_artifacts.py",
+  "scripts/release_license_catalog.toml",
+  "scripts/release_published.toml",
+  "scripts/collect_v04_smoke_evidence.py",
+  "scripts/provision_docling_artifacts.py",
+  "release/fetech-v0.4-docling-development-smoke.json",
+  "release/fetech-v0.4-docling-wheel-smoke.json",
+  "src/fetech/__init__.py",
+  "src/fetech/adapters/archive.py",
+  "src/fetech/adapters/base.py",
+  "src/fetech/adapters/browser.py",
+  "src/fetech/adapters/cache.py",
+  "src/fetech/adapters/documents.py",
+  "src/fetech/adapters/http.py",
+  "src/fetech/adapters/media.py",
+  "src/fetech/adapters/reader.py",
+  "src/fetech/archive_worker.py",
+  "src/fetech/browser_reader.py",
+  "src/fetech/browser_render.py",
+  "src/fetech/client.py",
+  "src/fetech/conformance.py",
+  "src/fetech/config.py",
+  "src/fetech/daemon.py",
+  "src/fetech/docling_artifacts.py",
+  "src/fetech/document_worker.py",
+  "src/fetech/executor.py",
+  "src/fetech/gateway.py",
+  "src/fetech/image_worker.py",
+  "src/fetech/logic/clingo_backend.py",
+  "src/fetech/logic/coordinator.py",
+  "src/fetech/logic/process.py",
+  "src/fetech/logic/process_bootstrap.py",
+  "src/fetech/mcp_server.py",
+  "src/fetech/models.py",
+  "src/fetech/planning.py",
+  "src/fetech/registry.py",
+  "src/fetech/scheduling.py",
+  "src/fetech/search.py",
+  "src/fetech/storage.py",
+  "src/fetech/wayback.py",
+  "src/fetech/worker_isolation.py",
+  "src/fetech/worker_isolation_bootstrap.py",
+  "src/fetech/worker_audit.py",
+  "src/fetech/yt_dlp.py",
+  "src/fetech/yt_dlp_worker.py",
+  "src/fetech/version.py",
+  "tests/test_docling_artifacts.py",
+  "tests/test_http_adapter.py",
+  "tests/test_logic_backends.py",
+  "tests/test_network_scheduling.py",
+  "tests/test_release_evidence.py",
+  "tests/test_release_readiness.py",
+  "tests/test_v04_release_artifacts.py",
+  "tests/test_storage_cas.py",
+  "tests/test_systemd_unit.py",
+  "tests/test_v01_conformance.py",
+  "tests/test_v02_browser.py",
+  "tests/test_v02_conformance.py",
+  "tests/test_v03_auth.py",
+  "tests/test_v03_integration.py",
+  "tests/test_v03_interfaces.py",
+  "tests/test_v04_budget_accounting.py",
+  "tests/test_v04_cache_archives.py",
+  "tests/test_v04_cache_expiry_provenance.py",
+  "tests/test_v04_capability_matrix.py",
+  "tests/test_v04_docling.py",
+  "tests/test_v04_document_providers_integration.py",
+  "tests/test_v04_documents.py",
+  "tests/test_v04_integration.py",
+  "tests/test_v04_interfaces.py",
+  "tests/test_v04_media.py",
+  "tests/test_v04_planning.py",
+  "tests/test_v04_smoke_evidence.py",
+  "tests/test_v04_ytdlp.py",
+  "tests/test_wayback.py",
+  "tests/test_worker_audit.py",
+  "tests/test_worker_isolation.py",
+  "tests/test_worker_isolation_linux.py",
+]
+publication_gaps = [
+  "Package metadata and candidate notes identify `0.4.0a0`, but the clean release-commit wheel, source distribution, checksum set, tag, GitHub Release, and package publication do not yet exist.",
+  "Focused installed Docling 2.113 source-tree and development-wheel contract/content subsets pass against the exact reference bundle; the final clean v0.4.0a0 candidate wheel still needs complete retained artifact-bound smoke evidence from the release environment.",
+  "Built-in yt-dlp and exact-host Wayback paths have hermetic tests and share top-level admission, but exact-version live evidence is not captured; required mode refuses local yt-dlp until an allowlisting egress broker mediates its internal multi-host requests.",
+  "The reference Linux boundary is implemented for covered built-in offline workers, but release-commit CI and target-systemd evidence are pending; development mode and uncovered processes remain outside it.",
+  "Exact live versions and smoke evidence for external tools, browser downloads, providers, and connectors are not captured.",
+  "The exact-version catalog covers all 167 third-party identities in the current universal lock and the v0.4.0a0 candidate reports regenerate; published v0.3 evidence remains immutable and profile-verified. Artifact-level notice and redistribution legal review remains required for the explicit NVIDIA proprietary/EULA and pypdfium2 mixed-distribution LicenseRefs before publication can be approved.",
+]
+
+[[publication_gates]]
+id = "manifest-13-155"
+phase = "prepublication"
+evidence_kind = "machine"
+description = "The canonical manifest has exactly 13 categories and 155 canonical capability IDs."
+pending_reason = "The readiness checker derives this result directly from the manifest."
+
+[[publication_gates]]
+id = "quality-suite"
+phase = "prepublication"
+evidence_kind = "attestation"
+description = "The release commit passes the full test, Ruff, mypy, lock, and diff verification suite."
+pending_reason = "A branch-local run is not immutable release-commit evidence."
+
+[[publication_gates]]
+id = "published-history-integrity"
+phase = "prepublication"
+evidence_kind = "machine"
+description = "Published v0.3 evidence remains hash-bound and immutable."
+pending_reason = "The readiness checker verifies the tracked historical evidence profile."
+
+[[publication_gates]]
+id = "release-version-0.4.0a0"
+phase = "prepublication"
+evidence_kind = "machine"
+description = "Package, lock, runtime, and FastAPI metadata consistently identify 0.4.0a0."
+pending_reason = "The readiness checker verifies package and lock metadata directly."
+
+[[publication_gates]]
+id = "final-sbom-and-license-report"
+phase = "prepublication"
+evidence_kind = "machine"
+description = "Release-candidate SPDX and dependency-license artifacts match the exact lock and version."
+pending_reason = "The unreleased candidate SBOM and dependency-license report have not passed their dedicated verifier."
+check = "candidate_evidence_v1"
+
+[[publication_gates]]
+id = "wheel-sdist-checksums"
+phase = "prepublication"
+evidence_kind = "machine"
+description = "The final wheel and source distribution are version-consistent, bounded, inspected, and checksum-bound."
+pending_reason = "Clean release-commit 0.4.0a0 distributions and checksums have not passed the artifact verifier."
+check = "release_artifacts_v1"
+
+[[publication_gates]]
+id = "complete-artifact-smoke"
+phase = "prepublication"
+evidence_kind = "machine"
+description = "The final installed wheel passes every required artifact-bound smoke check."
+pending_reason = "Retained Docling evidence is intentionally focused and not a complete release smoke."
+
+[[publication_gates]]
+id = "release-commit-ci"
+phase = "prepublication"
+evidence_kind = "attestation"
+description = "Required verify and Linux containment jobs pass for the exact release commit."
+pending_reason = "Current branch CI is not an attestation for a finalized release commit."
+
+[[publication_gates]]
+id = "target-systemd-attestation"
+phase = "prepublication"
+evidence_kind = "attestation"
+description = "The exact reference unit passes static and runtime verification on the systemd 257+ target."
+pending_reason = "The target distribution has not supplied a hash- and commit-bound runtime attestation."
+
+[[publication_gates]]
+id = "ytdlp-egress-or-narrowed-claim"
+phase = "prepublication"
+evidence_kind = "attestation"
+description = "Required-mode yt-dlp has brokered allowlisted egress, or release claims explicitly limit it to development mode."
+pending_reason = "The checker must confirm the narrower claim remains explicit throughout release documentation."
+
+[[publication_gates]]
+id = "artifact-legal-review"
+phase = "prepublication"
+evidence_kind = "attestation"
+description = "A human reviewer approves exact model, NVIDIA, pypdfium2, browser, and binary notices and redistribution terms."
+pending_reason = "Technical license metadata is not legal approval."
+
+[[publication_gates]]
+id = "optional-runtime-live-evidence"
+phase = "prepublication"
+evidence_kind = "attestation"
+description = "Exact-version optional tools and versioned connectors pass live smoke; remote services record date and endpoint."
+pending_reason = "The retained focused evidence has missing, failed, or skipped live checks."
+
+[[publication_gates]]
+id = "git-tag-and-github-release"
+phase = "postpublication"
+evidence_kind = "publication"
+description = "The exact release commit is tagged and its GitHub Release contains the verified assets."
+pending_reason = "Publication is intentionally blocked until every prepublication gate passes."
+
+[[publication_gates]]
+id = "package-publication"
+phase = "postpublication"
+evidence_kind = "publication"
+description = "The verified wheel and source distribution are published under version 0.4.0a0."
+pending_reason = "Package publication is intentionally blocked until every prepublication gate passes."
+
+[[external_components]]
+name = "SWI-Prolog"
+status = "Optional logic executable installed separately and not shipped by Fetech."
+license_observation = "`BSD-2-Clause` for the core."
+required_review = "The selected build may link GMP or load add-ons with additional terms. Inspect it with the `license.` predicate."
+source_url = "https://www.swi-prolog.org/license.html"
+
+[[external_components]]
+name = "curl"
+status = "Optional HTTP/3 executable installed separately and not shipped by Fetech."
+license_observation = "SPDX `curl`."
+required_review = "Record the selected build, linked libraries, license texts, and notices before redistributing a system image."
+source_url = "https://curl.se/docs/copyright.html"
+
+[[external_components]]
+name = "Playwright browser binaries"
+status = "Downloaded separately by the Playwright CLI and not contained in the Python wheel."
+license_observation = "Varies by browser and build."
+required_review = "Record each selected browser build and preserve its bundled licenses and notices."
+source_url = "https://playwright.dev/python/docs/browsers"
+
+[[external_components]]
+name = "Tesseract OCR"
+status = "Optional OCR executable discovered at runtime and not shipped by Fetech."
+license_observation = "Apache-2.0 for the upstream engine."
+required_review = "Record the exact executable, trained-data packages, linked libraries, licenses, and notices used by a distribution."
+source_url = "https://github.com/tesseract-ocr/tesseract/blob/main/LICENSE"
+
+[[external_components]]
+name = "FFmpeg and FFprobe"
+status = "Optional media executables discovered at runtime and not shipped by Fetech."
+license_observation = "`LGPL-2.1-or-later` baseline."
+required_review = "GPL-covered build options can change the complete build license. Record configure flags and linked libraries."
+source_url = "https://ffmpeg.org/legal.html"
+
+[[external_components]]
+name = "Docling Layout Heron model artifacts"
+status = "Operator-provisioned local artifact bundle for the preferred offline Docling path; not contained in the Python wheel or universal lock."
+license_observation = "Reference bundle e9aab284777b02541f427ff10ff7e2f1b5656eda04afa3082b9b448d8201bd76 records docling-project/docling-layout-heron@8f39ad3c0b4c58e9c2d2c84a38465abf757272d8 with published Apache-2.0 metadata."
+required_review = "The canonical content manifest and smoke evidence provide technical provenance, not legal approval. Review the bundled model card, license text, notices, and redistribution terms before release or image publication."
+source_url = "https://huggingface.co/docling-project/docling-layout-heron/tree/8f39ad3c0b4c58e9c2d2c84a38465abf757272d8"

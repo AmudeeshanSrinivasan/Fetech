@@ -1,0 +1,55 @@
+[Unit]
+Description=Fetech single-tenant fetch daemon
+Documentation=file:/opt/fetech/docs/deployment-containment.md
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=simple
+User=fetech
+Group=fetech
+WorkingDirectory=/var/lib/fetech
+Environment=HOME=/var/lib/fetech
+Environment=FETECH_DATA_DIR=/var/lib/fetech
+Environment=FETECH_WORKER_ISOLATION_MODE=required
+Environment=FETECH_WORKER_BWRAP_EXECUTABLE=/usr/bin/bwrap
+Environment=FETECH_WORKER_CGROUP_ROOT=/sys/fs/cgroup
+Environment=FETECH_BROWSER_ARTIFACTS_PATH=/opt/fetech/browser-artifacts
+ExecStart=/opt/fetech/.venv/bin/fetech-daemon
+Restart=on-failure
+RestartSec=2s
+
+# Baseline Linux service containment. Operators must size these ceilings for
+# their enabled browser/document/media extras.
+UMask=0077
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/fetech
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+# Delegate only the controllers used for per-worker leaves. The private cgroup
+# view exposes this service's delegated root as /sys/fs/cgroup. The private
+# value requires systemd 257 or newer.
+Delegate=cpu memory pids
+DelegateSubgroup=daemon
+ProtectControlGroups=private
+ProtectClock=yes
+RestrictSUIDSGID=yes
+RestrictRealtime=yes
+LockPersonality=yes
+RemoveIPC=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+SystemCallArchitectures=native
+LimitCORE=0
+LimitNOFILE=4096
+TasksMax=768
+MemoryMax=6G
+
+[Install]
+WantedBy=multi-user.target

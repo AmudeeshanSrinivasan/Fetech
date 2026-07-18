@@ -136,6 +136,122 @@ structured capability after the HTTP acquisition node.
 See [the v0.3 authentication and API guide](v0.3-authentication-foundation.md) for the provider
 contracts, approval model, parser limits, failure semantics, and verification surface.
 
+## v0.4 conformance state
+
+The v0.4 set is cardinality-locked at 36 entries: 14 document/file paths, 11 media paths, and
+11 cache/snapshot paths. Every path has an importable Apache-compatible core implementation or a
+typed optional boundary. Native and optional are availability classifications, not permission:
+Python still owns destination policy, authentication scope, resource budgets, artifact admission,
+and provenance.
+
+Hostile document and archive bytes cross ephemeral bounded Python worker processes. External OCR and
+media tools run with fixed argument vectors, wall-time, output, file/CPU, and Linux-only
+best-effort address-space limits. Live YouTube metadata and Internet Archive acquisition have
+built-in optional yt-dlp and Wayback paths; other live media and snapshot services remain injected
+protocols. Worker and provider outputs are revalidated and unexpected exceptions are sanitized.
+Raw publisher artifacts remain parents of normalized artifacts, and archive/cache URLs never
+replace the original authority URL. Development subprocesses are not an OS sandbox. Linux required
+mode supplies the fail-closed boundary for the covered document, archive, image, offline-browser,
+and native-media workers; release-commit Linux/systemd evidence remains a publication gate.
+Primary HTTP and Wayback use shared request admission. Local yt-dlp uses process-level shared
+admission in development, while required mode refuses it until its multi-host traffic has brokered
+egress.
+
+### Document and file capability evidence
+
+The document-worker request protocol contains acquired bytes, a path suffix, a canonical capability,
+and bounded numeric limits; it intentionally omits the host, query, credentials, opaque
+authentication reference, and caller target path. An enabled preferred Docling parse adds one
+validated local model-artifact directory and an independently configured expected bundle SHA-256.
+The exact `docling-slim[convert-core,format-pdf,models-local]==2.113.0` dependency runs offline with
+remote services, plugins, implicit downloads, OCR, enrichments, and generated images disabled. The
+v0.4 reference is
+`docling-project/docling-layout-heron@8f39ad3c0b4c58e9c2d2c84a38465abf757272d8`
+with canonical bundle SHA-256
+`e9aab284777b02541f427ff10ff7e2f1b5656eda04afa3082b9b448d8201bd76`.
+Non-success, timeout/error, sparse, and incomplete conversions are rejected. The document worker
+installs a Python audit hook before Docling imports that denies Python-level network/process
+operations, filesystem mutation, and reads outside reviewed interpreter/package/model roots; the
+Pillow image worker applies the same policy after loading reviewed decoder plugins. Native
+extensions can bypass these hooks, native media tools do not receive them, and no child has a
+kernel-enforced filesystem or network boundary in the core runtime.
+Structured text parsers reject duplicate JSON keys and XML DTD/entity declarations; ZIP handling
+rejects traversal, links, devices, nested archives, excessive members, expansion, and compression
+ratios. Office and PDF engines are optional `fetech[documents]` dependencies.
+
+| Capability | Status | Accepted evidence and owner path |
+| --- | --- | --- |
+| <a id="pdf"></a>`pdf` | optional | PDF signature → bounded document worker → `pypdf`; textless pages produce `NEEDS_OCR` unless a configured PDF OCR provider returns valid page-located text |
+| <a id="scanned-pdf"></a>`scanned_pdf` | optional | Textless PDF → checked-only `NEEDS_OCR`, or bounded schema-validated output from an injected PDF OCR provider |
+| <a id="docx"></a>`docx` | optional | Valid OOXML Word container → bounded `python-docx` parser |
+| <a id="pptx"></a>`pptx` | optional | Valid OOXML presentation container → bounded `python-pptx` parser with slide locators |
+| <a id="xlsx"></a>`xlsx` | optional | Valid OOXML workbook → bounded read-only `openpyxl` parser with sheet/row locators |
+| <a id="csv"></a>`csv` | native | Bounded UTF-8/UTF-8-SIG CSV parser with row locators |
+| <a id="txt"></a>`txt` | native | Bounded text normalization with stable line locators |
+| <a id="markdown"></a>`markdown` | native | Bounded text-preserving Markdown normalization; fetched instructions remain untrusted |
+| <a id="json-file"></a>`json_file` | native | Bounded JSON parser with duplicate-key, depth, number, and output checks |
+| <a id="xml-file"></a>`xml_file` | native | DTD/entity-free bounded XML parser with element locators |
+| <a id="zip-archive"></a>`zip_archive` | native | HTTP → bounded-worker `ArchiveAdapter`; immutable member artifacts retain the raw archive parent |
+| <a id="github-raw"></a>`github_raw` | native | Exact `https://raw.githubusercontent.com` origin and bounded repository path → document router; GitHub remains publisher authority |
+| <a id="git-lfs"></a>`git_lfs` | optional | Git LFS v1 pointer → configured exact-origin resolver; Python rechecks result type, origin, declared size, SHA-256, byte limit, and deadline |
+| <a id="dataset-file"></a>`dataset_file` | native | Signature-first bounded routing to a registered file handler |
+
+### Media capability evidence
+
+Native image, subtitle, podcast, and EXIF readers are bounded parsers over already acquired bytes.
+Tesseract, FFprobe, and FFmpeg run through reviewed subprocess boundaries. Live transcription
+remains an injected provider protocol. Live YouTube lookup uses the built-in optional
+`YTDLPMetadataWorker`, while pre-acquired yt-dlp-info documents can still be normalized offline.
+Provider and worker return types, sizes, fields, finite numeric values, media types, source identity,
+and consumed budgets are checked again by Python.
+
+| Capability | Status | Accepted evidence and owner path |
+| --- | --- | --- |
+| <a id="image"></a>`image` | optional | Bounded header checks plus a full decode in `PillowImageValidationWorker` from `fetech[media]` → normalized image artifact |
+| <a id="image-metadata"></a>`image_metadata` | optional | Bounded PNG/GIF/JPEG/TIFF/WebP header checks confirmed by the isolated Pillow decoder → dimensions and encoding fields |
+| <a id="image-ocr"></a>`image_ocr` | optional | Acquired image → bounded `TesseractOCRWorker`; missing binary is `DEPENDENCY_MISSING` |
+| <a id="screenshot-to-text"></a>`screenshot_to_text` | optional | Acquired screenshot → same bounded OCR boundary |
+| <a id="video-metadata"></a>`video_metadata` | optional | Acquired media → bounded `FFprobeWorker` with schema-validated JSON output |
+| <a id="audio-metadata"></a>`audio_metadata` | optional | Native bounded WAV header or bounded FFprobe for other codecs |
+| <a id="transcript"></a>`transcript` | optional | Native bounded VTT/SRT/text parsing or injected schema-validated `TranscriptProvider` |
+| <a id="youtube-metadata"></a>`youtube_metadata` | optional | Sanitized pre-acquired yt-dlp info JSON or built-in bounded `YTDLPMetadataWorker` from `fetech[media]`; exact HTTPS/public-DNS policy and URL-redacted metadata |
+| <a id="podcast-feed"></a>`podcast_feed` | native | DTD/entity-free RSS parser with byte, XML-node, depth, and episode bounds; enclosure URLs are observed, never fetched automatically |
+| <a id="thumbnail"></a>`thumbnail` | optional | Acquired video → bounded `FFmpegThumbnailWorker` |
+| <a id="exif-metadata"></a>`exif_metadata` | native | Bounded TIFF/EXIF reader with GPS, owner, serial, user-comment, and MakerNote fields omitted |
+
+### Cache, snapshot, and archive capability evidence
+
+Native storage strategies use authentication-partitioned `CacheKey` values, immutable CAS bodies,
+sanitized metadata, conditional validators, and deterministic freshness/stale-while-revalidate
+semantics. The Internet Archive path has a built-in exact-host connector; other connector paths are
+optional because they require an operator-provided service that reapplies URL policy and
+byte/deadline limits. Cache keys include URL, representation,
+authentication scope, policy profile, language, region, parser version, and relevant `Vary` values.
+A cache hit is never treated as authorization or as independent evidence of truth.
+
+Previous-snapshot and configured archive alternatives are tried after policy but before HTTP and
+fall through on miss, failure, or checked-only quality. Local writes happen after extraction and
+admit only an accepted artifact of the capability's exact representation. Connector bodies pass the
+ordinary text/binary quality checks; checked-only responses are recorded as unsuccessful snapshots
+and do not stop fallback acquisition.
+
+| Capability | Status | Accepted evidence and owner path |
+| --- | --- | --- |
+| <a id="search-snippet-cache"></a>`search_snippet_cache` | native | Configured producer's validated `search_results` artifact, including bounded snippets → partitioned `SnapshotStore` |
+| <a id="search-cache"></a>`search_cache` | native | Configured producer's validated `search_results` artifact → partitioned `SnapshotStore` |
+| <a id="search-engine-cache-adapter"></a>`search_engine_cache_adapter` | optional | Configured policy-aware `SnapshotConnector` |
+| <a id="alternate-search-cache-adapter"></a>`alternate_search_cache_adapter` | optional | Independently configured policy-aware `SnapshotConnector` |
+| <a id="web-archive"></a>`web_archive` | optional | Configured archive connector; original URL remains source authority |
+| <a id="internet-archive-snapshot"></a>`internet_archive_snapshot` | native | Explicit public request → bounded availability lookup on exact `archive.org` → exact-source `web.archive.org` raw capture; DNS and every redirect are policy-checked |
+| <a id="local-snapshot"></a>`local_snapshot` | native | Acquired source/derived artifact → immutable local snapshot metadata |
+| <a id="previous-successful-snapshot"></a>`previous_successful_snapshot` | native | Latest integrity-verified successful record in the exact cache partition |
+| <a id="cdn-copy"></a>`cdn_copy` | optional | Configured policy-aware connector; HTTPS snapshot locator and byte hash required |
+| <a id="browser-cache"></a>`browser_cache` | native | Planner-produced accepted `rendered_html` → exact representation/parser partition |
+| <a id="rag-document-cache"></a>`rag_document_cache` | native | Planner-produced accepted `clean_text` → exact representation/parser partition |
+
+See [v0.4 conformance](v0.4-conformance.md) for worker protocols, cache behavior, failure semantics,
+and the release gate.
+
 ## Logic projections
 
 The optional logic backends receive generated, bounded projections of the manifest rather than
