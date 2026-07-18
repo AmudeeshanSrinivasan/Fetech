@@ -25,8 +25,26 @@ Browser changes need missing-dependency, offline subresource, malformed-output, 
 and connector policy tests. URL-variant changes must prove that no HTTPS downgrade or secret-bearing
 cross-origin fetch can be produced.
 
+Docling changes must preserve the exact optional dependency pin, run without implicit model
+downloads or remote services, reject partial/timeout/error conversions, and retain the pypdf
+fallback. Hermetic fake-contract tests are necessary but not release evidence: before publication,
+run the artifact-bound smoke collector against the exact wheel and an immutable reviewed local
+model-artifact bundle.
+
 Run the repository verification commands in `AGENTS.md` before submitting changes. Generated
 Graphify output and local runtime data must remain untracked.
+
+Changes to the manifest, universal lock, license catalog, or v0.4 conformance document must verify
+the immutable published v0.3 evidence and regenerate and check the explicitly unreleased v0.4
+development overlay. Never regenerate published evidence from a later development lock:
+
+```bash
+uv run python scripts/generate_release_evidence.py --check-published
+uv run python scripts/generate_release_evidence.py \
+  --overlay-profile scripts/release_v04_development.toml
+uv run python scripts/generate_release_evidence.py \
+  --overlay-profile scripts/release_v04_development.toml --check
+```
 
 Use `uv sync --extra dev --extra logic` to exercise the Clingo adapter. SWI-Prolog conformance tests
 run when `swipl` is available and otherwise skip without weakening the Python-only suite.

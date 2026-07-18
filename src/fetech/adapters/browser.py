@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from datetime import UTC, datetime
+from time import monotonic
 
 from fetech.adapters.base import AdapterDependencyError, AdapterExecutionError, ExecutionContext
 from fetech.browser_render import BrowserRenderer
@@ -72,18 +73,27 @@ class BrowserAdapter:
             status=AttemptStatus.RUNNING,
         )
         context.attempts.append(attempt)
+        started = monotonic()
         body = await context.cas.get(
             raw.cas_uri,
             maximum_bytes=context.request.budget.decompressed_bytes,
         )
+        remaining_output_bytes = int(
+            context.remaining_budget("decompressed_bytes")
+        )
+        remaining_browser_seconds = float(
+            context.remaining_budget("browser_seconds")
+        )
+        context.require_budget("decompressed_bytes", 1)
+        context.require_budget("browser_seconds", 0.001)
         operations = frozenset(context.request.output_requirements) & set(BROWSER_CAPABILITIES)
         operations = frozenset({*operations, *_ALWAYS_APPLIED})
         result = await renderer.render(
             body.decode("utf-8", errors="replace"),
             target=context.request.target,
             user_agent=self.user_agent,
-            timeout_seconds=context.request.budget.browser_seconds,
-            maximum_bytes=context.request.budget.decompressed_bytes,
+            timeout_seconds=remaining_browser_seconds,
+            maximum_bytes=remaining_output_bytes,
             operations=operations,
             wait_selector=context.request.metadata.get("wait_selector", "body"),
             scroll_steps=_bounded_int(context.request.metadata.get("scroll_steps"), 3, 1, 5),
@@ -93,7 +103,14 @@ class BrowserAdapter:
             expected_language=context.request.language,
         )
         artifacts = []
-        html_uri, html_digest, html_size = await context.cas.put(result.html.encode())
+        html_body = result.html.encode()
+        text_body = result.visible_text.encode()
+        screenshot_body = result.screenshot or b""
+        total_output_bytes = len(html_body) + len(text_body) + len(screenshot_body)
+        elapsed = monotonic() - started
+        context.require_budget("decompressed_bytes", total_output_bytes)
+        context.require_budget("browser_seconds", elapsed)
+        html_uri, html_digest, html_size = await context.cas.put(html_body)
         rendered_html = build_artifact(
             role="derived",
             representation="rendered_html",
@@ -109,7 +126,7 @@ class BrowserAdapter:
         )
         context.artifacts.append(rendered_html)
         artifacts.append(rendered_html)
-        text_uri, text_digest, text_size = await context.cas.put(result.visible_text.encode())
+        text_uri, text_digest, text_size = await context.cas.put(text_body)
         visible_text = build_artifact(
             role="primary" if quality.accepted else "checked-only",
             representation="visible_text",
@@ -154,6 +171,7 @@ class BrowserAdapter:
                 "artifact_ids": tuple(artifact.artifact_id for artifact in artifacts),
                 "consumed_budget": {
                     "decompressed_bytes": sum(artifact.size for artifact in artifacts),
+                    "browser_seconds": elapsed,
                 },
             }
         )

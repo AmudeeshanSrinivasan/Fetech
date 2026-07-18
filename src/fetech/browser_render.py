@@ -7,6 +7,7 @@ import binascii
 import json
 import sys
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Protocol
 
 import httpx
@@ -17,6 +18,10 @@ from fetech.logic.base import LogicBackendError
 from fetech.logic.process import run_bounded
 from fetech.security import SafeURLPolicy, sanitize_url
 from fetech.transport import PinnedAsyncHTTPTransport
+from fetech.worker_isolation import (
+    WorkerIsolationProfile,
+    WorkerIsolationRuntime,
+)
 
 
 @dataclass(frozen=True)
@@ -43,6 +48,15 @@ class BrowserRenderer(Protocol):
 
 
 class BrowserRenderWorker:
+    def __init__(
+        self,
+        *,
+        isolation: WorkerIsolationRuntime | None = None,
+        browser_artifacts_path: Path | None = None,
+    ) -> None:
+        self.isolation = isolation or WorkerIsolationRuntime.from_environment()
+        self.browser_artifacts_path = browser_artifacts_path
+
     async def render(
         self,
         document: str,
@@ -55,6 +69,7 @@ class BrowserRenderWorker:
         wait_selector: str,
         scroll_steps: int,
     ) -> BrowserRenderResult:
+        del target
         if timeout_seconds <= 0:
             raise AdapterExecutionError("browser rendering has no browser-time budget")
         worker_byte_limit = min(maximum_bytes, 50_000_000)
@@ -64,7 +79,6 @@ class BrowserRenderWorker:
             {
                 "mode": "render",
                 "document": document,
-                "target": target,
                 "user_agent": user_agent,
                 "timeout_seconds": timeout_seconds,
                 "maximum_bytes": worker_byte_limit,
@@ -81,6 +95,25 @@ class BrowserRenderWorker:
                 timeout_seconds=timeout_seconds,
                 memory_mb=BROWSER_WORKER_ADDRESS_SPACE_MB,
                 maximum_output_bytes=min(100_000_000, worker_byte_limit * 2 + 8_192),
+                maximum_file_bytes=512_000_000,
+                isolation=self.isolation.request(
+                    WorkerIsolationProfile.BROWSER_OFFLINE,
+                    read_only_paths=(
+                        (self.browser_artifacts_path,)
+                        if self.browser_artifacts_path is not None
+                        else ()
+                    ),
+                    environment=(
+                        (
+                            (
+                                "PLAYWRIGHT_BROWSERS_PATH",
+                                str(self.browser_artifacts_path),
+                            ),
+                        )
+                        if self.browser_artifacts_path is not None
+                        else ()
+                    ),
+                ),
             )
         except LogicBackendError as exc:
             raise AdapterExecutionError("bounded browser render process failed") from exc

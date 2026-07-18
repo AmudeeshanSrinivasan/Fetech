@@ -12,7 +12,9 @@ an explicitly installed system dependency.
 The registry combines the immutable 13/155 manifest with a code-owned conformance overlay. The
 overlay prevents a registered roadmap capability from being advertised as available. The current
 reports are v0.1 at 56/56, v0.2 at 40/40, and v0.3 at 23/23 implementation paths, all with
-`closure_ready=true`, for 119 cumulative paths. HTTP/3 uses an optional bounded
+`closure_ready=true`. The v0.4 development overlay adds 36/36 document, media, cache, snapshot, and
+archive paths, also with `closure_ready=true`, for 155 cumulative paths. v0.4 contains 17 native
+paths and 19 typed optional paths. HTTP/3 uses an optional bounded
 curl subprocess, reuses Python-validated DNS addresses, and refuses fallback to HTTP/2 or HTTP/1.1.
 Browser reader mode and v0.2 browser rendering use offline Playwright subprocesses over acquired
 HTML. Reader mode disables JavaScript; rendering enables JavaScript and bounded interactions while
@@ -23,6 +25,14 @@ The v0.3 release closes authentication/private sessions and structured APIs/feed
 are native. `sso` and `private_workspace` are optional because they require an explicitly configured
 operator connector, but their typed boundary, policy checks, failure semantics, and tests ship in the
 Apache core.
+
+The v0.4 implementation routes hostile document and archive bytes through ephemeral bounded workers,
+uses bounded native or external-tool media parsers, and stores sanitized immutable snapshot metadata
+over CAS artifacts. It includes built-in bounded yt-dlp and Wayback paths; other live media and
+snapshot connectors are injected protocols whose results are revalidated. Missing optional
+dependencies, tools, or providers are observable dependency failures; neither
+registration nor cache presence is accepted as evidence. This is an unreleased overlay on package
+version `0.3.0a0`, not a v0.4 release-readiness claim.
 
 ## Runtime flow
 
@@ -47,7 +57,7 @@ Python deterministic classifier and baseline planner
 Python registry, policy, dependency, and budget validation
         |
         v
-Python execution DAG and isolated workers
+Python execution DAG and bounded workers
         |
         v
 Artifacts, quality checks, event ledger, cache, and graph projections
@@ -58,6 +68,14 @@ same-domain frontier. Page, depth, attempt, byte, redirect, deadline, concurrenc
 limits remain cumulative. Sitemap, internal/related/category/pagination links, safe URL candidates,
 and optional search results feed the frontier; rejected cross-domain and over-depth candidates remain
 observable. The result includes a typed `CrawlReport` and a CAS-backed `crawl_report` artifact.
+
+`UniversalFetchGateway` owns one bounded `NetworkScheduler`. Primary HTTP and built-in Wayback hold
+one shared slot across DNS/policy evaluation and the associated request for each hop; queue,
+resolution, redirect, and transfer work consumes one cumulative deadline. Failed and partial HTTP
+transfers retain observed byte usage. Host pacing history is bounded, eligible waiters are admitted
+fairly, and cancellation releases capacity synchronously. The bounded yt-dlp subprocess consumes
+one operation-level slot; because its internal networking spans several allowed hosts without parent
+IPC, those internal requests are not represented as individual scheduler admissions.
 
 For ordinary web retrieval, `candidate_url_expansion` owns the 13 non-schedulable URL generators.
 It writes a sanitized `url_candidates` artifact and may try a safe alternative only when extracted
@@ -118,6 +136,103 @@ rejects aliases/anchors; external references are represented as data and never f
 connectors require an exact approved official origin/path plus a recognizable response schema. All
 thirteen capabilities share HTTP security, authentication, redirects, budgets, and provenance
 instead of creating independent transport stacks.
+
+## Document, media, and archive worker boundaries
+
+The document and archive adapters perform no acquisition. They read an already admitted raw artifact,
+derive request-owned limits, and call `fetech.document_worker` or `fetech.archive_worker` through the
+bounded subprocess runner. The request protocol contains bytes, a path suffix, canonical capability
+ID, and numeric limits; it omits the host, query, credentials, opaque authentication reference, and
+caller target path. An enabled Docling parse additionally receives one validated absolute
+read-only model-artifact directory plus an independently configured expected bundle SHA-256. The
+parent and child require the canonical manifest, rehash every bounded model file, and reject a
+digest mismatch. The parent also recomputes format evidence and validates the returned parser
+identity, exact artifact identity, schema, locator family, byte/block/member bounds, and complete
+output before CAS admission. In development mode the child remains an ordinary bounded host
+process. Linux required mode places it in the canonical `document_parser` profile before any input
+is sent.
+Before Docling imports, the document worker also installs a Python audit hook that
+denies Python-level sockets, process creation, filesystem mutation, and reads outside reviewed
+interpreter/package/model roots. The Pillow image decoder applies the same policy after loading
+reviewed plugins. Audit hooks are bypassable by native code and are not an operating-system
+sandbox.
+
+PDF parsing prefers the exact locked
+`docling-slim[convert-core,format-pdf,models-local]==2.113.0` path when an operator configures local
+model artifacts. The v0.4 trust anchor is
+`docling-project/docling-layout-heron@8f39ad3c0b4c58e9c2d2c84a38465abf757272d8`
+with canonical bundle SHA-256
+`e9aab284777b02541f427ff10ff7e2f1b5656eda04afa3082b9b448d8201bd76`.
+Remote services, external plugins, implicit model downloads, OCR, enrichments, and image generation
+are disabled. Python rejects non-success, timeout/error, sparse, or incomplete conversion results.
+The smaller pypdf implementation remains a deterministic, observable fallback; release evidence
+must still record a successful real installed contract/content smoke against the reviewed bundle.
+
+Textless PDFs remain checked-only `NEEDS_OCR` unless an injected PDF OCR provider returns bounded,
+page-located output that passes parent validation. Git LFS pointers similarly use an injected
+resolver that receives a sanitized target and canonical origin; Python rejects wrong result types,
+origin changes, size/hash mismatches, timeouts, and over-budget bodies. `github_raw` accepts only the
+exact `raw.githubusercontent.com` HTTPS origin and a bounded repository path.
+
+The media adapter uses bounded native parsers for structurally checked PNG/GIF/JPEG/TIFF/WebP
+images, EXIF, byte/node/depth-limited podcast feeds, subtitles, and WAV data. Tesseract, FFprobe, and
+FFmpeg paths use fixed argument vectors with input/output, CPU, and wall-time limits; Linux also
+attempts an address-space ceiling.
+Transcription remains an injected provider boundary. Live YouTube metadata uses the optional
+`YTDLPMetadataWorker`: a bounded child process with a sanitized environment, fixed invocation,
+disabled user configuration/plugins/cookies/downloads/external execution, exact HTTPS host and
+public-DNS checks, identity-only responses, redirect/byte/process ceilings, and a strict
+URL-redacted output schema. Python revalidates its fields and consumed budgets. Injected providers
+receive no runtime credentials, but providers that process acquired bytes must be trusted for that
+content. Linux required mode refuses the local yt-dlp path until an allowlisting egress broker is
+available.
+
+POSIX workers start through an isolated bootstrap with its own deadline. The bootstrap applies
+irreversible CPU, core-dump, file-size, and file-descriptor limits and then replaces itself with the
+fixed worker command; communication receives only the remaining total wall budget, and termination
+targets the process group. That is the explicit development backend.
+
+Linux required mode wraps the fixed target in a trusted profile: a delegated cgroup-v2 leaf,
+explicit Bubblewrap namespaces, selective read-only mounts, bounded private tmpfs, dropped
+capabilities, `no_new_privileges`, and an inner strict rlimit/libseccomp bootstrap. Offline document,
+archive, image, browser, FFmpeg, FFprobe, and Tesseract profiles receive a new network namespace.
+Cleanup uses `cgroup.kill`, not only a process-group signal. Native media processes do not inherit
+the Python audit policy; the required Linux boundary is therefore authoritative for them.
+Injected providers and Clingo/Prolog remain separate boundaries and require independent isolation
+when enabled for hostile production input.
+
+## Validated snapshot boundary
+
+`SnapshotStore` writes immutable, bounded JSON records that refer to integrity-checked CAS artifacts.
+Keys include normalized URL, representation, authentication scope, policy profile, language, region,
+parser version, and relevant `Vary` values. Authenticated scope uses a domain-separated digest of the
+opaque reference. Metadata contains neither that reference nor credentials.
+
+Fresh, stale-while-revalidate, revalidation-required, and miss states are explicit. A verified 304
+creates a new immutable record instead of mutating history. The built-in Internet Archive connector
+uses exact `archive.org` and `web.archive.org` HTTPS origins, policy-validates and pins every
+redirect hop, streams bounded identity-encoded responses, and binds capture metadata to the
+requested original URL. Optional search-cache, web-archive, and CDN connectors must enforce the
+same destination/redirect policy and stream limits. The core rejects third-party connector use for
+private or authenticated requests and validates returned type, source authority, HTTPS locator,
+body, and provider origin. Adapter snapshot URLs remain locators and never replace publisher
+authority.
+
+Previous-snapshot and configured archive alternatives are policy-gated before HTTP so they can
+recover from an unavailable origin. Misses, failures, and checked-only quality fall through. Mixed
+content/cache requests retain HTTP and extraction, then write only an accepted artifact of the
+capability's exact representation. Connector body quality is assessed before admission; a
+low-quality copy remains checked-only and is stored as unsuccessful.
+
+Typed cache-only plans also include their producer dependency: `clean_text` for the RAG-document
+cache, `rendered_html` for the browser cache, and a configured `search_results` connector for the
+two search caches. If an optional producer is not configured, execution reports a dependency
+failure instead of relabeling raw HTTP.
+
+Attempt consumption is accumulated across nodes. Document/media normalized output consumes the
+decompressed-byte budget, connectors consume remaining wire and decompressed bytes, and archive
+extraction consumes expanded bytes and member counts. A later node cannot reuse a predecessor's
+spent allowance.
 
 ## Language responsibilities
 
@@ -209,19 +324,43 @@ Graphify and runtime Graphify projections remain separate and rebuildable.
 
 ## Packaging
 
-The Apache-2.0 Python core installs and runs independently. Clingo is an optional extra or external
-executable; SWI-Prolog is an external executable discovered explicitly at startup. Their licenses and
-bundled artifacts must be included in the dependency-license report and SPDX SBOM. Fetech does not
-silently download a solver or change planner backends during a fetch.
+The Apache-2.0 Python core installs and runs independently. Clingo and document/media libraries are
+optional extras; SWI-Prolog, Tesseract, and FFmpeg/FFprobe are external executables discovered
+explicitly. Configured PDF OCR, snapshot, transcript, Git LFS, and browser services remain separate
+providers/connectors except for the built-in Wayback connector. The media extra supplies yt-dlp for
+the built-in metadata worker; it does not download media or invoke external downloaders. Dependency
+licenses and bundled artifacts must be included in the dependency-license report and SPDX SBOM or
+external-tool inventory as applicable. Fetech does not silently download a solver, media binary,
+model, or connector or change planner backends during a fetch.
 
-The local logic runner is resource-bounded but is not an operating-system sandbox. Linux applies an
-address-space limit in addition to CPU, output, and wall-time limits; macOS currently lacks the
-address-space limit. A production daemon must place logic engines in an isolated worker or container
-that denies network and unrestricted filesystem/process access.
+The common development process runner is resource-bounded but is not an operating-system sandbox.
+macOS supports only that backend. The Linux daemon's explicit required mode adds the built-in
+document/archive/image/offline-browser/native-media containment profiles described in
+[the deployment guide](deployment-containment.md). Logic engines and injected providers are not
+silently covered by those profiles and must be isolated separately or disabled.
+
+The focused source-tree and development-wheel Docling contract/content subsets pass against the
+immutable local reference bundle, including wheel `RECORD` and digest binding. Publishing v0.4
+additionally requires the complete installed Docling 2.113 gate from the final clean tagged wheel,
+passing Linux containment evidence from the release commit and target systemd verification, and
+either brokered allowlisted egress for yt-dlp or an explicitly development-only local yt-dlp
+release claim.
+Publication also
+requires exact-version live smoke evidence for optional dependencies, tools, and connectors; dated
+endpoint/service evidence for Wayback; artifact-level notice and redistribution legal review for
+the explicit NVIDIA proprietary/EULA and pypdfium2 mixed-distribution LicenseRefs; a v0.4 version
+and finalized release notes; and release-specific SBOM, dependency-license, checksum, tag, and
+package artifacts. The exact-version catalog now covers all 167 third-party identities in the
+current universal lock and regenerates the v0.4 development reports; those development artifacts do
+not satisfy the final publication steps. The published v0.3 evidence is immutable historical
+evidence and is checked against its separate release profile instead of being regenerated from the
+current lock.
 
 See [ADR 0001](adr/0001-polyglot-logic-backends.md), the [security policy](../SECURITY.md), and the
-[implementation threat model](security-threat-model.md). Release evidence is reproducibly generated
-from the universal lock into the [SPDX SBOM](../release/fetech-0.3.0a0.spdx.json) and
-[dependency-license report](../release/dependency-licenses.md); the
-[competitor matrix](competitor-matrix.md) records source-bounded positioning without a superiority
-claim. See also the [capability catalogue](capability-catalog.md).
+[implementation threat model](security-threat-model.md). The historical
+[v0.3 SPDX SBOM](../release/fetech-0.3.0a0.spdx.json) and
+[dependency-license report](../release/dependency-licenses.md) are verified against
+`scripts/release_published.toml`. New development and release evidence is generated from its
+declared lock and overlay inputs. The [competitor matrix](competitor-matrix.md) records
+source-bounded positioning without a superiority claim. See also the
+[capability catalogue](capability-catalog.md).

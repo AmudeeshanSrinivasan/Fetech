@@ -92,8 +92,18 @@ async def test_browser_worker_exit_two_without_json_is_dependency_missing(
         timeout_seconds: float,
         memory_mb: int,
         maximum_output_bytes: int,
+        maximum_file_bytes: int | None,
+        isolation: object,
     ) -> ProcessResult:
-        del arguments, stdin, timeout_seconds, memory_mb, maximum_output_bytes
+        del (
+            arguments,
+            stdin,
+            timeout_seconds,
+            memory_mb,
+            maximum_output_bytes,
+            maximum_file_bytes,
+            isolation,
+        )
         return ProcessResult(returncode=2, stdout=b"", stderr=b"private worker detail")
 
     monkeypatch.setattr("fetech.browser_render.run_bounded", missing_worker)
@@ -124,8 +134,17 @@ async def test_browser_worker_crash_is_typed_bounded_and_does_not_leak_stderr(
         timeout_seconds: float,
         memory_mb: int,
         maximum_output_bytes: int,
+        maximum_file_bytes: int | None,
+        isolation: object,
     ) -> ProcessResult:
-        del arguments, stdin, timeout_seconds, maximum_output_bytes
+        del (
+            arguments,
+            stdin,
+            timeout_seconds,
+            maximum_output_bytes,
+            maximum_file_bytes,
+            isolation,
+        )
         nonlocal observed_memory_mb
         observed_memory_mb = memory_mb
         return ProcessResult(returncode=-9, stdout=b"", stderr=b"private worker detail")

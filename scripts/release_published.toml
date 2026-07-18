@@ -1,0 +1,15 @@
+profile_version = "1"
+
+[[releases]]
+version = "0.3.0a0"
+tag = "v0.3.0a0"
+created = "2026-07-17T00:00:00Z"
+generator = "fetech-release-evidence-generator/1"
+lock_sha256 = "b0f149e119743287a45a95405ffd417005b395c7b810e42a9da8edc152d364ea"
+third_party_package_count = 113
+spdx_filename = "fetech-0.3.0a0.spdx.json"
+spdx_sha256 = "65b0f06ec381427a833466bd6211d94ef908791999dfad88f03158d06a85e70c"
+spdx_document_name = "fetech-0.3.0a0-universal-lock"
+spdx_document_namespace = "https://github.com/AmudeeshanSrinivasan/Fetech/spdx/fetech-0.3.0a0-b0f149e119743287a45a95405ffd417005b395c7b810e42a9da8edc152d364ea"
+license_report_filename = "dependency-licenses.md"
+license_report_sha256 = "9b0b9476c6a2aa6f9684ec31dbf60062526f872c751d1cf56953d2be330efd57"

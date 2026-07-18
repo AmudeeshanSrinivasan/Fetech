@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 from datetime import UTC, datetime
 from html import unescape
@@ -9,7 +10,11 @@ from urllib.parse import quote, urlsplit
 
 import httpx
 
-from fetech.adapters.base import AdapterExecutionError, ExecutionContext
+from fetech.adapters.base import (
+    AdapterBudgetExceededError,
+    AdapterExecutionError,
+    ExecutionContext,
+)
 from fetech.browser_reader import BrowserReaderWorker
 from fetech.models import AttemptStatus, FetchAttempt, PlanNode
 from fetech.quality import assess_text
@@ -41,35 +46,85 @@ class ReaderAdapter:
 
     async def execute(self, node: PlanNode, context: ExecutionContext) -> None:
         raw = context.latest_artifact("raw")
-        if raw is None or not context.resources:
+        normalized_document = (
+            context.latest_artifact("document")
+            if node.capability_id == "clean_text"
+            else None
+        )
+        source = normalized_document or raw
+        if source is None or not context.resources:
             raise AdapterExecutionError("reader requires an HTTP source artifact")
+        resource = next(
+            (
+                candidate
+                for candidate in reversed(context.resources)
+                if candidate.resource_id == source.source_resource_id
+            ),
+            None,
+        )
+        if resource is None:
+            raise AdapterExecutionError(
+                "reader source resource is missing from the execution context"
+            )
         attempt = FetchAttempt(
             capability_id=node.capability_id,
             sanitized_destination=sanitize_url(context.request.target),
             status=AttemptStatus.RUNNING,
         )
         context.attempts.append(attempt)
+        attempt_index = len(context.attempts) - 1
+        remaining_output_bytes = int(context.remaining_budget("decompressed_bytes"))
+        context.require_budget("decompressed_bytes", 1)
         body = await context.cas.get(
-            raw.cas_uri, maximum_bytes=context.request.budget.decompressed_bytes
+            source.cas_uri,
+            maximum_bytes=source.size,
         )
         document = body.decode("utf-8", errors="replace")
         if node.capability_id == "jina_reader":
-            text, parser, bytes_received = await self._remote_reader(context)
+            remaining_wire_bytes = int(context.remaining_budget("bytes"))
+            context.require_budget("bytes", 1)
+            limiting_budget = (
+                "wire"
+                if remaining_wire_bytes < remaining_output_bytes
+                else "decompressed"
+            )
+            text, parser, bytes_received = await self._remote_reader(
+                context,
+                attempt_index=attempt_index,
+                maximum_bytes=min(
+                    remaining_wire_bytes,
+                    remaining_output_bytes,
+                ),
+                limiting_budget=limiting_budget,
+            )
         elif node.capability_id == "browser_reader_mode":
+            if raw is None:
+                raise AdapterExecutionError(
+                    "browser reader mode requires an HTTP source artifact"
+                )
             text = await self.browser_reader.extract(
                 document,
                 target=context.request.target,
                 user_agent=self.user_agent,
                 timeout_seconds=context.request.budget.browser_seconds,
-                maximum_bytes=context.request.budget.decompressed_bytes,
+                maximum_bytes=remaining_output_bytes,
             )
             parser = "offline-browser-reader"
             bytes_received = len(text.encode())
+        elif normalized_document is not None:
+            text = _normalized_document_text(
+                body,
+                maximum_bytes=remaining_output_bytes,
+            )
+            parser = "normalized-document-reader"
+            bytes_received = len(body)
         else:
+            assert raw is not None
             text, parser = _extract(node.capability_id, document, raw.media_type)
             bytes_received = len(body)
         quality = assess_text(text, expected_language=context.request.language)
         encoded = text.encode("utf-8")
+        context.require_budget("decompressed_bytes", len(encoded))
         uri, digest, size = await context.cas.put(encoded)
         duplicate = next(
             (artifact for artifact in context.artifacts if artifact.sha256 == digest),
@@ -84,26 +139,39 @@ class ReaderAdapter:
             cas_uri=uri,
             digest=digest,
             size=size,
-            resource=context.resources[-1],
+            resource=resource,
             extractor=f"{parser}/{node.capability_id}/0.1",
             quality=quality,
-            parents=(raw,),
+            parents=(source,),
             locators=("document",),
         )
         context.artifacts.append(artifact)
         context.record_quality_outcomes(quality, stage="quality")
         context.accepted = context.accepted or quality.accepted
-        context.attempts[-1] = attempt.model_copy(
+        current_attempt = context.attempts[attempt_index]
+        consumed_budget = dict(current_attempt.consumed_budget)
+        consumed_budget["decompressed_bytes"] = (
+            consumed_budget.get("decompressed_bytes", 0) + size
+        )
+        context.attempts[attempt_index] = current_attempt.model_copy(
             update={
                 "status": AttemptStatus.SUCCEEDED,
                 "finished_at": datetime.now(UTC),
                 "bytes_received": bytes_received,
                 "parser": parser,
                 "artifact_ids": (artifact.artifact_id,),
+                "consumed_budget": consumed_budget,
             }
         )
 
-    async def _remote_reader(self, context: ExecutionContext) -> tuple[str, str, int]:
+    async def _remote_reader(
+        self,
+        context: ExecutionContext,
+        *,
+        attempt_index: int,
+        maximum_bytes: int,
+        limiting_budget: str,
+    ) -> tuple[str, str, int]:
         from fetech.adapters.base import AdapterDependencyError
 
         if not self.remote_reader_template:
@@ -132,7 +200,7 @@ class ReaderAdapter:
         )
         if isinstance(transport, PinnedAsyncHTTPTransport):
             transport.pin(host, self.policy.validated_addresses(host))
-        maximum_bytes = min(context.request.budget.decompressed_bytes, 50_000_000)
+        maximum_bytes = min(maximum_bytes, 50_000_000)
         chunks: list[bytes] = []
         size = 0
         try:
@@ -147,8 +215,15 @@ class ReaderAdapter:
                 response.raise_for_status()
                 async for chunk in response.aiter_bytes():
                     size += len(chunk)
+                    context.record_attempt_consumption(
+                        attempt_index,
+                        bytes=len(chunk),
+                    )
                     if size > maximum_bytes:
-                        raise AdapterExecutionError("remote reader exceeded the byte budget")
+                        raise AdapterBudgetExceededError(
+                            f"remote reader exceeded the remaining {limiting_budget} "
+                            "byte budget"
+                        )
                     chunks.append(chunk)
         except httpx.HTTPError as exc:
             raise AdapterExecutionError("remote reader request failed") from exc
@@ -161,6 +236,57 @@ def extract_visible_text(document: str) -> str:
     without_scripts = _SCRIPT_STYLE.sub(" ", document)
     without_tags = _TAGS.sub(" ", without_scripts)
     return _WHITESPACE.sub(" ", unescape(without_tags)).strip()
+
+
+def _normalized_document_text(body: bytes, *, maximum_bytes: int) -> str:
+    """Extract bounded text from Fetech's validated document representation."""
+
+    try:
+        document = json.loads(body)
+        if not isinstance(document, dict):
+            raise TypeError
+        blocks = document.get("blocks")
+        if not isinstance(blocks, list) or len(blocks) > 10_000:
+            raise TypeError
+        parts: list[str] = []
+        size = 0
+        for block in blocks:
+            if not isinstance(block, dict):
+                raise TypeError
+            value: str | None = None
+            if isinstance(block.get("text"), str):
+                value = block["text"]
+            elif isinstance(block.get("cells"), list):
+                value = " ".join(
+                    "" if cell is None else str(cell)
+                    for cell in block["cells"]
+                )
+            elif "value" in block:
+                value = json.dumps(
+                    block["value"],
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    allow_nan=False,
+                )
+            elif isinstance(block.get("locator"), str):
+                value = block["locator"]
+            if value is None:
+                continue
+            encoded_size = len(value.encode("utf-8"))
+            size += encoded_size + (1 if parts else 0)
+            if size > maximum_bytes:
+                raise AdapterBudgetExceededError(
+                    "normalized document text exceeds the remaining decompressed byte budget"
+                )
+            parts.append(value)
+    except AdapterBudgetExceededError:
+        raise
+    except (TypeError, ValueError, json.JSONDecodeError) as exc:
+        raise AdapterExecutionError(
+            "reader received an invalid normalized document artifact"
+        ) from exc
+    return "\n".join(parts)
 
 
 def _extract(capability_id: str, document: str, media_type: str) -> tuple[str, str]:
