@@ -1,0 +1,126 @@
+{
+  "gates": [
+    {
+      "description": "The canonical manifest has exactly 13 categories and 155 canonical capability IDs.",
+      "evidence_kind": "machine",
+      "id": "manifest-13-155",
+      "phase": "prepublication",
+      "reason": "Verified 13 unique categories, 155 unique canonical IDs, and collision-free aliases.",
+      "state": "passed"
+    },
+    {
+      "description": "The release commit passes the full test, Ruff, mypy, lock, and diff verification suite.",
+      "evidence_kind": "attestation",
+      "id": "quality-suite",
+      "phase": "prepublication",
+      "reason": "A branch-local run is not immutable release-commit evidence.",
+      "state": "blocked"
+    },
+    {
+      "description": "Published v0.3 evidence remains hash-bound and immutable.",
+      "evidence_kind": "machine",
+      "id": "published-history-integrity",
+      "phase": "prepublication",
+      "reason": "Verified immutable published-history artifact hashes and release metadata.",
+      "state": "passed"
+    },
+    {
+      "description": "Package metadata, release notes, artifacts, and evidence consistently identify 0.4.0a0.",
+      "evidence_kind": "machine",
+      "id": "release-version-0.4.0a0",
+      "phase": "prepublication",
+      "reason": "pyproject.toml and the unique uv.lock root package must both use 0.4.0a0.",
+      "state": "blocked"
+    },
+    {
+      "description": "Final release-specific SPDX and dependency-license artifacts match the final lock and version.",
+      "evidence_kind": "machine",
+      "id": "final-sbom-and-license-report",
+      "phase": "prepublication",
+      "reason": "Only the unreleased development-overlay evidence exists.",
+      "state": "blocked"
+    },
+    {
+      "description": "The final wheel and source distribution are version-consistent, bounded, inspected, and checksum-bound.",
+      "evidence_kind": "machine",
+      "id": "wheel-sdist-checksums",
+      "phase": "prepublication",
+      "reason": "Final 0.4.0a0 distributions and checksums do not exist.",
+      "state": "blocked"
+    },
+    {
+      "description": "The final installed wheel passes every required artifact-bound smoke check.",
+      "evidence_kind": "machine",
+      "id": "complete-artifact-smoke",
+      "phase": "prepublication",
+      "reason": "Retained Docling evidence is intentionally focused and not a complete release smoke.",
+      "state": "blocked"
+    },
+    {
+      "description": "Required verify and Linux containment jobs pass for the exact release commit.",
+      "evidence_kind": "attestation",
+      "id": "release-commit-ci",
+      "phase": "prepublication",
+      "reason": "Current branch CI is not an attestation for a finalized release commit.",
+      "state": "blocked"
+    },
+    {
+      "description": "The exact reference unit passes static and runtime verification on the systemd 257+ target.",
+      "evidence_kind": "attestation",
+      "id": "target-systemd-attestation",
+      "phase": "prepublication",
+      "reason": "The target distribution has not supplied a hash- and commit-bound runtime attestation.",
+      "state": "blocked"
+    },
+    {
+      "description": "Required-mode yt-dlp has brokered allowlisted egress, or release claims explicitly limit it to development mode.",
+      "evidence_kind": "attestation",
+      "id": "ytdlp-egress-or-narrowed-claim",
+      "phase": "prepublication",
+      "reason": "The checker must confirm the narrower claim remains explicit throughout release documentation.",
+      "state": "blocked"
+    },
+    {
+      "description": "A human reviewer approves exact model, NVIDIA, pypdfium2, browser, and binary notices and redistribution terms.",
+      "evidence_kind": "attestation",
+      "id": "artifact-legal-review",
+      "phase": "prepublication",
+      "reason": "Technical license metadata is not legal approval.",
+      "state": "blocked"
+    },
+    {
+      "description": "Exact-version optional tools and versioned connectors pass live smoke; remote services record date and endpoint.",
+      "evidence_kind": "attestation",
+      "id": "optional-runtime-live-evidence",
+      "phase": "prepublication",
+      "reason": "The retained development evidence has missing, failed, or skipped live checks.",
+      "state": "blocked"
+    },
+    {
+      "description": "The exact release commit is tagged and its GitHub Release contains the verified assets.",
+      "evidence_kind": "publication",
+      "id": "git-tag-and-github-release",
+      "phase": "postpublication",
+      "reason": "Publication is intentionally blocked until every prepublication gate passes.",
+      "state": "blocked"
+    },
+    {
+      "description": "The verified wheel and source distribution are published under version 0.4.0a0.",
+      "evidence_kind": "publication",
+      "id": "package-publication",
+      "phase": "postpublication",
+      "reason": "Package publication is intentionally blocked until every prepublication gate passes.",
+      "state": "blocked"
+    }
+  ],
+  "schema_version": "1",
+  "state": "blocked",
+  "summary": {
+    "blocked_count": 12,
+    "gate_count": 14,
+    "passed_count": 2,
+    "postpublication_blocked_count": 2,
+    "prepublication_blocked_count": 10
+  },
+  "target_version": "0.4.0a0"
+}

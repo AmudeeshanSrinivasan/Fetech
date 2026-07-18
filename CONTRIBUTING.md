@@ -40,11 +40,17 @@ development overlay. Never regenerate published evidence from a later developmen
 
 ```bash
 uv run python scripts/generate_release_evidence.py --check-published
+uv run python scripts/check_v04_release_readiness.py --check
 uv run python scripts/generate_release_evidence.py \
   --overlay-profile scripts/release_v04_development.toml
 uv run python scripts/generate_release_evidence.py \
   --overlay-profile scripts/release_v04_development.toml --check
 ```
+
+The ordinary readiness `--check` confirms that the tracked development report is exact, including
+truthful blockers. It does not mean the release is publishable. Only the final release environment
+may run `--require-publishable`, and it must not provide or relabel evidence that did not actually
+pass.
 
 Use `uv sync --extra dev --extra logic` to exercise the Clingo adapter. SWI-Prolog conformance tests
 run when `swipl` is available and otherwise skip without weakening the Python-only suite.

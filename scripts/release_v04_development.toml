@@ -26,10 +26,12 @@ evidence_inputs = [
   "docs/v0.4-conformance.md",
   "docs/releases/v0.4.0a0.md",
   "scripts/generate_release_evidence.py",
+  "scripts/check_v04_release_readiness.py",
   "scripts/release_license_catalog.toml",
   "scripts/release_published.toml",
   "scripts/collect_v04_smoke_evidence.py",
   "scripts/provision_docling_artifacts.py",
+  "release/fetech-v0.4-readiness.json",
   "release/fetech-v0.4-docling-development-smoke.json",
   "release/fetech-v0.4-docling-wheel-smoke.json",
   "src/fetech/__init__.py",
@@ -74,7 +76,9 @@ evidence_inputs = [
   "tests/test_logic_backends.py",
   "tests/test_network_scheduling.py",
   "tests/test_release_evidence.py",
+  "tests/test_release_readiness.py",
   "tests/test_storage_cas.py",
+  "tests/test_systemd_unit.py",
   "tests/test_v01_conformance.py",
   "tests/test_v02_browser.py",
   "tests/test_v02_conformance.py",
@@ -107,6 +111,104 @@ publication_gaps = [
   "Exact live versions and smoke evidence for external tools, browser downloads, providers, and connectors are not captured.",
   "The exact-version catalog covers all 167 third-party identities in the current universal lock and the v0.4 development reports regenerate; published v0.3 evidence remains immutable and profile-verified. Artifact-level notice and redistribution legal review remains required for the explicit NVIDIA proprietary/EULA and pypdfium2 mixed-distribution LicenseRefs before final release evidence can be approved.",
 ]
+
+[[publication_gates]]
+id = "manifest-13-155"
+phase = "prepublication"
+evidence_kind = "machine"
+description = "The canonical manifest has exactly 13 categories and 155 canonical capability IDs."
+pending_reason = "The readiness checker derives this result directly from the manifest."
+
+[[publication_gates]]
+id = "quality-suite"
+phase = "prepublication"
+evidence_kind = "attestation"
+description = "The release commit passes the full test, Ruff, mypy, lock, and diff verification suite."
+pending_reason = "A branch-local run is not immutable release-commit evidence."
+
+[[publication_gates]]
+id = "published-history-integrity"
+phase = "prepublication"
+evidence_kind = "machine"
+description = "Published v0.3 evidence remains hash-bound and immutable."
+pending_reason = "The readiness checker verifies the tracked historical evidence profile."
+
+[[publication_gates]]
+id = "release-version-0.4.0a0"
+phase = "prepublication"
+evidence_kind = "machine"
+description = "Package metadata, release notes, artifacts, and evidence consistently identify 0.4.0a0."
+pending_reason = "Package metadata still identifies 0.3.0a0."
+
+[[publication_gates]]
+id = "final-sbom-and-license-report"
+phase = "prepublication"
+evidence_kind = "machine"
+description = "Final release-specific SPDX and dependency-license artifacts match the final lock and version."
+pending_reason = "Only the unreleased development-overlay evidence exists."
+
+[[publication_gates]]
+id = "wheel-sdist-checksums"
+phase = "prepublication"
+evidence_kind = "machine"
+description = "The final wheel and source distribution are version-consistent, bounded, inspected, and checksum-bound."
+pending_reason = "Final 0.4.0a0 distributions and checksums do not exist."
+
+[[publication_gates]]
+id = "complete-artifact-smoke"
+phase = "prepublication"
+evidence_kind = "machine"
+description = "The final installed wheel passes every required artifact-bound smoke check."
+pending_reason = "Retained Docling evidence is intentionally focused and not a complete release smoke."
+
+[[publication_gates]]
+id = "release-commit-ci"
+phase = "prepublication"
+evidence_kind = "attestation"
+description = "Required verify and Linux containment jobs pass for the exact release commit."
+pending_reason = "Current branch CI is not an attestation for a finalized release commit."
+
+[[publication_gates]]
+id = "target-systemd-attestation"
+phase = "prepublication"
+evidence_kind = "attestation"
+description = "The exact reference unit passes static and runtime verification on the systemd 257+ target."
+pending_reason = "The target distribution has not supplied a hash- and commit-bound runtime attestation."
+
+[[publication_gates]]
+id = "ytdlp-egress-or-narrowed-claim"
+phase = "prepublication"
+evidence_kind = "attestation"
+description = "Required-mode yt-dlp has brokered allowlisted egress, or release claims explicitly limit it to development mode."
+pending_reason = "The checker must confirm the narrower claim remains explicit throughout release documentation."
+
+[[publication_gates]]
+id = "artifact-legal-review"
+phase = "prepublication"
+evidence_kind = "attestation"
+description = "A human reviewer approves exact model, NVIDIA, pypdfium2, browser, and binary notices and redistribution terms."
+pending_reason = "Technical license metadata is not legal approval."
+
+[[publication_gates]]
+id = "optional-runtime-live-evidence"
+phase = "prepublication"
+evidence_kind = "attestation"
+description = "Exact-version optional tools and versioned connectors pass live smoke; remote services record date and endpoint."
+pending_reason = "The retained development evidence has missing, failed, or skipped live checks."
+
+[[publication_gates]]
+id = "git-tag-and-github-release"
+phase = "postpublication"
+evidence_kind = "publication"
+description = "The exact release commit is tagged and its GitHub Release contains the verified assets."
+pending_reason = "Publication is intentionally blocked until every prepublication gate passes."
+
+[[publication_gates]]
+id = "package-publication"
+phase = "postpublication"
+evidence_kind = "publication"
+description = "The verified wheel and source distribution are published under version 0.4.0a0."
+pending_reason = "Package publication is intentionally blocked until every prepublication gate passes."
 
 [[external_components]]
 name = "SWI-Prolog"

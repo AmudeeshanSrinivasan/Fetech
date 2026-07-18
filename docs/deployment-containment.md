@@ -188,6 +188,11 @@ They must be larger than any permitted worker leaf plus the daemon itself.
 Cross-platform tests validate profile schemas, exact shell-free command
 construction, fail-closed required mode, explicit development status, hidden
 data/home roots, bounded tmpfs declarations, and unsupported network profiles.
+`tests/test_systemd_unit.py` also pins the reference unit's security-critical
+identity, launch path, writable path, cgroup delegation, required-mode
+environment, and hardening directives. This hermetic contract test detects
+configuration drift; it is not a substitute for target-systemd runtime
+verification.
 
 The `containment-linux` CI job runs as the unprivileged service user inside a
 transient delegated systemd service and must not skip enforcement tests.

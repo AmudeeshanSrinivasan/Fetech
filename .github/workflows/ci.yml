@@ -35,6 +35,7 @@ jobs:
       - name: Verify release evidence
         run: |
           uv run --no-sync python scripts/generate_release_evidence.py --check-published
+          uv run --no-sync python scripts/check_v04_release_readiness.py --check
           uv run --no-sync python scripts/generate_release_evidence.py \
             --overlay-profile scripts/release_v04_development.toml --check
       - name: Build distributions
