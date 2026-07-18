@@ -195,8 +195,14 @@ Ubuntu 24.04's systemd supports delegation and `DelegateSubgroup` but predates
 the reference unit's `ProtectControlGroups=private` value, so CI uses the normal
 delegated cgroup view and points the runtime at the transient service's exact
 `/sys/fs/cgroup/system.slice/fetech-containment-ci.service` subtree. The final
-target-systemd verification separately checks the complete reference unit. CI
-checks:
+target-systemd verification separately checks the complete reference unit.
+Ubuntu's `apparmor-profiles` package supplies the reviewed
+`bwrap-userns-restrict` profile used by CI. The job loads that restrictive
+profile and runs a non-root user/network-namespace preflight; it never disables
+AppArmor's host-wide unprivileged-user-namespace policy. Failed worker startup
+reports only bounded, fixed-category diagnostics; raw Bubblewrap stderr is
+suppressed so paths, URLs and credential-like material cannot enter results or
+logs. CI checks:
 
 - read-only selected mounts and absence of unmounted host secrets;
 - private default-deny networking for parsers;

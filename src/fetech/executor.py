@@ -24,6 +24,7 @@ from fetech.models import (
     AttemptStatus,
     CapabilityOutcomeStatus,
     Diagnostic,
+    FetchAttempt,
     FetchPlan,
     FetchResult,
     PlanNode,
@@ -34,7 +35,12 @@ from fetech.models import (
     RunState,
     utc_now,
 )
-from fetech.security import PolicyBlockedError, sanitize_output_for_request, sanitize_url
+from fetech.security import (
+    PolicyBlockedError,
+    sanitize_output_for_request,
+    sanitize_url,
+    sanitize_url_for_request,
+)
 from fetech.storage import FileSystemCAS
 
 
@@ -103,6 +109,7 @@ class ExecutionEngine:
                 {"capability_id": node.capability_id},
                 (root.event_id,),
             )
+            attempt_count = len(context.attempts)
             outcome_count = len(context.capability_outcomes)
             runtime_event_count = len(context.pending_events)
             try:
@@ -111,6 +118,11 @@ class ExecutionEngine:
                     monotonic() - execution_started
                 )
                 if remaining_deadline <= 0:
+                    self._ensure_deadline_attempt_failed(
+                        context,
+                        node,
+                        attempt_count,
+                    )
                     raise BudgetExhaustedError("run deadline budget exhausted")
                 async with asyncio.timeout(remaining_deadline):
                     await self._with_retries(adapter.execute, node, context, node.retry.maximum)
@@ -233,7 +245,11 @@ class ExecutionEngine:
                 break
             except TimeoutError:
                 budget_exhausted = True
-                self._mark_deadline_attempt_failed(context)
+                self._ensure_deadline_attempt_failed(
+                    context,
+                    node,
+                    attempt_count,
+                )
                 context.diagnostics.append(
                     Diagnostic(
                         code="budget_exhausted",
@@ -474,13 +490,35 @@ class ExecutionEngine:
         )
 
     @staticmethod
-    def _mark_deadline_attempt_failed(context: ExecutionContext) -> None:
-        if not context.attempts or context.attempts[-1].status not in {
+    def _ensure_deadline_attempt_failed(
+        context: ExecutionContext,
+        node: PlanNode,
+        attempt_count: int,
+    ) -> None:
+        if len(context.attempts) == attempt_count:
+            finished_at = utc_now()
+            context.attempts.append(
+                FetchAttempt(
+                    capability_id=node.capability_id,
+                    sanitized_destination=sanitize_url_for_request(
+                        context.request.target,
+                        context.request,
+                    ),
+                    status=AttemptStatus.FAILED,
+                    finished_at=finished_at,
+                    failure_code="budget_exhausted",
+                )
+            )
+            return
+
+        attempt = context.attempts[-1]
+        if attempt.status not in {
             AttemptStatus.CANCELLED,
+            AttemptStatus.PLANNED,
             AttemptStatus.RUNNING,
         }:
             return
-        context.attempts[-1] = context.attempts[-1].model_copy(
+        context.attempts[-1] = attempt.model_copy(
             update={
                 "status": AttemptStatus.FAILED,
                 "finished_at": utc_now(),

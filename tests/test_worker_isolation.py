@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 import sys
 from pathlib import Path
 from typing import cast
@@ -165,6 +166,37 @@ def test_required_profile_command_is_minimal_read_only_and_bounded(
     assert arguments[-3:] == (sys.executable, "-c", "print('isolated')")
 
 
+def test_tmp_read_only_inputs_are_mounted_after_bounded_scratch(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    prepared, package_root, _, _ = _required_prepared(tmp_path, monkeypatch)
+    scratch_input = Path("/tmp/fetech-reviewed-input")
+    prepared.read_only_roots = (package_root, scratch_input)
+
+    arguments = prepared.launch_arguments(status_fd=23)
+
+    scratch_tmpfs = next(
+        index
+        for index, argument in enumerate(arguments)
+        if argument == "--tmpfs" and arguments[index + 1] == "/tmp"
+    )
+    package_mount = arguments.index(str(package_root), arguments.index("--ro-bind"))
+    scratch_mount = arguments.index(str(scratch_input), scratch_tmpfs)
+    assert package_mount < scratch_tmpfs < scratch_mount
+    assert arguments[scratch_mount - 1 : scratch_mount + 2] == (
+        "--ro-bind",
+        str(scratch_input),
+        str(scratch_input),
+    )
+    assert scratch_mount < arguments.index("--chdir")
+
+
+def test_private_scratch_root_cannot_be_replaced_by_read_only_mount() -> None:
+    with pytest.raises(BackendExecutionError, match="cannot replace private scratch"):
+        isolation_module._partition_read_only_roots((Path("/tmp"),))
+
+
 @pytest.mark.asyncio
 async def test_development_profile_reports_explicit_unsandboxed_status() -> None:
     runtime = WorkerIsolationRuntime(mode=WorkerIsolationMode.DEVELOPMENT)
@@ -307,6 +339,126 @@ async def test_ytdlp_network_profile_is_refused_in_required_mode_before_spawn(
 
 def test_bubblewrap_status_requires_a_positive_integer_child_pid() -> None:
     process_module._validate_bubblewrap_status(b'{"child-pid":123}\n')
+
+
+@pytest.mark.asyncio
+async def test_bubblewrap_status_stream_preserves_followup_exit_code() -> None:
+    status_read, status_write = os.pipe()
+    os.set_blocking(status_read, False)
+    pending = bytearray()
+    try:
+        os.write(
+            status_write,
+            b'{"child-pid":123}\n{"exit-code":42}\n',
+        )
+        os.close(status_write)
+        status_write = -1
+
+        child = await process_module._read_startup_marker(
+            status_read,
+            stop_at_newline=True,
+            pending=pending,
+        )
+        exited = await process_module._read_startup_marker(
+            status_read,
+            stop_at_newline=True,
+            pending=pending,
+        )
+    finally:
+        os.close(status_read)
+        if status_write >= 0:
+            os.close(status_write)
+
+    process_module._validate_bubblewrap_status(child)
+    assert process_module._bubblewrap_exit_code(exited) == 42
+    assert pending == bytearray()
+
+
+@pytest.mark.asyncio
+async def test_missing_attestation_reports_only_sanitized_bounded_diagnostics(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FailedProcess:
+        returncode = 125
+        stderr = asyncio.StreamReader()
+
+    async def already_stopped(_: object) -> None:
+        return None
+
+    process = FailedProcess()
+    secret = b"https://user:password@example.invalid/private"
+    process.stderr.feed_data(
+        b"bwrap: loopback: Failed RTM_NEWADDR: Operation not permitted\n" + secret
+    )
+    process.stderr.feed_eof()
+    status_read, status_write = os.pipe()
+    os.set_blocking(status_read, False)
+    try:
+        os.write(status_write, b'{"exit-code":1}\n')
+        os.close(status_write)
+        status_write = -1
+        monkeypatch.setattr(process_module, "_kill_process_tree", already_stopped)
+
+        diagnostic = await process_module._isolation_startup_diagnostic(
+            cast(asyncio.subprocess.Process, process),
+            status_fd=status_read,
+            pending_status=bytearray(),
+        )
+    finally:
+        os.close(status_read)
+        if status_write >= 0:
+            os.close(status_write)
+
+    assert "Bubblewrap exit code 1" in diagnostic
+    assert "Bubblewrap loopback address setup was denied" in diagnostic
+    assert secret.decode() not in diagnostic
+
+
+@pytest.mark.asyncio
+async def test_startup_stderr_reader_is_strictly_bounded() -> None:
+    stream = asyncio.StreamReader()
+    stream.feed_data(b"x" * (process_module._MAX_STARTUP_STDERR_BYTES + 1))
+    stream.feed_eof()
+
+    content, truncated = await process_module._read_startup_stderr(stream)
+
+    assert len(content) == process_module._MAX_STARTUP_STDERR_BYTES
+    assert truncated
+
+
+@pytest.mark.asyncio
+async def test_diagnostic_omits_synthetic_kill_status_and_unknown_stderr(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class RunningProcess:
+        returncode: int | None = None
+        stderr = asyncio.StreamReader()
+
+    process = RunningProcess()
+    secret = b"/tmp/private/credential-reference"
+    process.stderr.feed_data(b"unexpected launcher failure at " + secret)
+    process.stderr.feed_eof()
+    status_read, status_write = os.pipe()
+    os.set_blocking(status_read, False)
+    os.close(status_write)
+
+    async def synthetic_kill(target: object) -> None:
+        cast(RunningProcess, target).returncode = -9
+
+    monkeypatch.setattr(process_module, "_kill_process_tree", synthetic_kill)
+    try:
+        diagnostic = await process_module._isolation_startup_diagnostic(
+            cast(asyncio.subprocess.Process, process),
+            status_fd=status_read,
+            pending_status=bytearray(),
+        )
+    finally:
+        os.close(status_read)
+
+    assert "launcher return code" not in diagnostic
+    assert "-9" not in diagnostic
+    assert "unrecognized startup stderr was suppressed" in diagnostic
+    assert secret.decode() not in diagnostic
 
 
 @pytest.mark.parametrize(

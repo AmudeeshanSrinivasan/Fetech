@@ -19,6 +19,7 @@ _DEFAULT_STARTUP_TIMEOUT_SECONDS = 5.0
 _STARTUP_MARKER = b"fetech-limits-ready-v1\n"
 _ISOLATION_STARTUP_MARKER = b"fetech-isolation-ready-v1\n"
 _MAX_STARTUP_PROTOCOL_BYTES = 4_096
+_MAX_STARTUP_STDERR_BYTES = 4_096
 
 
 @dataclass(frozen=True)
@@ -171,6 +172,7 @@ async def _spawn_posix_limited(
     os.set_inheritable(ready_write, True)
     os.set_blocking(ready_read, False)
     process: asyncio.subprocess.Process | None = None
+    status_buffer = bytearray()
     try:
         try:
             async with asyncio.timeout(startup_timeout_seconds):
@@ -213,6 +215,11 @@ async def _spawn_posix_limited(
                     stop_at_newline=bool(
                         isolation is not None and isolation.enforced
                     ),
+                    pending=(
+                        status_buffer
+                        if isolation is not None and isolation.enforced
+                        else None
+                    ),
                 )
                 if isolation is not None and isolation.enforced:
                     _validate_bubblewrap_status(marker)
@@ -225,8 +232,13 @@ async def _spawn_posix_limited(
                             len(_ISOLATION_STARTUP_MARKER)
                         )
                     except asyncio.IncompleteReadError as exc:
+                        diagnostic = await _isolation_startup_diagnostic(
+                            process,
+                            status_fd=ready_read,
+                            pending_status=status_buffer,
+                        )
                         raise BackendExecutionError(
-                            "isolated worker ended before containment attestation"
+                            diagnostic
                         ) from exc
                     if inner_marker != _ISOLATION_STARTUP_MARKER:
                         raise BackendExecutionError(
@@ -323,10 +335,27 @@ async def _read_startup_marker(
     descriptor: int,
     *,
     stop_at_newline: bool,
+    pending: bytearray | None = None,
 ) -> bytes:
     loop = asyncio.get_running_loop()
     completed: asyncio.Future[bytes] = loop.create_future()
-    content = bytearray()
+    content = pending if pending is not None else bytearray()
+
+    def completed_value(*, eof: bool = False) -> bytes | None:
+        if stop_at_newline and b"\n" in content:
+            line, _, remainder = bytes(content).partition(b"\n")
+            content.clear()
+            content.extend(remainder)
+            return line + b"\n"
+        if eof or len(content) >= _MAX_STARTUP_PROTOCOL_BYTES:
+            value = bytes(content)
+            content.clear()
+            return value
+        return None
+
+    buffered = completed_value()
+    if buffered is not None:
+        return buffered
 
     def readable() -> None:
         try:
@@ -343,24 +372,149 @@ async def _read_startup_marker(
             return
         if chunk:
             content.extend(chunk)
-        if (
-            (stop_at_newline and b"\n" in content)
-            or not chunk
-            or len(content) >= _MAX_STARTUP_PROTOCOL_BYTES
-        ):
+        value = completed_value(eof=not chunk)
+        if value is not None:
             loop.remove_reader(descriptor)
             if not completed.done():
-                if stop_at_newline:
-                    line, _, _ = bytes(content).partition(b"\n")
-                    completed.set_result(line + (b"\n" if line else b""))
-                else:
-                    completed.set_result(bytes(content))
+                completed.set_result(value)
 
     loop.add_reader(descriptor, readable)
     try:
         return await completed
     finally:
         loop.remove_reader(descriptor)
+
+
+async def _isolation_startup_diagnostic(
+    process: asyncio.subprocess.Process,
+    *,
+    status_fd: int,
+    pending_status: bytearray,
+) -> str:
+    status_task = asyncio.create_task(
+        _read_startup_marker(
+            status_fd,
+            stop_at_newline=True,
+            pending=pending_status,
+        ),
+        name="bubblewrap-exit-status",
+    )
+    stderr_task = asyncio.create_task(
+        _read_startup_stderr(process.stderr),
+        name="bubblewrap-startup-stderr",
+    )
+    terminal_returncode = process.returncode
+    try:
+        # No trusted worker attested, so no process from this group may remain
+        # alive while diagnostics are collected.
+        await _kill_process_tree(process)
+        status_document, (stderr, stderr_truncated) = await asyncio.gather(
+            status_task,
+            stderr_task,
+        )
+    except BaseException:
+        status_task.cancel()
+        stderr_task.cancel()
+        await asyncio.gather(status_task, stderr_task, return_exceptions=True)
+        raise
+
+    bubblewrap_exit_code = _bubblewrap_exit_code(status_document)
+    fragments: list[str] = []
+    if bubblewrap_exit_code is not None:
+        fragments.append(f"Bubblewrap exit code {bubblewrap_exit_code}")
+    elif terminal_returncode is not None:
+        fragments.append(f"launcher return code {terminal_returncode}")
+    if reason := _sanitize_startup_stderr(stderr):
+        fragments.append(reason)
+    if stderr_truncated:
+        fragments.append("startup stderr was truncated")
+
+    message = "isolated worker ended before containment attestation"
+    if fragments:
+        message = f"{message} ({'; '.join(fragments)})"
+    return message
+
+
+async def _read_startup_stderr(
+    stream: asyncio.StreamReader | None,
+) -> tuple[bytes, bool]:
+    if stream is None:
+        return b"", False
+    content = bytearray()
+    while len(content) <= _MAX_STARTUP_STDERR_BYTES:
+        chunk = await stream.read(
+            min(65_536, _MAX_STARTUP_STDERR_BYTES + 1 - len(content))
+        )
+        if not chunk:
+            break
+        content.extend(chunk)
+    return (
+        bytes(content[:_MAX_STARTUP_STDERR_BYTES]),
+        len(content) > _MAX_STARTUP_STDERR_BYTES,
+    )
+
+
+def _bubblewrap_exit_code(document: bytes) -> int | None:
+    try:
+        value = json.loads(document)
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        return None
+    exit_code = value.get("exit-code") if isinstance(value, dict) else None
+    if (
+        not isinstance(exit_code, int)
+        or isinstance(exit_code, bool)
+        or not 0 <= exit_code <= 255
+    ):
+        return None
+    return exit_code
+
+
+def _sanitize_startup_stderr(stderr: bytes) -> str | None:
+    if not stderr:
+        return None
+    lowered = stderr.lower()
+    fixed_reasons = (
+        (
+            b"failed rtm_newaddr",
+            "Bubblewrap loopback address setup was denied",
+        ),
+        (
+            b"failed rtm_newlink",
+            "Bubblewrap loopback link setup was denied",
+        ),
+        (
+            b"creating new namespace failed",
+            "Bubblewrap namespace setup was denied",
+        ),
+        (
+            b"no permissions to creating new namespace",
+            "Bubblewrap namespace setup was denied",
+        ),
+        (
+            b"setting up uid map",
+            "Bubblewrap identity mapping failed",
+        ),
+        (
+            b"setting up gid map",
+            "Bubblewrap identity mapping failed",
+        ),
+        (
+            b"no such file or directory",
+            "Bubblewrap startup dependency was unavailable",
+        ),
+        (
+            b"operation not permitted",
+            "Bubblewrap setup was denied",
+        ),
+        (
+            b"permission denied",
+            "Bubblewrap setup was denied",
+        ),
+    )
+    for marker, reason in fixed_reasons:
+        if marker in lowered:
+            return reason
+    return "unrecognized startup stderr was suppressed"
 
 
 def _validate_bubblewrap_status(marker: bytes) -> None:

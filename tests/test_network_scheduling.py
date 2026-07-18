@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 from collections import defaultdict
+from datetime import UTC, datetime
 from pathlib import Path
 from uuid import uuid4
 
@@ -14,9 +15,18 @@ from fetech.adapters.cache import CacheAdapter
 from fetech.adapters.http import HTTPAdapter
 from fetech.adapters.media import MediaAdapter
 from fetech.config import Settings
+from fetech.executor import ExecutionEngine
 from fetech.gateway import UniversalFetchGateway
+from fetech.ledger import EventLedger
 from fetech.logic.process import ProcessResult
-from fetech.models import FetchRequest, ResourceBudget, ResultStatus
+from fetech.models import (
+    AttemptStatus,
+    FetchPlan,
+    FetchRequest,
+    PlanNode,
+    ResourceBudget,
+    ResultStatus,
+)
 from fetech.scheduling import (
     NetworkDeadlineExceededError,
     NetworkScheduler,
@@ -431,11 +441,12 @@ async def test_gateway_maps_network_deadline_to_budget_exhausted(
     )
     gateway = UniversalFetchGateway(settings)
 
-    async def slow_public(_host: str, _port: int) -> tuple[str, ...]:
-        await asyncio.sleep(0.03)
-        return ("93.184.216.34",)
+    async def exhausted(_host: str, _port: int) -> tuple[str, ...]:
+        raise NetworkDeadlineExceededError(
+            "network scheduling deadline is exhausted"
+        )
 
-    monkeypatch.setattr(gateway.policy, "_resolve", slow_public)
+    monkeypatch.setattr(gateway.policy, "_resolve", exhausted)
     gateway.adapters["http"] = HTTPAdapter(
         user_agent=gateway.settings.user_agent,
         policy=gateway.policy,
@@ -449,7 +460,7 @@ async def test_gateway_maps_network_deadline_to_budget_exhausted(
     result = await gateway.fetch(
         FetchRequest(
             target="https://example.com/resource",
-            budget=ResourceBudget(deadline_seconds=0.01),
+            budget=ResourceBudget(deadline_seconds=1),
         )
     )
 
@@ -462,7 +473,85 @@ async def test_gateway_maps_network_deadline_to_budget_exhausted(
         attempt.failure_code == "budget_exhausted"
         for attempt in result.attempts
     )
+    assert len(
+        [
+            attempt
+            for attempt in result.attempts
+            if attempt.capability_id == "http_get"
+        ]
+    ) == 1
     await gateway.close()
+
+
+@pytest.mark.asyncio
+async def test_executor_records_attempt_when_deadline_expires_before_adapter_starts(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class NeverCalledAdapter:
+        calls = 0
+
+        async def execute(
+            self,
+            node: PlanNode,
+            context: ExecutionContext,
+        ) -> None:
+            del node, context
+            self.calls += 1
+
+    clock_values = iter((100.0, 102.0))
+    monkeypatch.setattr(
+        "fetech.executor.monotonic",
+        lambda: next(clock_values, 102.0),
+    )
+    request = FetchRequest(
+        target="https://example.com/resource?token=top-secret",
+        budget=ResourceBudget(deadline_seconds=1),
+    )
+    run_id = uuid4()
+    ledger = EventLedger.sqlite(tmp_path / "ledger.sqlite3")
+    await ledger.initialize()
+    await ledger.create_run(
+        run_id,
+        request.model_dump(mode="json"),
+        datetime.now(UTC),
+    )
+    adapter = NeverCalledAdapter()
+    engine = ExecutionEngine(
+        adapters={"never": adapter},
+        cas=FileSystemCAS(tmp_path / "cas"),
+        ledger=ledger,
+    )
+
+    try:
+        result = await engine.execute(
+            run_id,
+            FetchPlan(
+                request=request,
+                nodes=(
+                    PlanNode(
+                        id="deadline",
+                        capability_id="http_get",
+                        adapter="never",
+                    ),
+                ),
+            ),
+        )
+    finally:
+        await ledger.close()
+
+    assert adapter.calls == 0
+    assert result.status == ResultStatus.BUDGET_EXHAUSTED
+    assert len(result.attempts) == 1
+    attempt = result.attempts[0]
+    assert attempt.capability_id == "http_get"
+    assert attempt.status == AttemptStatus.FAILED
+    assert attempt.failure_code == "budget_exhausted"
+    assert attempt.finished_at is not None
+    assert attempt.sanitized_destination == (
+        "https://example.com/resource?token=%5BREDACTED%5D"
+    )
+    assert "top-secret" not in result.model_dump_json()
 
 
 @pytest.mark.asyncio

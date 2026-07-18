@@ -396,7 +396,10 @@ class PreparedWorkerIsolation:
         for name, value in self.environment:
             arguments.extend(("--setenv", name, value))
         arguments.extend(_system_mount_arguments())
-        for root in self.read_only_roots:
+        ordinary_roots, scratch_roots = _partition_read_only_roots(
+            self.read_only_roots
+        )
+        for root in ordinary_roots:
             arguments.extend(("--ro-bind", str(root), str(root)))
         arguments.extend(
             (
@@ -431,6 +434,16 @@ class PreparedWorkerIsolation:
                 "--chmod",
                 "0700",
                 "/tmp/config",
+            )
+        )
+        # Bubblewrap applies filesystem operations in argument order. Inputs
+        # below /tmp must be mounted after the private tmpfs or that tmpfs
+        # would hide them. These mounts remain read-only and do not replace the
+        # bounded scratch root itself.
+        for root in scratch_roots:
+            arguments.extend(("--ro-bind", str(root), str(root)))
+        arguments.extend(
+            (
                 "--chdir",
                 "/tmp",
                 "--json-status-fd",
@@ -533,6 +546,7 @@ class _CgroupLease:
 
 def _validate_read_only_paths(paths: tuple[Path, ...]) -> None:
     normalized: set[Path] = set()
+    scratch_root = Path("/tmp").resolve()
     for path in paths:
         if not isinstance(path, Path):
             raise TypeError("worker read-only mounts must be pathlib.Path values")
@@ -544,9 +558,31 @@ def _validate_read_only_paths(paths: tuple[Path, ...]) -> None:
             resolved = path.resolve(strict=True)
         except OSError as exc:
             raise ValueError("worker read-only mount root does not exist") from exc
-        if resolved == Path(resolved.anchor) or resolved in normalized:
+        if (
+            resolved == Path(resolved.anchor)
+            or resolved == scratch_root
+            or resolved in normalized
+        ):
             raise ValueError("worker read-only mount roots must be unique and non-root")
         normalized.add(resolved)
+
+
+def _partition_read_only_roots(
+    roots: tuple[Path, ...],
+) -> tuple[tuple[Path, ...], tuple[Path, ...]]:
+    scratch_root = Path("/tmp")
+    ordinary: list[Path] = []
+    scratch: list[Path] = []
+    for root in roots:
+        if root == scratch_root:
+            raise BackendExecutionError(
+                "worker read-only root cannot replace private scratch"
+            )
+        if root.is_relative_to(scratch_root):
+            scratch.append(root)
+        else:
+            ordinary.append(root)
+    return tuple(ordinary), tuple(scratch)
 
 
 def _validate_trusted_executable(path: Path) -> None:
