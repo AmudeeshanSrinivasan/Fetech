@@ -114,7 +114,7 @@ report does not make legal conclusions.
 | `tests/test_v04_ytdlp.py` | `70ae4e2d2228794882becd0063dfa9a644c6fe10d0b75584c9bdf2adfd57bcef` |
 | `tests/test_wayback.py` | `dbedb5aaf13aacb294c7066563c041c9a7e3a5d077ec90a90ebbd4dae459ff83` |
 | `tests/test_worker_audit.py` | `3544ff10e69ecea8533ac50338148c82fa84950d5894a9f74f0cb5d041629de0` |
-| `tests/test_worker_isolation.py` | `d1fd2b41f14a1708b8de443cfa81b5bdd2615b814879fdef63a57ad7d903f5e1` |
+| `tests/test_worker_isolation.py` | `04fa64ee748056527c276a676154dbd0d3f74c10f6051ab8817f410977ac73db` |
 | `tests/test_worker_isolation_linux.py` | `7d5f9ba5a3a9bc1aeb21c41160fb130a1ed9854086ecac2004fb65202be2270e` |
 
 ## Automated policy observations

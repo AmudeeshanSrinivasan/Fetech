@@ -170,9 +170,10 @@ def test_tmp_read_only_inputs_are_mounted_after_bounded_scratch(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    prepared, package_root, _, _ = _required_prepared(tmp_path, monkeypatch)
+    prepared, _, _, _ = _required_prepared(tmp_path, monkeypatch)
+    ordinary_input = Path(sys.executable).resolve().parent
     scratch_input = Path("/tmp/fetech-reviewed-input")
-    prepared.read_only_roots = (package_root, scratch_input)
+    prepared.read_only_roots = (ordinary_input, scratch_input)
 
     arguments = prepared.launch_arguments(status_fd=23)
 
@@ -181,9 +182,12 @@ def test_tmp_read_only_inputs_are_mounted_after_bounded_scratch(
         for index, argument in enumerate(arguments)
         if argument == "--tmpfs" and arguments[index + 1] == "/tmp"
     )
-    package_mount = arguments.index(str(package_root), arguments.index("--ro-bind"))
+    ordinary_mount = arguments.index(
+        str(ordinary_input),
+        arguments.index("--ro-bind"),
+    )
     scratch_mount = arguments.index(str(scratch_input), scratch_tmpfs)
-    assert package_mount < scratch_tmpfs < scratch_mount
+    assert ordinary_mount < scratch_tmpfs < scratch_mount
     assert arguments[scratch_mount - 1 : scratch_mount + 2] == (
         "--ro-bind",
         str(scratch_input),
