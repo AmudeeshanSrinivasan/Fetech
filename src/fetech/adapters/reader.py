@@ -21,6 +21,7 @@ from fetech.quality import assess_text
 from fetech.security import SafeURLPolicy, sanitize_url
 from fetech.storage import build_artifact
 from fetech.transport import PinnedAsyncHTTPTransport
+from fetech.version import DEFAULT_USER_AGENT
 
 _SCRIPT_STYLE = re.compile(r"<(script|style|noscript)\b[^>]*>.*?</\1>", re.I | re.S)
 _TAGS = re.compile(r"<[^>]+>")
@@ -34,7 +35,7 @@ class ReaderAdapter:
         *,
         remote_reader_template: str | None = None,
         policy: SafeURLPolicy | None = None,
-        user_agent: str = "Fetech/0.1",
+        user_agent: str = DEFAULT_USER_AGENT,
         remote_transport: httpx.AsyncBaseTransport | None = None,
         browser_reader: BrowserReaderWorker | None = None,
     ) -> None:

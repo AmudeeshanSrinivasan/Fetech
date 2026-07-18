@@ -1,12 +1,12 @@
 # Fetech security threat model
 
-Status: v0.4 development implementation snapshot
+Status: v0.4.0a0 unreleased candidate snapshot
 
 Last reviewed: 2026-07-18
 
 Reference platform: Linux daemon; macOS local development and library use
 
-This document describes the security posture of the Fetech v0.4 development runtime. It is
+This document describes the security posture of the Fetech v0.4.0a0 candidate runtime. It is
 an implementation-grounded threat model, not a certification or a claim that
 the process is a complete sandbox. The normative runtime invariants remain in
 [`SECURITY.md`](../SECURITY.md).
@@ -31,7 +31,7 @@ This model covers:
   acquisition connectors; and
 - repository and vault excerpts returned by the bounded context broker.
 
-It describes the 155-capability development conformance state: 119 v0.1-v0.3
+It describes the 155-capability candidate conformance state: 119 v0.1-v0.3
 paths and 36 v0.4 document, media, cache, snapshot, and archive paths. Optional
 binaries and configured connectors remain unavailable unless the operator
 installs or injects them; the explicitly requested public Internet Archive path
@@ -420,7 +420,7 @@ secrets, and rebuilding from trusted artifacts.
 
 ## Remaining v0.4 publication and post-v1 gates
 
-The development implementation now has ephemeral document/archive workers,
+The candidate implementation now has ephemeral document/archive workers,
 bounded OCR/FFmpeg/FFprobe paths, archive adversarial controls, immutable
 snapshot integrity, authentication partitioning, typed policy-aware remote
 connector protocols, an exact locked preferred Docling path, shared network
@@ -449,7 +449,7 @@ still requires:
 - artifact-level notice and redistribution legal review for dependencies recorded under explicit
   NVIDIA proprietary/EULA and pypdfium2 mixed-distribution LicenseRefs; the exact-version catalog
   already covers all 167 third-party identities in the current universal lock and regenerates the
-  v0.4 development SPDX and dependency-license evidence. The published v0.3 artifacts remain
+  v0.4.0a0 candidate SPDX and dependency-license evidence. The published v0.3 artifacts remain
   immutable and are checked against their historical release profile;
 - total storage quotas, retention, garbage collection, and crash-recovery
   exercises beyond immutable per-record writes;
@@ -460,10 +460,10 @@ still requires:
   SQLite, and Postgres implementations; and
 - malware-scanning integration points where deployments require them.
 
-Release administration is also unfinished: package metadata still reports
-`0.3.0a0`. Draft v0.4 notes and a reproducible development-overlay SPDX SBOM and
-dependency-license report exist, but finalized release-lock evidence, checksums,
-tag, and published package/release artifacts do not.
+Release administration is also unfinished: package metadata reports `0.4.0a0`, but the candidate is
+untagged and unpublished. Reproducible candidate SPDX and dependency-license reports exist; clean
+release-commit distributions, checksums, attestations, a tag, and published package/release
+artifacts do not.
 
 An authenticated artifact-delivery boundary and scoped physical storage remain
 mandatory before any multi-user deployment.

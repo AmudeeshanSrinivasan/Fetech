@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "fetech"
-version = "0.3.0a0"
+version = "0.4.0a0"
 description = "Policy-aware universal agentic content-acquisition runtime"
 readme = "README.md"
 requires-python = ">=3.12"

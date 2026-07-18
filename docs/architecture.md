@@ -12,7 +12,7 @@ an explicitly installed system dependency.
 The registry combines the immutable 13/155 manifest with a code-owned conformance overlay. The
 overlay prevents a registered roadmap capability from being advertised as available. The current
 reports are v0.1 at 56/56, v0.2 at 40/40, and v0.3 at 23/23 implementation paths, all with
-`closure_ready=true`. The v0.4 development overlay adds 36/36 document, media, cache, snapshot, and
+`closure_ready=true`. The v0.4.0a0 candidate adds 36/36 document, media, cache, snapshot, and
 archive paths, also with `closure_ready=true`, for 155 cumulative paths. v0.4 contains 17 native
 paths and 19 typed optional paths. HTTP/3 uses an optional bounded
 curl subprocess, reuses Python-validated DNS addresses, and refuses fallback to HTTP/2 or HTTP/1.1.
@@ -31,8 +31,8 @@ uses bounded native or external-tool media parsers, and stores sanitized immutab
 over CAS artifacts. It includes built-in bounded yt-dlp and Wayback paths; other live media and
 snapshot connectors are injected protocols whose results are revalidated. Missing optional
 dependencies, tools, or providers are observable dependency failures; neither
-registration nor cache presence is accepted as evidence. This is an unreleased overlay on package
-version `0.3.0a0`, not a v0.4 release-readiness claim.
+registration nor cache presence is accepted as evidence. Package metadata identifies `0.4.0a0`,
+but the candidate remains untagged and unpublished.
 
 ## Runtime flow
 
@@ -341,18 +341,18 @@ silently covered by those profiles and must be isolated separately or disabled.
 
 The focused source-tree and development-wheel Docling contract/content subsets pass against the
 immutable local reference bundle, including wheel `RECORD` and digest binding. Publishing v0.4
-additionally requires the complete installed Docling 2.113 gate from the final clean tagged wheel,
+additionally requires the complete installed Docling 2.113 gate from the clean release-commit wheel,
 passing Linux containment evidence from the release commit and target systemd verification, and
 either brokered allowlisted egress for yt-dlp or an explicitly development-only local yt-dlp
 release claim.
 Publication also
 requires exact-version live smoke evidence for optional dependencies, tools, and connectors; dated
 endpoint/service evidence for Wayback; artifact-level notice and redistribution legal review for
-the explicit NVIDIA proprietary/EULA and pypdfium2 mixed-distribution LicenseRefs; a v0.4 version
-and finalized release notes; and release-specific SBOM, dependency-license, checksum, tag, and
-package artifacts. The exact-version catalog now covers all 167 third-party identities in the
-current universal lock and regenerates the v0.4 development reports; those development artifacts do
-not satisfy the final publication steps. The published v0.3 evidence is immutable historical
+the explicit NVIDIA proprietary/EULA and pypdfium2 mixed-distribution LicenseRefs; and verified
+release-specific SBOM, dependency-license, wheel, source-distribution, checksum, tag, and package
+artifacts. The exact-version catalog now covers all 167 third-party identities in the current
+universal lock and regenerates the v0.4.0a0 candidate reports; those candidate artifacts do not
+by themselves satisfy the remaining publication steps. The published v0.3 evidence is immutable historical
 evidence and is checked against its separate release profile instead of being regenerated from the
 current lock.
 
@@ -360,7 +360,7 @@ See [ADR 0001](adr/0001-polyglot-logic-backends.md), the [security policy](../SE
 [implementation threat model](security-threat-model.md). The historical
 [v0.3 SPDX SBOM](../release/fetech-0.3.0a0.spdx.json) and
 [dependency-license report](../release/dependency-licenses.md) are verified against
-`scripts/release_published.toml`. New development and release evidence is generated from its
+`scripts/release_published.toml`. New candidate and release evidence is generated from its
 declared lock and overlay inputs. The [competitor matrix](competitor-matrix.md) records
 source-bounded positioning without a superiority claim. See also the
 [capability catalogue](capability-catalog.md).

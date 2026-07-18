@@ -7,6 +7,7 @@ import importlib.util
 import json
 import sys
 import tomllib
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -21,6 +22,7 @@ SPEC.loader.exec_module(MODULE)
 
 SPDX_DOCUMENT_ID = MODULE.SPDX_DOCUMENT_ID
 SPDX_ROOT_ID = MODULE.SPDX_ROOT_ID
+build_license_report = MODULE.build_license_report
 build_spdx_document = MODULE.build_spdx_document
 generate = MODULE.generate
 load_development_overlay = MODULE.load_development_overlay
@@ -35,7 +37,7 @@ PROJECT = ROOT / "pyproject.toml"
 LOCK = ROOT / "uv.lock"
 CATALOG = ROOT / "scripts" / "release_license_catalog.toml"
 RELEASE = ROOT / "release"
-V04_OVERLAY = ROOT / "scripts" / "release_v04_development.toml"
+V04_OVERLAY = ROOT / "scripts" / "release_v04_candidate.toml"
 PUBLISHED_PROFILE = ROOT / "scripts" / "release_published.toml"
 
 
@@ -342,29 +344,62 @@ def test_published_profile_rejects_unbounded_artifact_paths(tmp_path: Path) -> N
         load_published_evidence_profile(tmp_path, profile)
 
 
-def test_cli_refuses_to_overwrite_published_evidence() -> None:
+def test_cli_refuses_to_overwrite_published_evidence(tmp_path: Path) -> None:
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "fetech"\nversion = "0.3.0a0"\n',
+        encoding="utf-8",
+    )
+    profile = scripts / "release_published.toml"
+    profile.write_bytes(PUBLISHED_PROFILE.read_bytes())
+
     with pytest.raises(
         ValueError,
         match=r"published version 0\.3\.0a0 is immutable",
     ):
-        main(())
+        main(
+            (
+                "--project-root",
+                str(tmp_path),
+                "--published-profile",
+                str(profile),
+            )
+        )
 
     assert main(("--check-published",)) == 0
+
+
+def test_cli_requires_explicit_overlay_for_the_unpublished_candidate(
+    tmp_path: Path,
+) -> None:
+    with pytest.raises(
+        ValueError,
+        match="unpublished package versions require an explicit unpublished overlay",
+    ):
+        main(("--output-dir", str(tmp_path)))
+
+    assert not tuple(tmp_path.iterdir())
 
 
 def test_check_mode_rejects_missing_or_stale_artifacts(tmp_path: Path) -> None:
     with pytest.raises(ValueError, match="missing generated artifact"):
         generate(ROOT, tmp_path, check=True)
 
+    historical_report = tmp_path / "dependency-licenses.md"
+    historical_report.write_text("immutable historical evidence\n", encoding="utf-8")
     generate(ROOT, tmp_path, check=False)
-    report = tmp_path / "dependency-licenses.md"
+    report = tmp_path / "dependency-licenses-0.4.0a0.md"
+    assert historical_report.read_text(encoding="utf-8") == (
+        "immutable historical evidence\n"
+    )
     report.write_text("stale\n", encoding="utf-8")
 
     with pytest.raises(ValueError, match="generated artifact is stale"):
         generate(ROOT, tmp_path, check=True)
 
 
-def test_v04_development_overlay_is_reproducible_without_relabeling_package(
+def test_v04_candidate_overlay_is_reproducible_without_relabeling_package(
     tmp_path: Path,
 ) -> None:
     inputs = _inputs()
@@ -386,16 +421,18 @@ def test_v04_development_overlay_is_reproducible_without_relabeling_package(
         if package["SPDXID"] == SPDX_ROOT_ID
     )
 
-    assert version == "0.3.0a0"
-    assert overlay.identifier == "v0.4-development"
-    assert document["name"] == "fetech-v0.4-development-universal-lock"
+    assert version == "0.4.0a0"
+    assert overlay.profile_path == "scripts/release_v04_candidate.toml"
+    assert overlay.identifier == "v0.4.0a0-candidate"
+    assert overlay.status == "unreleased-candidate"
+    assert document["name"] == "fetech-v0.4.0a0-candidate-universal-lock"
     assert document["creationInfo"] == {
         "created": "2026-07-18T00:00:00Z",
         "creators": ["Tool: fetech-release-evidence-generator/2"],
     }
     assert root_package["versionInfo"] == version
     assert root_package["externalRefs"][0]["referenceLocator"] == (
-        "pkg:pypi/fetech@0.3.0a0"
+        "pkg:pypi/fetech@0.4.0a0"
     )
     package_names = {package["name"] for package in document["packages"]}
     assert "yt-dlp" in package_names
@@ -461,6 +498,10 @@ def test_v04_development_overlay_is_reproducible_without_relabeling_package(
     assert "Docling" in expected_report
     assert "Tesseract OCR" in expected_report
     assert "FFmpeg and FFprobe" in expected_report
+    assert (
+        "--overlay-profile scripts/release_v04_candidate.toml --check"
+        in expected_report
+    )
 
     tracked_paths = (
         RELEASE / overlay.spdx_filename,
@@ -476,8 +517,8 @@ def test_v04_development_overlay_is_reproducible_without_relabeling_package(
         overlay_profile=V04_OVERLAY,
     )
     assert generated_paths == (
-        tmp_path / "fetech-v0.4-development.spdx.json",
-        tmp_path / "dependency-licenses-v0.4-development.md",
+        tmp_path / "fetech-0.4.0a0-candidate.spdx.json",
+        tmp_path / "dependency-licenses-0.4.0a0-candidate.md",
     )
     assert generated_paths[0].read_text(encoding="utf-8") == expected_spdx
     assert generated_paths[1].read_text(encoding="utf-8") == expected_report
@@ -498,6 +539,14 @@ def _write_overlay_fixture(
     *,
     capability_count: int = 36,
     cumulative_capability_count: int = 155,
+    profile_path: str = "overlay.toml",
+    identifier: str = "v0.4-development",
+    title: str = "v0.4 development overlay",
+    package_version: str = "0.3.0a0",
+    status: str = "unreleased-development",
+    spdx_filename: str = "overlay.spdx.json",
+    license_report_filename: str = "overlay.md",
+    evidence_inputs: tuple[str, ...] = ("capabilities/manifest.yaml",),
 ) -> Path:
     manifest = root / "capabilities" / "manifest.yaml"
     manifest.parent.mkdir(parents=True)
@@ -505,22 +554,24 @@ def _write_overlay_fixture(
         (ROOT / "capabilities" / "manifest.yaml").read_text(encoding="utf-8"),
         encoding="utf-8",
     )
-    profile = root / "overlay.toml"
+    profile = root / profile_path
+    profile.parent.mkdir(parents=True, exist_ok=True)
+    configured_inputs = ", ".join(f'"{value}"' for value in evidence_inputs)
     profile.write_text(
         "\n".join(
             [
                 "[overlay]",
-                'identifier = "v0.4-development"',
-                'title = "v0.4 development overlay"',
-                'package_version = "0.3.0a0"',
-                'status = "unreleased-development"',
+                f'identifier = "{identifier}"',
+                f'title = "{title}"',
+                f'package_version = "{package_version}"',
+                f'status = "{status}"',
                 'created = "2026-07-18T00:00:00Z"',
                 'closure_release = "v0.4"',
                 f"capability_count = {capability_count}",
                 f"cumulative_capability_count = {cumulative_capability_count}",
-                'spdx_filename = "overlay.spdx.json"',
-                'license_report_filename = "overlay.md"',
-                'evidence_inputs = ["capabilities/manifest.yaml"]',
+                f'spdx_filename = "{spdx_filename}"',
+                f'license_report_filename = "{license_report_filename}"',
+                f"evidence_inputs = [{configured_inputs}]",
                 'publication_gaps = ["Not a published release."]',
                 "",
                 "[[external_components]]",
@@ -534,6 +585,105 @@ def _write_overlay_fixture(
         encoding="utf-8",
     )
     return profile
+
+
+def test_unreleased_candidate_overlay_is_explicit_and_uses_loaded_profile_path(
+    tmp_path: Path,
+) -> None:
+    profile = _write_overlay_fixture(
+        tmp_path,
+        profile_path="scripts/release_v04_candidate.toml",
+        identifier="v0.4.0a0-candidate",
+        title="0.4.0a0 release candidate",
+        package_version="0.4.0a0",
+        status="unreleased-candidate",
+        spdx_filename="fetech-0.4.0a0-candidate.spdx.json",
+        license_report_filename="dependency-licenses-0.4.0a0-candidate.md",
+    )
+    overlay = load_development_overlay(
+        tmp_path,
+        profile,
+        package_version="0.4.0a0",
+    )
+
+    assert overlay.profile_path == "scripts/release_v04_candidate.toml"
+    assert (
+        overlay.identifier,
+        overlay.package_version,
+        overlay.status,
+        overlay.spdx_filename,
+        overlay.license_report_filename,
+    ) == (
+        "v0.4.0a0-candidate",
+        "0.4.0a0",
+        "unreleased-candidate",
+        "fetech-0.4.0a0-candidate.spdx.json",
+        "dependency-licenses-0.4.0a0-candidate.md",
+    )
+
+    inputs = _inputs()
+    candidate_inputs = replace(
+        inputs,
+        project={**inputs.project, "version": "0.4.0a0"},
+    )
+    document = build_spdx_document(candidate_inputs, overlay)
+    report = build_license_report(candidate_inputs, overlay)
+    root_package = next(
+        package
+        for package in document["packages"]
+        if package["SPDXID"] == SPDX_ROOT_ID
+    )
+
+    assert document["name"] == "fetech-v0.4.0a0-candidate-universal-lock"
+    assert root_package["versionInfo"] == "0.4.0a0"
+    assert root_package["externalRefs"][0]["referenceLocator"] == (
+        "pkg:pypi/fetech@0.4.0a0"
+    )
+    assert "not a published-release SBOM" in root_package["comment"]
+    assert "deterministic unreleased engineering evidence" in report
+    assert "not\na published-release license report" in report
+    assert "### Hashed unpublished-overlay inputs" in report
+    assert (
+        "--overlay-profile scripts/release_v04_candidate.toml --check"
+        in report
+    )
+
+
+def test_overlay_rejects_a_status_that_could_claim_publication(tmp_path: Path) -> None:
+    profile = _write_overlay_fixture(tmp_path, status="published")
+
+    with pytest.raises(
+        ValueError,
+        match=(
+            "overlay status must be unreleased-development or "
+            "unreleased-candidate"
+        ),
+    ):
+        load_development_overlay(
+            tmp_path,
+            profile,
+            package_version="0.3.0a0",
+        )
+
+
+def test_overlay_rejects_generated_output_as_a_hashed_input(tmp_path: Path) -> None:
+    profile = _write_overlay_fixture(
+        tmp_path,
+        evidence_inputs=(
+            "capabilities/manifest.yaml",
+            "release/overlay.spdx.json",
+        ),
+    )
+
+    with pytest.raises(
+        ValueError,
+        match="evidence_inputs must not include generated output filenames",
+    ):
+        load_development_overlay(
+            tmp_path,
+            profile,
+            package_version="0.3.0a0",
+        )
 
 
 def test_v04_overlay_counts_are_derived_from_the_canonical_manifest() -> None:
@@ -580,20 +730,13 @@ def test_v04_overlay_rejects_counts_that_drift_from_the_manifest(
         )
 
 
-def test_v04_overlay_rejects_a_package_version_relabel(tmp_path: Path) -> None:
-    profile = tmp_path / "overlay.toml"
-    profile.write_text(
-        "\n".join(
-            [
-                "[overlay]",
-                'identifier = "v0.4-development"',
-                'title = "v0.4 development overlay"',
-                'package_version = "0.4.0a0"',
-                'status = "unreleased-development"',
-                'created = "2026-07-18T00:00:00Z"',
-            ]
-        ),
-        encoding="utf-8",
+def test_candidate_overlay_rejects_a_package_version_relabel(tmp_path: Path) -> None:
+    profile = _write_overlay_fixture(
+        tmp_path,
+        identifier="v0.4.0a0-candidate",
+        title="0.4.0a0 release candidate",
+        package_version="0.4.0a0",
+        status="unreleased-candidate",
     )
 
     with pytest.raises(ValueError, match="cannot relabel the package"):

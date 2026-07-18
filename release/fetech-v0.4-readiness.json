@@ -25,27 +25,27 @@
       "state": "passed"
     },
     {
-      "description": "Package metadata, release notes, artifacts, and evidence consistently identify 0.4.0a0.",
+      "description": "Package, lock, runtime, and FastAPI metadata consistently identify 0.4.0a0.",
       "evidence_kind": "machine",
       "id": "release-version-0.4.0a0",
       "phase": "prepublication",
-      "reason": "pyproject.toml and the unique uv.lock root package must both use 0.4.0a0.",
-      "state": "blocked"
+      "reason": "Verified package, lock, runtime, and FastAPI version 0.4.0a0.",
+      "state": "passed"
     },
     {
-      "description": "Final release-specific SPDX and dependency-license artifacts match the final lock and version.",
+      "description": "Release-candidate SPDX and dependency-license artifacts match the exact lock and version.",
       "evidence_kind": "machine",
       "id": "final-sbom-and-license-report",
       "phase": "prepublication",
-      "reason": "Only the unreleased development-overlay evidence exists.",
-      "state": "blocked"
+      "reason": "Verified exact-lock candidate SPDX and dependency-license evidence.",
+      "state": "passed"
     },
     {
       "description": "The final wheel and source distribution are version-consistent, bounded, inspected, and checksum-bound.",
       "evidence_kind": "machine",
       "id": "wheel-sdist-checksums",
       "phase": "prepublication",
-      "reason": "Final 0.4.0a0 distributions and checksums do not exist.",
+      "reason": "Clean release-commit 0.4.0a0 distributions and checksums have not passed the artifact verifier.",
       "state": "blocked"
     },
     {
@@ -93,7 +93,7 @@
       "evidence_kind": "attestation",
       "id": "optional-runtime-live-evidence",
       "phase": "prepublication",
-      "reason": "The retained development evidence has missing, failed, or skipped live checks.",
+      "reason": "The retained focused evidence has missing, failed, or skipped live checks.",
       "state": "blocked"
     },
     {
@@ -116,11 +116,11 @@
   "schema_version": "1",
   "state": "blocked",
   "summary": {
-    "blocked_count": 12,
+    "blocked_count": 10,
     "gate_count": 14,
-    "passed_count": 2,
+    "passed_count": 4,
     "postpublication_blocked_count": 2,
-    "prepublication_blocked_count": 10
+    "prepublication_blocked_count": 8
   },
   "target_version": "0.4.0a0"
 }

@@ -8,6 +8,7 @@ import hashlib
 import hmac
 import json
 import re
+import shlex
 import tomllib
 from collections import Counter, defaultdict, deque
 from collections.abc import Sequence
@@ -32,6 +33,12 @@ CLOSURE_RELEASE_PATTERN = re.compile(r"v\d+\.\d+\Z")
 UTC_TIMESTAMP_PATTERN = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z\Z")
 PUBLISHED_VERSION_PATTERN = re.compile(r"[0-9][0-9A-Za-z.+-]{0,63}\Z")
 SHA256_PATTERN = re.compile(r"[0-9a-f]{64}\Z")
+UNRELEASED_OVERLAY_STATUSES = frozenset(
+    {
+        "unreleased-development",
+        "unreleased-candidate",
+    }
+)
 EXTRACTED_LICENSE_INFO: dict[str, dict[str, Any]] = {
     "LicenseRef-BSD-Unknown": {
         "licenseId": "LicenseRef-BSD-Unknown",
@@ -306,8 +313,9 @@ class ExternalComponent:
 
 @dataclass(frozen=True, slots=True)
 class DevelopmentOverlay:
-    """Validated metadata for an unreleased development evidence projection."""
+    """Validated metadata for an explicitly unpublished evidence projection."""
 
+    profile_path: str
     identifier: str
     title: str
     package_version: str
@@ -949,7 +957,7 @@ def load_development_overlay(
     *,
     package_version: str,
 ) -> DevelopmentOverlay:
-    """Load a bounded development-overlay profile and hash every declared input."""
+    """Load a bounded unpublished-overlay profile and hash every declared input."""
 
     root = project_root.resolve()
     resolved_profile = profile_path.resolve()
@@ -974,11 +982,13 @@ def load_development_overlay(
     if declared_package_version != package_version:
         raise ValueError(
             "overlay package_version must match pyproject.toml and uv.lock; "
-            "development evidence cannot relabel the package"
+            "unreleased evidence cannot relabel the package"
         )
     status = _bounded_profile_text(overlay.get("status", ""), "status", maximum=80)
-    if status != "unreleased-development":
-        raise ValueError("overlay status must be unreleased-development")
+    if status not in UNRELEASED_OVERLAY_STATUSES:
+        raise ValueError(
+            "overlay status must be unreleased-development or unreleased-candidate"
+        )
     created = _bounded_profile_text(overlay.get("created", ""), "created", maximum=32)
     if UTC_TIMESTAMP_PATTERN.fullmatch(created) is None:
         raise ValueError("overlay created must be a fixed UTC timestamp")
@@ -1028,6 +1038,11 @@ def load_development_overlay(
     )
     if len(input_paths) != len(set(input_paths)):
         raise ValueError("overlay evidence_inputs must be unique")
+    output_filenames = {spdx_filename, report_filename}
+    if any(Path(path).name in output_filenames for path in input_paths):
+        raise ValueError(
+            "overlay evidence_inputs must not include generated output filenames"
+        )
     input_hashes = tuple(
         _profile_input(root, configured_path)
         for configured_path in input_paths
@@ -1097,6 +1112,7 @@ def load_development_overlay(
         raise ValueError("overlay publication_gaps must not be empty")
 
     return DevelopmentOverlay(
+        profile_path=profile_relative,
         identifier=identifier,
         title=title,
         package_version=declared_package_version,
@@ -1138,7 +1154,7 @@ def build_spdx_document(
 
     version = str(inputs.project["version"])
     if overlay is not None and overlay.package_version != version:
-        raise ValueError("development overlay does not match the package version")
+        raise ValueError("unreleased overlay does not match the package version")
     evidence_name = overlay.identifier if overlay is not None else version
     namespace_digest = inputs.lock_sha256
     if overlay is not None:
@@ -1348,7 +1364,7 @@ def build_license_report(
 
     version = str(inputs.project["version"])
     if overlay is not None and overlay.package_version != version:
-        raise ValueError("development overlay does not match the package version")
+        raise ValueError("unreleased overlay does not match the package version")
     counts = Counter(inputs.licenses.values())
     agpl_packages = sorted(
         key for key, expression in inputs.licenses.items() if AGPL_PATTERN.search(expression)
@@ -1398,7 +1414,7 @@ def build_license_report(
         lines = [
             f"# Fetech {overlay.title} dependency-license report",
             "",
-            "This is deterministic development engineering evidence, not legal advice and not",
+            "This is deterministic unreleased engineering evidence, not legal advice and not",
             "a published-release license report. The package metadata and universal lock remain",
             f"`{version}`; the overlay label does not relabel the Python distribution.",
             "License declarations were reviewed for the exact versions in `uv.lock`; SPDX",
@@ -1421,7 +1437,7 @@ def build_license_report(
             "  catalog also uses package metadata, bundled notices, and upstream license files;",
             "  special review notes remain attached to affected rows.",
             "",
-            "### Hashed development-overlay inputs",
+            "### Hashed unpublished-overlay inputs",
             "",
             "| Input | SHA-256 |",
             "|---|---|",
@@ -1571,11 +1587,11 @@ def build_license_report(
     if overlay is not None:
         reproduction_command = (
             "uv run python scripts/generate_release_evidence.py "
-            "--overlay-profile scripts/release_v04_development.toml --check"
+            f"--overlay-profile {shlex.quote(overlay.profile_path)} --check"
         )
         checked_inputs = (
             "`pyproject.toml`, `uv.lock`, the reviewed catalog, or any hashed "
-            "development-overlay input"
+            "unpublished-overlay input"
         )
     lines.extend(
         [
@@ -1627,7 +1643,7 @@ def _artifact_paths(
         )
     return (
         output_dir / f"fetech-{version}.spdx.json",
-        output_dir / "dependency-licenses.md",
+        output_dir / f"dependency-licenses-{version}.md",
     )
 
 
@@ -1689,7 +1705,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--overlay-profile",
         type=Path,
         help=(
-            "generate an explicitly unreleased development-overlay projection "
+            "generate an explicitly unpublished overlay projection "
             "without changing the package version"
         ),
     )
@@ -1748,9 +1764,13 @@ def main(argv: Sequence[str] | None = None) -> int:
         if package_version in published_versions:
             raise ValueError(
                 f"release evidence for published version {package_version} is immutable; "
-                "use --check-published, an explicit development overlay, or bump the "
+                "use --check-published, an explicit unpublished overlay, or bump the "
                 "package version"
             )
+        raise ValueError(
+            "unpublished package versions require an explicit unpublished overlay; "
+            "the ordinary final-release renderer is not approved for this candidate"
+        )
     paths = generate(
         project_root,
         output_dir,

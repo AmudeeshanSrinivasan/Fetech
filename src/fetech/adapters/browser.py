@@ -17,6 +17,7 @@ from fetech.models import (
 from fetech.quality import assess_text
 from fetech.security import sanitize_url
 from fetech.storage import build_artifact
+from fetech.version import DEFAULT_USER_AGENT
 
 BROWSER_CAPABILITIES = (
     "playwright",
@@ -45,7 +46,7 @@ class BrowserAdapter:
         local_renderer: BrowserRenderer,
         *,
         remote_renderers: Mapping[str, BrowserRenderer] | None = None,
-        user_agent: str = "Fetech/0.3",
+        user_agent: str = DEFAULT_USER_AGENT,
     ) -> None:
         self.local_renderer = local_renderer
         self.remote_renderers = dict(remote_renderers or {})

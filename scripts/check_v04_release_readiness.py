@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import re
 import subprocess
@@ -18,7 +19,7 @@ import yaml
 
 TARGET_VERSION: Final = "0.4.0a0"
 REPORT_SCHEMA_VERSION: Final = "1"
-DEFAULT_PROFILE: Final = Path("scripts/release_v04_development.toml")
+DEFAULT_PROFILE: Final = Path("scripts/release_v04_candidate.toml")
 DEFAULT_OUTPUT: Final = Path("release/fetech-v0.4-readiness.json")
 MAX_PROFILE_BYTES: Final = 256 * 1024
 MAX_TEXT_BYTES: Final = 4_000
@@ -331,23 +332,81 @@ def _check_release_version(
         lock = tomllib.loads((project_root / "uv.lock").read_text(encoding="utf-8"))
         project_version = project["project"]["version"]
         packages = lock["package"]
+        version_tree = ast.parse(
+            (project_root / "src" / "fetech" / "version.py").read_text(
+                encoding="utf-8"
+            )
+        )
+        init_tree = ast.parse(
+            (project_root / "src" / "fetech" / "__init__.py").read_text(
+                encoding="utf-8"
+            )
+        )
+        daemon_tree = ast.parse(
+            (project_root / "src" / "fetech" / "daemon.py").read_text(
+                encoding="utf-8"
+            )
+        )
     except (OSError, UnicodeDecodeError, KeyError, TypeError, tomllib.TOMLDecodeError):
         return _blocked(gate, "Package or lock metadata is unavailable or invalid.")
+    except SyntaxError:
+        return _blocked(gate, "Runtime version sources are not valid Python.")
+
+    runtime_versions = [
+        node.value.value
+        for node in version_tree.body
+        if isinstance(node, ast.Assign)
+        and any(
+            isinstance(target, ast.Name) and target.id == "__version__"
+            for target in node.targets
+        )
+        and isinstance(node.value, ast.Constant)
+        and isinstance(node.value.value, str)
+    ]
+    init_exports_version = any(
+        isinstance(node, ast.ImportFrom)
+        and node.module == "fetech.version"
+        and any(alias.name == "__version__" for alias in node.names)
+        for node in init_tree.body
+    )
+    daemon_imports_version = any(
+        isinstance(node, ast.ImportFrom)
+        and node.module == "fetech.version"
+        and any(alias.name == "__version__" for alias in node.names)
+        for node in daemon_tree.body
+    )
+    openapi_version_references = [
+        keyword.value.id
+        for node in ast.walk(daemon_tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "FastAPI"
+        for keyword in node.keywords
+        if keyword.arg == "version"
+        and isinstance(keyword.value, ast.Name)
+    ]
 
     root_versions = [
         package.get("version")
         for package in packages
         if isinstance(package, dict) and package.get("name") == "fetech"
     ]
-    if project_version != TARGET_VERSION or root_versions != [TARGET_VERSION]:
+    if (
+        project_version != TARGET_VERSION
+        or root_versions != [TARGET_VERSION]
+        or runtime_versions != [TARGET_VERSION]
+        or not init_exports_version
+        or not daemon_imports_version
+        or openapi_version_references != ["__version__"]
+    ):
         return _blocked(
             gate,
-            f"pyproject.toml and the unique uv.lock root package must both use "
-            f"{TARGET_VERSION}.",
+            "pyproject.toml, the unique uv.lock root package, canonical runtime "
+            f"version, public export, and FastAPI metadata must all use {TARGET_VERSION}.",
         )
     return _passed(
         gate,
-        f"Verified package and lock root version {TARGET_VERSION}.",
+        f"Verified package, lock, runtime, and FastAPI version {TARGET_VERSION}.",
     )
 
 
@@ -389,9 +448,101 @@ def _check_published_history(
     )
 
 
+def _check_candidate_evidence(
+    project_root: Path,
+    gate: PublicationGate,
+) -> GateResult:
+    if gate.check != "candidate_evidence_v1":
+        return _blocked(
+            gate,
+            "The candidate-evidence gate lacks its canonical verifier ID.",
+        )
+    verifier = project_root / "scripts" / "generate_release_evidence.py"
+    profile = project_root / "scripts" / "release_v04_candidate.toml"
+    if (
+        verifier.is_symlink()
+        or profile.is_symlink()
+        or not verifier.is_file()
+        or not profile.is_file()
+    ):
+        return _blocked(gate, "Candidate evidence verifier or profile is unavailable.")
+    try:
+        process = subprocess.run(
+            [
+                sys.executable,
+                str(verifier),
+                "--project-root",
+                str(project_root),
+                "--overlay-profile",
+                str(profile),
+                "--check",
+            ],
+            cwd=project_root,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return _blocked(gate, "Candidate evidence verification did not complete.")
+    if process.returncode != 0:
+        return _blocked(gate, "Candidate SBOM or dependency-license evidence is stale.")
+    return _passed(
+        gate,
+        "Verified exact-lock candidate SPDX and dependency-license evidence.",
+    )
+
+
+def _check_release_artifacts(
+    project_root: Path,
+    gate: PublicationGate,
+    artifact_dir: Path | None,
+) -> GateResult:
+    if gate.check != "release_artifacts_v1":
+        return _blocked(
+            gate,
+            "The wheel/source-distribution gate lacks its canonical verifier ID.",
+        )
+    if artifact_dir is None:
+        return _blocked(gate)
+    verifier = project_root / "scripts" / "verify_v04_release_artifacts.py"
+    if verifier.is_symlink() or not verifier.is_file():
+        return _blocked(gate, "The release-artifact verifier is unavailable.")
+    try:
+        process = subprocess.run(
+            [
+                sys.executable,
+                str(verifier),
+                "--project-root",
+                str(project_root),
+                "--wheel",
+                str(artifact_dir / f"fetech-{TARGET_VERSION}-py3-none-any.whl"),
+                "--sdist",
+                str(artifact_dir / f"fetech-{TARGET_VERSION}.tar.gz"),
+                "--checksums",
+                str(artifact_dir / "SHA256SUMS"),
+            ],
+            cwd=project_root,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return _blocked(gate, "Release-artifact verification did not complete.")
+    if process.returncode != 0:
+        return _blocked(gate, "Release-artifact verification failed.")
+    return _passed(
+        gate,
+        "Verified clean-commit wheel, source distribution, and canonical checksums.",
+    )
+
+
 def evaluate_gates(
     project_root: Path,
     gates: Sequence[PublicationGate],
+    *,
+    release_artifacts_dir: Path | None = None,
 ) -> tuple[GateResult, ...]:
     """Evaluate trusted local checks and fail closed for every other gate."""
 
@@ -404,6 +555,12 @@ def evaluate_gates(
             results.append(_check_published_history(root, gate))
         elif gate.id == "release-version-0.4.0a0":
             results.append(_check_release_version(root, gate))
+        elif gate.id == "final-sbom-and-license-report":
+            results.append(_check_candidate_evidence(root, gate))
+        elif gate.id == "wheel-sdist-checksums":
+            results.append(
+                _check_release_artifacts(root, gate, release_artifacts_dir)
+            )
         else:
             # A profile assertion or an evidence file's mere existence is not a
             # trusted verifier. Dedicated parsers can be added per gate later.
@@ -427,11 +584,17 @@ def classify_state(results: Sequence[GateResult]) -> ReadinessState:
 def build_report(
     project_root: Path,
     profile_path: Path = DEFAULT_PROFILE,
+    *,
+    release_artifacts_dir: Path | None = None,
 ) -> dict[str, object]:
     """Build the deterministic sanitized readiness document."""
 
     gates = load_publication_gates(project_root, profile_path)
-    results = evaluate_gates(project_root, gates)
+    results = evaluate_gates(
+        project_root,
+        gates,
+        release_artifacts_dir=release_artifacts_dir,
+    )
     passed_count = sum(result.state == "passed" for result in results)
     prepublication_blocked_count = sum(
         result.phase == "prepublication" and result.state == "blocked"
@@ -493,6 +656,14 @@ def main(argv: Sequence[str] | None = None) -> int:
     )
     parser.add_argument("--profile", type=Path, default=DEFAULT_PROFILE)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument(
+        "--release-artifacts-dir",
+        type=Path,
+        help=(
+            "verify the canonical wheel, source distribution, and SHA256SUMS "
+            "from this directory"
+        ),
+    )
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument(
         "--write",
@@ -514,7 +685,19 @@ def main(argv: Sequence[str] | None = None) -> int:
     try:
         project_root = args.project_root.resolve()
         output_path = _root_file(project_root, args.output, "readiness output")
-        report = build_report(project_root, args.profile)
+        artifact_dir = None
+        if args.release_artifacts_dir is not None:
+            configured_artifact_dir = args.release_artifacts_dir
+            artifact_dir = (
+                configured_artifact_dir
+                if configured_artifact_dir.is_absolute()
+                else project_root / configured_artifact_dir
+            ).resolve()
+        report = build_report(
+            project_root,
+            args.profile,
+            release_artifacts_dir=artifact_dir,
+        )
         rendered = render_report(report)
         current = _write_or_check(
             output_path,

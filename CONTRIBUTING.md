@@ -35,19 +35,19 @@ Run the repository verification commands in `AGENTS.md` before submitting change
 Graphify output and local runtime data must remain untracked.
 
 Changes to the manifest, universal lock, license catalog, or v0.4 conformance document must verify
-the immutable published v0.3 evidence and regenerate and check the explicitly unreleased v0.4
-development overlay. Never regenerate published evidence from a later development lock:
+the immutable published v0.3 evidence and regenerate and check the explicitly unreleased v0.4.0a0
+candidate evidence. Never regenerate published evidence from a later candidate lock:
 
 ```bash
 uv run python scripts/generate_release_evidence.py --check-published
 uv run python scripts/check_v04_release_readiness.py --check
 uv run python scripts/generate_release_evidence.py \
-  --overlay-profile scripts/release_v04_development.toml
+  --overlay-profile scripts/release_v04_candidate.toml
 uv run python scripts/generate_release_evidence.py \
-  --overlay-profile scripts/release_v04_development.toml --check
+  --overlay-profile scripts/release_v04_candidate.toml --check
 ```
 
-The ordinary readiness `--check` confirms that the tracked development report is exact, including
+The ordinary readiness `--check` confirms that the tracked candidate report is exact, including
 truthful blockers. It does not mean the release is publishable. Only the final release environment
 may run `--require-publishable`, and it must not provide or relabel evidence that did not actually
 pass.

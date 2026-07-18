@@ -18,6 +18,7 @@ from fetech.context import ContextBroker
 from fetech.gateway import UniversalFetchGateway
 from fetech.logic.models import ReasoningResult
 from fetech.models import ContextBundle, FetchPlan, FetchRequest, FetchRun, InspectionResult
+from fetech.version import __version__
 
 
 def create_app(
@@ -57,7 +58,7 @@ def create_app(
         finally:
             await gateway.close()
 
-    app = FastAPI(title="Fetech", version="0.3.0a0", lifespan=lifespan)
+    app = FastAPI(title="Fetech", version=__version__, lifespan=lifespan)
     app.state.gateway = gateway
 
     @app.post("/v1/fetch", response_model=FetchRun, status_code=202)

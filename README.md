@@ -3,14 +3,14 @@
 Fetech is an Apache-2.0, policy-aware content-acquisition runtime. It registers 155 capabilities
 across 13 categories and selects only the capabilities needed for a request.
 
-The current development branch implements the canonical registry and contracts, deterministic
+The current release-candidate branch implements the canonical registry and contracts, deterministic
 planning, SSRF-safe HTTP acquisition, bounded crawling, URL alternatives, bounded browser,
 document, media, and archive subprocesses, typed artifacts, a SQLite event ledger,
 content-addressed storage, validated snapshots, quality validation, runtime provenance projection,
 Python SDK, CLI, REST, MCP, a bounded Graphify/QMD context broker, origin-scoped authentication
 sessions, approved form submission, and bounded structured API/feed normalization.
 
-The published `v0.3.0a0` prerelease closes 119 paths. The v0.4 development overlay adds the final 36
+The published `v0.3.0a0` prerelease closes 119 paths. The unreleased `v0.4.0a0` candidate adds the final 36
 document, media, cache, snapshot, and archive paths, giving 155/155 implementation paths: 17 v0.4
 paths are native and 19 use typed optional dependencies or configured providers. Optional means an
 implementation boundary ships but its binary or service may be absent; absence returns
@@ -19,17 +19,18 @@ implementation boundary ships but its binary or service may be absent; absence r
 counts separately; Fetech never infers successful local execution merely from manifest
 registration.
 
-> **Release status:** v0.4 is an unreleased development overlay. The package is still versioned
-> `0.3.0a0`. The preferred offline Docling path, shared network admission, and an independent
+> **Release status:** `0.4.0a0` is an unreleased candidate. Package and lock metadata now identify
+> `0.4.0a0`, but no v0.4 tag, GitHub Release, or package publication exists. The preferred offline
+> Docling path, shared network admission, and an independent
 > POSIX startup deadline are implemented. Fail-closed Linux per-worker profiles are implemented;
-> passing release-commit Linux enforcement evidence and target systemd verification, a final clean
-> tagged-wheel rerun of the successful source-tree and development-wheel Docling smokes,
+> passing release-commit Linux enforcement evidence and target systemd verification, a clean
+> release-commit wheel rerun of the successful source-tree and development-wheel Docling smokes,
 > request-level coordination inside
 > yt-dlp's multi-host
 > subprocess traffic, exact-version live evidence for optional tools and services, artifact-level
 > notice and redistribution legal review for LicenseRef-tagged NVIDIA and pypdfium2 distributions,
-> finalized release assets and checksums, a tag, and package publication remain release gates. The
-> tracked development evidence and draft notes are not published-release artifacts.
+> verified wheel/source distributions and checksums, a tag, and package publication remain release
+> gates. Candidate evidence and notes are not published-release artifacts.
 
 Fetech uses a deliberately narrow polyglot design. Python 3.12 is the required runtime and remains
 authoritative for public APIs, security, budgets, adapters, artifacts, and persistence. A pure-Python
@@ -156,7 +157,7 @@ the expected bundle digest. The wheel gate also verified every installed Fetech 
 against the wheel `RECORD` and bound the evidence to the exact wheel SHA-256 recorded in the
 sanitized result. Results are retained in `release/fetech-v0.4-docling-development-smoke.json` and
 `release/fetech-v0.4-docling-wheel-smoke.json`. Because that wheel is still versioned `0.3.0a0` and
-was built from the unreleased development tree, the final clean tagged v0.4 wheel must rerun the
+was built from the unreleased development tree, the clean release-commit v0.4.0a0 wheel must rerun the
 same gate in the release environment. Those JSON files are focused development evidence, not
 complete v0.4 smoke passes; their browser, Tesseract, source-cleanliness, and live-service statuses
 remain recorded independently. The Python worker audit hook is defense in depth around
@@ -275,7 +276,7 @@ uv run ruff check .
 uv run mypy src/fetech
 uv run python scripts/generate_release_evidence.py --check-published
 uv run python scripts/generate_release_evidence.py \
-  --overlay-profile scripts/release_v04_development.toml --check
+  --overlay-profile scripts/release_v04_candidate.toml --check
 uv build
 git diff --check
 ```
@@ -288,8 +289,8 @@ See [the architecture](docs/architecture.md), [security policy](SECURITY.md),
 [dependency-license report](release/dependency-licenses.md), and
 [competitor matrix](docs/competitor-matrix.md) are release evidence, not claims of certification or
 market superiority. The published v0.3 evidence is immutable and is hash- and metadata-verified from
-`scripts/release_published.toml`; it is not regenerated from the v0.4 development lock. The
+`scripts/release_published.toml`; it is not regenerated from the v0.4 candidate lock. The
 separately tracked
-[v0.4 development SBOM](release/fetech-v0.4-development.spdx.json) and
-[development dependency-license report](release/dependency-licenses-v0.4-development.md) are
-explicitly unreleased overlays and retain the real package version `0.3.0a0`.
+[v0.4.0a0 candidate SBOM](release/fetech-0.4.0a0-candidate.spdx.json) and
+[candidate dependency-license report](release/dependency-licenses-0.4.0a0-candidate.md) are
+explicitly unreleased evidence for package version `0.4.0a0`.

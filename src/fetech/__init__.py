@@ -44,6 +44,7 @@ from fetech.models import (
     ResourceBudget,
     ResultStatus,
 )
+from fetech.version import __version__
 from fetech.wayback import WaybackSnapshotConnector
 
 __all__ = [
@@ -87,7 +88,6 @@ __all__ = [
     "TranscriptProvider",
     "WaybackSnapshotConnector",
     "YouTubeMetadataProvider",
+    "__version__",
     "extract_csrf_token",
 ]
-
-__version__ = "0.3.0a0"
