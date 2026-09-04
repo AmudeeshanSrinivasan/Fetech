@@ -15,13 +15,13 @@ jobs:
       FETECH_WORKER_ISOLATION_MODE: development
       FETECH_EXPECTED_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: ${{ env.FETECH_EXPECTED_COMMIT }}
           persist-credentials: false
       - name: Verify checked-out commit identity
         run: test "$(git rev-parse HEAD)" = "$FETECH_EXPECTED_COMMIT"
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - name: Install uv
@@ -64,13 +64,13 @@ jobs:
     env:
       FETECH_EXPECTED_COMMIT: ${{ github.event.pull_request.head.sha || github.sha }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           ref: ${{ env.FETECH_EXPECTED_COMMIT }}
           persist-credentials: false
       - name: Verify checked-out commit identity
         run: test "$(git rev-parse HEAD)" = "$FETECH_EXPECTED_COMMIT"
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - name: Install uv and containment dependencies

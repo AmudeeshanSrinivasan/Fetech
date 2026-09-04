@@ -177,6 +177,13 @@ systemd-analyze security fetech.service
 sudo -u fetech /usr/bin/bwrap --version
 ```
 
+For the v0.4 release gate, the installed unit must be byte-identical to the
+checked-in reference and run on the intended non-container Linux target with
+systemd 257 or newer. Collect and sign the bounded target receipt using the
+commands in the [release process](release-process.md#3-collect-the-systemd-257-target-attestation).
+The receipt is commit- and artifact-bound, expires after 14 days, and is not
+accepted merely because a JSON file exists.
+
 The unit uses `ProtectControlGroups=private` together with
 `Delegate=cpu memory pids`; inside that private view the configured worker root
 is `/sys/fs/cgroup`. Do not change the unit to expose the host control-group

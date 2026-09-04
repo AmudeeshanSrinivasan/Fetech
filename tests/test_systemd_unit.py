@@ -40,6 +40,12 @@ def test_reference_unit_runs_as_dedicated_fetech_service() -> None:
     assert {
         "FETECH_WORKER_ISOLATION_MODE=required",
         "FETECH_WORKER_CGROUP_ROOT=/sys/fs/cgroup",
+        "FETECH_BROWSER_ARTIFACTS_PATH=/opt/fetech/browser-artifacts",
+        "FETECH_DOCLING_ARTIFACTS_PATH=/opt/fetech/docling-models/2.113.0",
+        (
+            "FETECH_DOCLING_ARTIFACTS_SHA256="
+            "e9aab284777b02541f427ff10ff7e2f1b5656eda04afa3082b9b448d8201bd76"
+        ),
     } <= _service_environment()
 
 

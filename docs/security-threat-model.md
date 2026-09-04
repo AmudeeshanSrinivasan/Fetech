@@ -467,6 +467,17 @@ untagged and unpublished. Reproducible candidate SPDX and dependency-license rep
 release-commit distributions, checksums, attestations, a tag, and published package/release
 artifacts do not.
 
+The release boundary fails closed for external evidence. Target-systemd and
+legal receipts must be canonical, fresh, exact-commit and exact-artifact bound,
+and signed in separate OpenSSH namespaces by principals selected through
+independently managed allowed-signers files. GitHub Release verification
+dereferences the remote signed tag and checks the complete release-asset
+inventory against local approved bytes. PyPI verification accepts only the
+canonical HTTPS API response containing the exact wheel and source
+distribution names, types, sizes, and SHA-256 digests. The publication workflow
+receives an OIDC token only inside the reviewer-protected `pypi` environment
+and never stores a long-lived package index credential.
+
 An authenticated artifact-delivery boundary and scoped physical storage remain
 mandatory before any multi-user deployment.
 

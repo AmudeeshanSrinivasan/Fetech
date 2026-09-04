@@ -78,6 +78,14 @@ def _gate_profile(*, duplicate: bool = False, omit_last: bool = False) -> str:
             lines.append('check = "complete_smoke_v2"')
         elif gate_id == "ytdlp-egress-or-narrowed-claim":
             lines.append('check = "ytdlp_narrowed_claim_v1"')
+        elif gate_id == "target-systemd-attestation":
+            lines.append('check = "systemd_target_attestation_v1"')
+        elif gate_id == "artifact-legal-review":
+            lines.append('check = "legal_approval_v1"')
+        elif gate_id == "git-tag-and-github-release":
+            lines.append('check = "github_release_v1"')
+        elif gate_id == "package-publication":
+            lines.append('check = "pypi_publication_v1"')
         sections.append(
             "\n".join(lines)
         )
@@ -299,6 +307,43 @@ def test_attestation_file_presence_is_not_treated_as_verification(
         if gate["id"] == "artifact-legal-review"
     )
     assert legal_gate["state"] == "blocked"
+
+
+def test_external_gates_pass_only_through_their_dedicated_verifiers(
+    tmp_path: Path,
+) -> None:
+    profile = _write_project(tmp_path, version="0.4.0a0")
+    artifact_dir = tmp_path / "dist"
+    artifact_dir.mkdir()
+    scripts = tmp_path / "scripts"
+    verifiers = {
+        "target-systemd-attestation": "verify_v04_systemd_attestation.py",
+        "artifact-legal-review": "verify_v04_legal_approval.py",
+        "git-tag-and-github-release": "verify_v04_github_release.py",
+        "package-publication": "verify_v04_pypi_publication.py",
+    }
+    for filename in verifiers.values():
+        (scripts / filename).write_text("raise SystemExit(0)\n", encoding="utf-8")
+
+    report = build_report(
+        tmp_path,
+        profile,
+        release_artifacts_dir=artifact_dir,
+    )
+    states = {gate["id"]: gate["state"] for gate in report["gates"]}
+    assert {gate_id: states[gate_id] for gate_id in verifiers} == {
+        gate_id: "passed" for gate_id in verifiers
+    }
+
+    failed_filename = verifiers["artifact-legal-review"]
+    (scripts / failed_filename).write_text("raise SystemExit(1)\n", encoding="utf-8")
+    failed = build_report(
+        tmp_path,
+        profile,
+        release_artifacts_dir=artifact_dir,
+    )
+    failed_states = {gate["id"]: gate["state"] for gate in failed["gates"]}
+    assert failed_states["artifact-legal-review"] == "blocked"
 
 
 def test_state_requires_all_prepublication_then_all_publication_gates() -> None:

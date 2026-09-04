@@ -52,5 +52,11 @@ truthful blockers. It does not mean the release is publishable. Only the final r
 may run `--require-publishable`, and it must not provide or relabel evidence that did not actually
 pass.
 
+Release operators must follow [`docs/release-process.md`](docs/release-process.md). Target-systemd
+and legal receipts require independently selected OpenSSH allowed-signers files; private signing
+keys never enter the repository or CI. A GitHub Release and PyPI upload must be revalidated against
+their live authoritative APIs and the exact artifact receipt before the candidate is described as
+published.
+
 Use `uv sync --extra dev --extra logic` to exercise the Clingo adapter. SWI-Prolog conformance tests
 run when `swipl` is available and otherwise skip without weakening the Python-only suite.

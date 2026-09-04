@@ -1,0 +1,120 @@
+name: Publish approved release
+
+on:
+  release:
+    types: [published]
+
+permissions: {}
+
+concurrency:
+  group: publish-${{ github.event.release.tag_name }}
+  cancel-in-progress: false
+
+jobs:
+  publish-pypi:
+    if: >-
+      github.event.release.tag_name == 'v0.4.0a0' &&
+      github.event.release.prerelease == true &&
+      github.event.release.draft == false
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/fetech/0.4.0a0/
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: refs/tags/v0.4.0a0
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Verify checked-out signed release tag
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          test "$GITHUB_REF_TYPE" = tag
+          test "$GITHUB_REF_NAME" = "$RELEASE_TAG"
+          test "$(git rev-parse HEAD)" = "$(git rev-list -n 1 "$RELEASE_TAG")"
+
+      - name: Download exact GitHub Release inventory
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          mkdir -- dist
+          gh release download "$RELEASE_TAG" \
+            --repo "$GITHUB_REPOSITORY" \
+            --dir dist
+          find dist -maxdepth 1 -type f -exec basename {} \; | LC_ALL=C sort > "$RUNNER_TEMP/actual-assets"
+          LC_ALL=C sort > "$RUNNER_TEMP/expected-assets" <<'EOF'
+          SHA256SUMS
+          dependency-licenses-0.4.0a0-candidate.md
+          fetech-0.4.0a0-artifacts.json
+          fetech-0.4.0a0-candidate.spdx.json
+          fetech-0.4.0a0-py3-none-any.whl
+          fetech-0.4.0a0.tar.gz
+          fetech-v0.4.0a0-github-ci.json
+          fetech-v0.4.0a0-legal-approval.json
+          fetech-v0.4.0a0-legal-approval.json.sig
+          fetech-v0.4.0a0-smoke.json
+          fetech-v0.4.0a0-systemd-attestation.json
+          fetech-v0.4.0a0-systemd-attestation.json.sig
+          EOF
+          diff --unified "$RUNNER_TEMP/expected-assets" "$RUNNER_TEMP/actual-assets"
+
+      - name: Verify approved distribution checksums
+        run: |
+          cd dist
+          sha256sum --check --strict SHA256SUMS
+
+      - name: Verify release evidence and external approvals
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FETECH_SYSTEMD_ALLOWED_SIGNERS: ${{ secrets.FETECH_SYSTEMD_ALLOWED_SIGNERS }}
+          FETECH_LEGAL_ALLOWED_SIGNERS: ${{ secrets.FETECH_LEGAL_ALLOWED_SIGNERS }}
+        run: |
+          umask 077
+          printf '%s\n' "$FETECH_SYSTEMD_ALLOWED_SIGNERS" > "$RUNNER_TEMP/systemd.allowed_signers"
+          printf '%s\n' "$FETECH_LEGAL_ALLOWED_SIGNERS" > "$RUNNER_TEMP/legal.allowed_signers"
+          python scripts/verify_v04_release_artifacts.py \
+            --wheel dist/fetech-0.4.0a0-py3-none-any.whl \
+            --sdist dist/fetech-0.4.0a0.tar.gz \
+            --checksums dist/SHA256SUMS \
+            --output "$RUNNER_TEMP/generated-artifacts.json"
+          cmp --silent \
+            "$RUNNER_TEMP/generated-artifacts.json" \
+            dist/fetech-0.4.0a0-artifacts.json
+          python scripts/verify_v04_smoke_evidence.py \
+            --evidence dist/fetech-v0.4.0a0-smoke.json \
+            --wheel dist/fetech-0.4.0a0-py3-none-any.whl
+          python scripts/verify_v04_ci_attestation.py \
+            --receipt dist/fetech-v0.4.0a0-github-ci.json
+          python scripts/verify_v04_systemd_attestation.py \
+            --artifact-dir dist \
+            --receipt dist/fetech-v0.4.0a0-systemd-attestation.json \
+            --signature dist/fetech-v0.4.0a0-systemd-attestation.json.sig \
+            --allowed-signers "$RUNNER_TEMP/systemd.allowed_signers"
+          python scripts/verify_v04_legal_approval.py \
+            --artifact-dir dist \
+            --receipt dist/fetech-v0.4.0a0-legal-approval.json \
+            --signature dist/fetech-v0.4.0a0-legal-approval.json.sig \
+            --allowed-signers "$RUNNER_TEMP/legal.allowed_signers"
+          python scripts/verify_v04_github_release.py --artifact-dir dist
+
+      - name: Install pinned uv publisher
+        run: python -m pip install --disable-pip-version-check 'uv==0.11.29'
+
+      - name: Publish exact distributions with PyPI Trusted Publishing
+        run: >-
+          uv publish
+          --trusted-publishing always
+          --check-url https://pypi.org/simple/fetech/
+          dist/fetech-0.4.0a0-py3-none-any.whl
+          dist/fetech-0.4.0a0.tar.gz

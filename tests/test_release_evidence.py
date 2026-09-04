@@ -444,9 +444,17 @@ def test_v04_candidate_overlay_is_reproducible_without_relabeling_package(
     profile_document = tomllib.loads(V04_OVERLAY.read_text(encoding="utf-8"))
     declared_inputs = tuple(profile_document["overlay"]["evidence_inputs"])
     required_bound_inputs = {
+        ".github/workflows/release.yml",
+        "docs/release-process.md",
+        "scripts/collect_v04_systemd_attestation.py",
         "scripts/generate_release_evidence.py",
+        "scripts/release_attestation_common.py",
         "scripts/release_published.toml",
         "scripts/verify_v04_ci_attestation.py",
+        "scripts/verify_v04_github_release.py",
+        "scripts/verify_v04_legal_approval.py",
+        "scripts/verify_v04_pypi_publication.py",
+        "scripts/verify_v04_systemd_attestation.py",
         "scripts/verify_v04_ytdlp_release_claim.py",
         "src/fetech/adapters/archive.py",
         "src/fetech/adapters/cache.py",
@@ -467,6 +475,7 @@ def test_v04_candidate_overlay_is_reproducible_without_relabeling_package(
         "tests/test_storage_cas.py",
         "tests/test_v04_capability_matrix.py",
         "tests/test_v04_ci_attestation.py",
+        "tests/test_v04_external_release_gates.py",
         "tests/test_v04_documents.py",
         "tests/test_v04_media.py",
         "tests/test_v04_smoke_evidence.py",

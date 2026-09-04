@@ -17,19 +17,27 @@ evidence_inputs = [
   "uv.lock",
   "capabilities/manifest.yaml",
   ".github/workflows/ci.yml",
+  ".github/workflows/release.yml",
   "deploy/systemd/fetech.service.example",
   "docs/architecture.md",
   "docs/capability-catalog.md",
   "docs/competitor-matrix.md",
   "docs/deployment-containment.md",
+  "docs/release-process.md",
   "docs/security-threat-model.md",
   "docs/v0.4-conformance.md",
   "docs/releases/v0.4.0a0.md",
   "scripts/generate_release_evidence.py",
   "scripts/check_v04_release_readiness.py",
+  "scripts/collect_v04_systemd_attestation.py",
+  "scripts/release_attestation_common.py",
   "scripts/verify_v04_ci_attestation.py",
+  "scripts/verify_v04_github_release.py",
+  "scripts/verify_v04_legal_approval.py",
+  "scripts/verify_v04_pypi_publication.py",
   "scripts/verify_v04_release_artifacts.py",
   "scripts/verify_v04_smoke_evidence.py",
+  "scripts/verify_v04_systemd_attestation.py",
   "scripts/verify_v04_ytdlp_release_claim.py",
   "scripts/release_license_catalog.toml",
   "scripts/release_published.toml",
@@ -88,6 +96,7 @@ evidence_inputs = [
   "tests/test_release_readiness.py",
   "tests/test_runtime_bugfixes.py",
   "tests/test_v04_ci_attestation.py",
+  "tests/test_v04_external_release_gates.py",
   "tests/test_v04_release_artifacts.py",
   "tests/test_v04_smoke_verifier.py",
   "tests/test_storage_cas.py",
@@ -193,6 +202,7 @@ phase = "prepublication"
 evidence_kind = "attestation"
 description = "The exact reference unit passes static and runtime verification on the systemd 257+ target."
 pending_reason = "The target distribution has not supplied a hash- and commit-bound runtime attestation."
+check = "systemd_target_attestation_v1"
 
 [[publication_gates]]
 id = "ytdlp-egress-or-narrowed-claim"
@@ -208,6 +218,7 @@ phase = "prepublication"
 evidence_kind = "attestation"
 description = "A human reviewer approves exact model, NVIDIA, pypdfium2, browser, and binary notices and redistribution terms."
 pending_reason = "Technical license metadata is not legal approval."
+check = "legal_approval_v1"
 
 [[publication_gates]]
 id = "optional-runtime-live-evidence"
@@ -223,6 +234,7 @@ phase = "postpublication"
 evidence_kind = "publication"
 description = "The exact release commit is tagged and its GitHub Release contains the verified assets."
 pending_reason = "Publication is intentionally blocked until every prepublication gate passes."
+check = "github_release_v1"
 
 [[publication_gates]]
 id = "package-publication"
@@ -230,6 +242,7 @@ phase = "postpublication"
 evidence_kind = "publication"
 description = "The verified wheel and source distribution are published under version 0.4.0a0."
 pending_reason = "Package publication is intentionally blocked until every prepublication gate passes."
+check = "pypi_publication_v1"
 
 [[external_components]]
 name = "SWI-Prolog"

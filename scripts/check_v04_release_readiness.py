@@ -20,6 +20,10 @@ import yaml
 TARGET_VERSION: Final = "0.4.0a0"
 SMOKE_EVIDENCE_FILENAME: Final = f"fetech-v{TARGET_VERSION}-smoke.json"
 CI_ATTESTATION_FILENAME: Final = f"fetech-v{TARGET_VERSION}-github-ci.json"
+SYSTEMD_ATTESTATION_FILENAME: Final = (
+    f"fetech-v{TARGET_VERSION}-systemd-attestation.json"
+)
+LEGAL_APPROVAL_FILENAME: Final = f"fetech-v{TARGET_VERSION}-legal-approval.json"
 REPORT_SCHEMA_VERSION: Final = "1"
 DEFAULT_PROFILE: Final = Path("scripts/release_v04_candidate.toml")
 DEFAULT_OUTPUT: Final = Path("release/fetech-v0.4-readiness.json")
@@ -689,6 +693,50 @@ def _check_ytdlp_release_claim(
     )
 
 
+def _check_external_gate(
+    project_root: Path,
+    gate: PublicationGate,
+    artifact_dir: Path | None,
+    *,
+    expected_check: str,
+    verifier_name: str,
+    arguments: Sequence[str],
+    passed_reason: str,
+    timeout: int,
+) -> GateResult:
+    """Run one explicit fail-closed verifier for external release evidence."""
+
+    if gate.check != expected_check:
+        return _blocked(gate, f"The {gate.id} gate lacks its canonical verifier ID.")
+    if artifact_dir is None:
+        return _blocked(gate)
+    verifier = project_root / "scripts" / verifier_name
+    if verifier.is_symlink() or not verifier.is_file():
+        return _blocked(gate, f"The {gate.id} verifier is unavailable.")
+    try:
+        process = subprocess.run(
+            [
+                sys.executable,
+                str(verifier),
+                "--project-root",
+                str(project_root),
+                "--artifact-dir",
+                str(artifact_dir),
+                *arguments,
+            ],
+            cwd=project_root,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=timeout,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return _blocked(gate, f"The {gate.id} verification did not complete.")
+    if process.returncode != 0:
+        return _blocked(gate, f"The {gate.id} verification failed.")
+    return _passed(gate, passed_reason)
+
+
 def evaluate_gates(
     project_root: Path,
     gates: Sequence[PublicationGate],
@@ -736,6 +784,97 @@ def evaluate_gates(
                     root,
                     gate,
                     require_committed=release_artifacts_dir is not None,
+                )
+            )
+        elif gate.id == "target-systemd-attestation":
+            results.append(
+                _check_external_gate(
+                    root,
+                    gate,
+                    release_artifacts_dir,
+                    expected_check="systemd_target_attestation_v1",
+                    verifier_name="verify_v04_systemd_attestation.py",
+                    arguments=(
+                        "--receipt",
+                        str(
+                            release_artifacts_dir / SYSTEMD_ATTESTATION_FILENAME
+                            if release_artifacts_dir is not None
+                            else Path(SYSTEMD_ATTESTATION_FILENAME)
+                        ),
+                        "--signature",
+                        str(
+                            release_artifacts_dir
+                            / f"{SYSTEMD_ATTESTATION_FILENAME}.sig"
+                            if release_artifacts_dir is not None
+                            else Path(f"{SYSTEMD_ATTESTATION_FILENAME}.sig")
+                        ),
+                    ),
+                    passed_reason=(
+                        "Verified a fresh signed attestation from an actual systemd "
+                        "257+ target running the exact reference unit and release bytes."
+                    ),
+                    timeout=120,
+                )
+            )
+        elif gate.id == "artifact-legal-review":
+            results.append(
+                _check_external_gate(
+                    root,
+                    gate,
+                    release_artifacts_dir,
+                    expected_check="legal_approval_v1",
+                    verifier_name="verify_v04_legal_approval.py",
+                    arguments=(
+                        "--receipt",
+                        str(
+                            release_artifacts_dir / LEGAL_APPROVAL_FILENAME
+                            if release_artifacts_dir is not None
+                            else Path(LEGAL_APPROVAL_FILENAME)
+                        ),
+                        "--signature",
+                        str(
+                            release_artifacts_dir / f"{LEGAL_APPROVAL_FILENAME}.sig"
+                            if release_artifacts_dir is not None
+                            else Path(f"{LEGAL_APPROVAL_FILENAME}.sig")
+                        ),
+                    ),
+                    passed_reason=(
+                        "Verified an independently trusted human legal approval bound "
+                        "to the exact release scope, components, commit, and artifacts."
+                    ),
+                    timeout=120,
+                )
+            )
+        elif gate.id == "git-tag-and-github-release":
+            results.append(
+                _check_external_gate(
+                    root,
+                    gate,
+                    release_artifacts_dir,
+                    expected_check="github_release_v1",
+                    verifier_name="verify_v04_github_release.py",
+                    arguments=(),
+                    passed_reason=(
+                        "Verified the signed release tag target and exact published "
+                        "GitHub prerelease asset inventory against live GitHub state."
+                    ),
+                    timeout=180,
+                )
+            )
+        elif gate.id == "package-publication":
+            results.append(
+                _check_external_gate(
+                    root,
+                    gate,
+                    release_artifacts_dir,
+                    expected_check="pypi_publication_v1",
+                    verifier_name="verify_v04_pypi_publication.py",
+                    arguments=(),
+                    passed_reason=(
+                        "Verified PyPI published only the approved wheel and source "
+                        "distribution with exact release hashes."
+                    ),
+                    timeout=120,
                 )
             )
         else:
