@@ -1,0 +1,26 @@
+# Beta boundary record. This preserves identifiers and hashes; it is not a
+# publication approval, legal opinion, systemd attestation, or release receipt.
+schema_version = 1
+candidate_version = "0.4.0a0"
+candidate_commit = "5358f3fd4c9c797244e2e412701e03af2e6d6bcb"
+publication_gate_count = 14
+publication_gate_passed_count = 10
+blocked_gates = [
+  "target-systemd-attestation",
+  "artifact-legal-review",
+  "git-tag-and-github-release",
+  "package-publication",
+]
+
+[tracked_evidence]
+"release/fetech-0.4.0a0-candidate.spdx.json" = "4d488b60000521941c55099aac3cc8c8a3ef4bf62dd8123c4988d0fa62bb5025"
+"release/dependency-licenses-0.4.0a0-candidate.md" = "85a76619653767d8e7392118dac8d069ff0173b8877f7445608a2c47b1c54373"
+
+[local_candidate_evidence]
+# These ignored artifacts may be absent in another clone. When present, their
+# hashes must match this frozen local release-candidate record.
+"dist/fetech-v0.4-readiness-with-artifacts.json" = "795cf2bbc6b73901143a403c231c83555d27944ee15c188a499dadc2052ad841"
+"dist/fetech-0.4.0a0-py3-none-any.whl" = "577265aa37955deb9c90da3b63eb3e2921b28e75b4cd0f9901f3bd196d0ee431"
+"dist/fetech-0.4.0a0.tar.gz" = "1d5d965c28d1ef73182099b15f241b2cd9ca8a3ed39fff147dc1d378551b38bf"
+"dist/fetech-v0.4.0a0-complete-smoke.json" = "e097d51967248c900a81f3be5cf8ae6f48209c7e538d1b0e497fcafe103129d2"
+"dist/fetech-v0.4.0a0-github-ci.json" = "02199b7ea957480d54d75f99ba9da9e87364b6c1ad007e8042eb3605fa229f21"

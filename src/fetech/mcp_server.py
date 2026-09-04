@@ -13,9 +13,31 @@ from fetech.adapters.documents import GitLFSResolver, PDFOCRProvider
 from fetech.adapters.media import MediaAdapter
 from fetech.auth import CredentialProvider
 from fetech.auth_flows import FormSubmissionProvider, SessionProvider
+from fetech.config import Settings
 from fetech.context import ContextBroker
+from fetech.contracts import contract_manifest
 from fetech.gateway import UniversalFetchGateway
 from fetech.models import FetchRequest, ResourceBudget
+
+
+def _fetch_request(
+    target: str,
+    outputs: list[str] | None,
+    maximum_bytes: int,
+    authentication_ref: str | None,
+    privacy_profile: Literal["public", "private"],
+    approved_capabilities: list[str] | None,
+) -> FetchRequest:
+    if not 1 <= maximum_bytes <= 2_000_000_000:
+        raise ValueError("maximum_bytes must be between 1 and 2000000000")
+    return FetchRequest(
+        target=target,
+        output_requirements=tuple(outputs or ["clean_text"]),
+        authentication_ref=authentication_ref,
+        privacy_profile=privacy_profile,
+        approved_capabilities=frozenset(approved_capabilities or ()),
+        budget=ResourceBudget(bytes=maximum_bytes),
+    )
 
 
 def build_server(
@@ -51,7 +73,11 @@ def build_server(
     )
     repository = Path(os.environ.get("FETECH_REPOSITORY", Path.cwd())).resolve()
     vault_value = os.environ.get("FETECH_OBSIDIAN_VAULT")
-    broker = ContextBroker(repository, vault=Path(vault_value) if vault_value else None)
+    broker = ContextBroker(
+        repository,
+        runtime_graph=Settings.from_environment().runtime_graph_path,
+        vault=Path(vault_value) if vault_value else None,
+    )
 
     @server.tool()
     async def fetch_content(
@@ -63,17 +89,41 @@ def build_server(
         approved_capabilities: list[str] | None = None,
     ) -> str:
         """Fetch content using opaque auth references and explicit capability approvals."""
-        if not 1 <= maximum_bytes <= 2_000_000_000:
-            raise ValueError("maximum_bytes must be between 1 and 2000000000")
-        request = FetchRequest(
-            target=target,
-            output_requirements=tuple(outputs or ["clean_text"]),
-            authentication_ref=authentication_ref,
-            privacy_profile=privacy_profile,
-            approved_capabilities=frozenset(approved_capabilities or ()),
-            budget=ResourceBudget(bytes=maximum_bytes),
+        request = _fetch_request(
+            target,
+            outputs,
+            maximum_bytes,
+            authentication_ref,
+            privacy_profile,
+            approved_capabilities,
         )
         return (await gateway.fetch(request)).model_dump_json()
+
+    @server.tool()
+    async def submit_fetch(
+        target: str,
+        outputs: list[str] | None = None,
+        maximum_bytes: int = 10_000_000,
+        authentication_ref: str | None = None,
+        privacy_profile: Literal["public", "private"] = "public",
+        approved_capabilities: list[str] | None = None,
+    ) -> str:
+        """Submit a fetch and return its run identifier without waiting for completion."""
+        request = _fetch_request(
+            target,
+            outputs,
+            maximum_bytes,
+            authentication_ref,
+            privacy_profile,
+            approved_capabilities,
+        )
+        return (await gateway.submit(request)).model_dump_json()
+
+    @server.tool()
+    async def cancel_fetch(run_id: str) -> str:
+        """Idempotently cancel an active fetch run."""
+
+        return (await gateway.cancel(UUID(run_id))).model_dump_json()
 
     @server.tool()
     async def inspect_target(target: str) -> str:
@@ -115,18 +165,24 @@ def build_server(
         """Return the stored run snapshot and its sanitized event trace."""
         identifier = UUID(run_id)
         snapshot = await gateway.get_run(identifier)
-        events = await gateway.ledger.events(identifier)
+        events = await gateway.provenance(identifier)
         return "\n".join([snapshot.model_dump_json(), *(event.model_dump_json() for event in events)])
 
     @server.tool()
     async def query_provenance(run_id: str) -> str:
         """Query immutable provenance events for one run."""
-        return "\n".join(event.model_dump_json() for event in await gateway.ledger.events(UUID(run_id)))
+        return "\n".join(event.model_dump_json() for event in await gateway.provenance(UUID(run_id)))
 
     @server.tool()
     async def get_context(question: str, token_budget: int = 4_000) -> str:
         """Return bounded Graphify, QMD, and exact source context for Codex."""
         return (await broker.search(question, token_budget=token_budget)).model_dump_json()
+
+    @server.tool()
+    async def get_contracts() -> str:
+        """Return public contract versions and deterministic JSON Schema hashes."""
+
+        return contract_manifest().model_dump_json()
 
     @server.tool()
     async def explain_capability(capability_id: str, allowed: bool = True) -> str:

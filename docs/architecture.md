@@ -34,6 +34,46 @@ dependencies, tools, or providers are observable dependency failures; neither
 registration nor cache presence is accepted as evidence. Package metadata identifies `0.4.0a0`,
 but the candidate remains untagged and unpublished.
 
+## Beta contract stabilization
+
+Beta development is isolated from the frozen v0.4 candidate. It does not change the v0.4
+publication evidence or reinterpret its 10/14 release-gate result.
+
+The first Beta increment makes the existing `1.0` JSON contracts explicit and discoverable.
+`FetchRequest`, `FetchPlan`, `FetchResult`, and `Artifact` reject unknown schema versions. A legacy
+document that omits `schema_version` remains compatible and is normalized to `1.0`; an explicitly
+different version never falls through to current semantics.
+
+`fetech.contracts.contract_manifest()` is the single source for contract discovery. It emits an
+ordered inventory with the package version, REST API version, contract schema version, and a
+SHA-256 of each canonical serialization JSON Schema. The same manifest is available through
+`FetechClient.contracts()`, `fetech contracts`, `GET /v1/contracts`, and the MCP `get_contracts`
+tool. The hashes detect interface or dependency drift; they are compatibility identifiers, not
+signatures or security attestations.
+
+The second Beta increment keeps run lifecycle ownership in `UniversalFetchGateway` and terminal
+persistence in `EventLedger.finish_run()`. Runs move through `QUEUED`, `PLANNING`, `RUNNING`, and
+`FINISHED`; both normal completion and cancellation use one atomic compare-and-set transition. The
+first terminal writer wins, so a completion/cancellation race cannot append contradictory terminal
+events or overwrite a durable result. Cancellation during execution preserves completed artifacts,
+attempts, capability outcomes, policy decisions, diagnostics, provenance, and consumed budget.
+
+Cancellation is explicit for submitted runs. Cancelling a task that is only waiting on
+`FetchHandle.result()` does not cancel the underlying run; `FetchHandle.cancel()` does. Cancelling
+the foreground `FetechClient.fetch()` coroutine cancels the run it created and still finalizes its
+ledger record. Repeated cancellation returns the same terminal snapshot without a second event.
+The REST daemon exposes `DELETE /v1/runs/{run_id}`, MCP exposes `submit_fetch` and `cancel_fetch`,
+and the CLI sends `fetech cancel` to the daemon that owns the in-memory task. Unknown REST event
+streams now fail with HTTP 404 before an SSE response begins.
+
+The third Beta increment completes the dual-graph context boundary. Repository architecture queries
+use `graphify-out/graph.json`; run and failure-history queries use the separately configured runtime
+projection whose authority remains the immutable event ledger. A deterministic classifier selects
+code, runtime, and/or decision retrieval without a model. Code-graph locations are confirmed through
+bounded exact-source windows before being marked verified. All provider outcomes and per-plane token
+usage are typed and observable, while missing Graphify or QMD providers degrade to exact source
+without affecting fetch execution. See [`context-broker.md`](context-broker.md).
+
 ## Runtime flow
 
 ```text

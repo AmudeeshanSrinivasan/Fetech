@@ -5,6 +5,8 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
+import re
+import subprocess
 import sys
 import tomllib
 from dataclasses import replace
@@ -39,6 +41,64 @@ CATALOG = ROOT / "scripts" / "release_license_catalog.toml"
 RELEASE = ROOT / "release"
 V04_OVERLAY = ROOT / "scripts" / "release_v04_candidate.toml"
 PUBLISHED_PROFILE = ROOT / "scripts" / "release_published.toml"
+BETA_FREEZE = RELEASE / "fetech-v0.4.0a0-freeze.toml"
+
+
+def _verify_frozen_v04_candidate() -> None:
+    freeze = tomllib.loads(BETA_FREEZE.read_text(encoding="utf-8"))
+    commit = freeze["candidate_commit"]
+    assert freeze["candidate_version"] == "0.4.0a0"
+    assert freeze["publication_gate_count"] == 14
+    assert freeze["publication_gate_passed_count"] == 10
+    assert set(freeze["blocked_gates"]) == {
+        "target-systemd-attestation",
+        "artifact-legal-review",
+        "git-tag-and-github-release",
+        "package-publication",
+    }
+
+    for relative_path, expected_digest in freeze["tracked_evidence"].items():
+        actual = hashlib.sha256((ROOT / relative_path).read_bytes()).hexdigest()
+        assert actual == expected_digest
+
+    for relative_path, expected_digest in freeze["local_candidate_evidence"].items():
+        candidate = ROOT / relative_path
+        if candidate.exists():
+            assert hashlib.sha256(candidate.read_bytes()).hexdigest() == expected_digest
+
+    readiness_path = ROOT / "dist/fetech-v0.4-readiness-with-artifacts.json"
+    if readiness_path.exists():
+        readiness = json.loads(readiness_path.read_text(encoding="utf-8"))
+        assert readiness["summary"]["gate_count"] == freeze["publication_gate_count"]
+        assert (
+            readiness["summary"]["passed_count"]
+            == freeze["publication_gate_passed_count"]
+        )
+        assert {
+            gate["id"] for gate in readiness["gates"] if gate["state"] == "blocked"
+        } == set(freeze["blocked_gates"])
+
+    subprocess.run(
+        ["git", "merge-base", "--is-ancestor", commit, "HEAD"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+    )
+    report = (RELEASE / "dependency-licenses-0.4.0a0-candidate.md").read_text(
+        encoding="utf-8"
+    )
+    recorded_inputs = dict(
+        re.findall(r"^\| `([^`]+)` \| `([0-9a-f]{64})` \|$", report, re.MULTILINE)
+    )
+    assert recorded_inputs
+    for relative_path, expected_digest in recorded_inputs.items():
+        source = subprocess.run(
+            ["git", "show", f"{commit}:{relative_path}"],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+        ).stdout
+        assert hashlib.sha256(source).hexdigest() == expected_digest
 
 
 def _inputs():
@@ -521,6 +581,9 @@ def test_v04_candidate_overlay_is_reproducible_without_relabeling_package(
         RELEASE / overlay.spdx_filename,
         RELEASE / overlay.license_report_filename,
     )
+    if BETA_FREEZE.exists():
+        _verify_frozen_v04_candidate()
+        return
     assert tracked_paths[0].read_text(encoding="utf-8") == expected_spdx
     assert tracked_paths[1].read_text(encoding="utf-8") == expected_report
 

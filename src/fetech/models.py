@@ -82,6 +82,26 @@ class RunState(StrEnum):
     FINISHED = "FINISHED"
 
 
+class ContextNeed(StrEnum):
+    """Deterministic context families selected by the context broker."""
+
+    CODE_ARCHITECTURE = "code_architecture"
+    RUNTIME_HISTORY = "runtime_history"
+    DECISION_HISTORY = "decision_history"
+
+
+class ContextProviderStatus(StrEnum):
+    """Observable outcome from one bounded context provider."""
+
+    SUCCEEDED = "SUCCEEDED"
+    SKIPPED = "SKIPPED"
+    EMPTY = "EMPTY"
+    UNAVAILABLE = "UNAVAILABLE"
+    TIMED_OUT = "TIMED_OUT"
+    OUTPUT_LIMIT = "OUTPUT_LIMIT"
+    FAILED = "FAILED"
+
+
 class PageState(StrEnum):
     OK = "OK"
     EMPTY = "EMPTY"
@@ -133,7 +153,7 @@ class ResourceBudget(ContractModel):
 
 
 class FetchRequest(ContractModel):
-    schema_version: str = "1.0"
+    schema_version: Literal["1.0"] = "1.0"
     target: str = Field(min_length=1, max_length=_MAX_TARGET_BYTES)
     intent: str = Field(default="retrieve", min_length=1, max_length=256)
     output_requirements: tuple[str, ...] = Field(
@@ -238,7 +258,7 @@ class PlanNode(ContractModel):
 
 
 class FetchPlan(ContractModel):
-    schema_version: str = "1.0"
+    schema_version: Literal["1.0"] = "1.0"
     plan_id: UUID = Field(default_factory=uuid4)
     request: FetchRequest
     nodes: tuple[PlanNode, ...]
@@ -333,7 +353,7 @@ class Artifact(ContractModel):
     role: str
     representation: str
     media_type: str
-    schema_version: str = "1.0"
+    schema_version: Literal["1.0"] = "1.0"
     cas_uri: str
     sha256: str
     size: int = Field(ge=0)
@@ -387,7 +407,7 @@ class CrawlReport(ContractModel):
 
 
 class FetchResult(ContractModel):
-    schema_version: str = "1.0"
+    schema_version: Literal["1.0"] = "1.0"
     run_id: UUID = Field(default_factory=uuid4)
     status: ResultStatus
     resources: tuple[Resource, ...] = ()
@@ -434,14 +454,60 @@ class ContextSource(ContractModel):
     score: float = Field(default=0.0, ge=0.0)
     freshness: datetime | None = None
     provenance: tuple[str, ...] = ()
+    content_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
+    source_locations: tuple[str, ...] = ()
+    graph_nodes: tuple[str, ...] = ()
+    graph_paths: tuple[str, ...] = ()
+    verified: bool = False
+
+
+class ContextProviderReport(ContractModel):
+    """Typed retrieval result without leaking provider stderr or prompt content."""
+
+    provider: Literal["code_graph", "runtime_graph", "qmd", "exact_source"]
+    status: ContextProviderStatus
+    attempts: int = Field(default=0, ge=0, le=2)
+    result_count: int = Field(default=0, ge=0)
+    detail: str | None = Field(default=None, max_length=256)
+
+
+class ContextTokenUsage(ContractModel):
+    """Estimated excerpt tokens selected from each context plane."""
+
+    code_graph: int = Field(default=0, ge=0)
+    runtime_graph: int = Field(default=0, ge=0)
+    qmd: int = Field(default=0, ge=0)
+    exact_source: int = Field(default=0, ge=0)
+    total: int = Field(default=0, ge=0)
 
 
 class ContextBundle(ContractModel):
     question: str
     sources: tuple[ContextSource, ...]
+    needs: tuple[ContextNeed, ...] = ()
     confidence: float = Field(default=0.0, ge=0.0, le=1.0)
     contradictions: tuple[str, ...] = ()
     omitted_results: int = 0
     token_budget: int = 4_000
     estimated_tokens: int = 0
     fallback_reason: str | None = None
+    provider_reports: tuple[ContextProviderReport, ...] = ()
+    token_usage: ContextTokenUsage = Field(default_factory=ContextTokenUsage)
+    freshness: datetime | None = None
+
+
+class ContractDescriptor(ContractModel):
+    """Stable identity for one public JSON contract."""
+
+    name: str
+    schema_version: Literal["1.0"] = "1.0"
+    json_schema_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
+class ContractManifest(ContractModel):
+    """Machine-readable contract inventory shared by every public interface."""
+
+    schema_version: Literal["1.0"] = "1.0"
+    api_version: Literal["v1"] = "v1"
+    package_version: str
+    contracts: tuple[ContractDescriptor, ...]

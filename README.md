@@ -32,6 +32,16 @@ registration.
 > verified wheel/source distributions and checksums, a tag, and package publication remain release
 > gates. Candidate evidence and notes are not published-release artifacts.
 
+> **Beta development:** post-v0.4 stabilization work now lives on the `beta` branch. The official
+> v0.4 publication contract remains frozen at 10/14 gates; Beta changes do not relabel, regenerate,
+> or waive its outstanding systemd-attestation, legal-review, tag/release, and package-publication
+> gates. The first Beta increment adds fail-closed contract-schema versions and a deterministic
+> contract manifest shared by the SDK, CLI, REST daemon, and MCP server. The second increment adds
+> durable, idempotent cancellation and one first-writer-wins terminal transition across those
+> interfaces. The third increment adds deterministic dual-graph context routing, typed provider
+> degradation, hash-based deduplication, and exact-source verification. See the
+> [Beta development guide](docs/beta-development.md).
+
 Fetech permits local yt-dlp only in development mode; required mode refuses it until brokered, allowlisted egress is configured.
 
 Fetech uses a deliberately narrow polyglot design. Python 3.12 is the required runtime and remains
@@ -62,10 +72,13 @@ wire-byte, and decompressed-byte budgets are decremented cumulatively in `remain
 ```bash
 uv sync --extra dev --extra web --extra server --extra mcp
 uv run fetech capabilities --summary
+uv run fetech contracts
 uv run fetech plan https://example.com
 uv run fetech fetch https://example.com
 uv run fetech crawl https://example.com --max-pages 20 --max-depth 2
 uv run fetech-daemon
+# In another terminal, for a run submitted to that daemon:
+uv run fetech cancel RUN_ID
 ```
 
 Install the v0.4 file and media engines explicitly, or use `--all-extras` for conformance work:

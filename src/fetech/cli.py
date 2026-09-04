@@ -8,13 +8,16 @@ from dataclasses import replace
 from enum import StrEnum
 from pathlib import Path
 from typing import Annotated
+from urllib.parse import urlsplit
 from uuid import UUID
 
+import httpx
 import typer
 
 from fetech.client import FetechClient
 from fetech.config import Settings
 from fetech.context import ContextBroker
+from fetech.contracts import contract_manifest
 from fetech.models import FetchRequest, ResourceBudget
 from fetech.provenance import build_runtime_graph
 from fetech.registry import CapabilityRegistry
@@ -25,6 +28,7 @@ app = typer.Typer(
     rich_markup_mode=None,
 )
 DEFAULT_REPOSITORY = Path.cwd()
+DEFAULT_DAEMON_URL = "http://127.0.0.1:8787"
 
 
 class PrivacyProfile(StrEnum):
@@ -39,6 +43,40 @@ def _json(document: object) -> None:
         typer.echo(document.model_dump_json(indent=2))
     else:
         typer.echo(json.dumps(document, indent=2, sort_keys=True, default=str))
+
+
+def _daemon_endpoint(base_url: str, path: str) -> str:
+    parsed = urlsplit(base_url)
+    if (
+        parsed.scheme not in {"http", "https"}
+        or parsed.hostname is None
+        or "@" in parsed.netloc
+        or parsed.query
+        or parsed.fragment
+        or parsed.path not in {"", "/"}
+    ):
+        raise typer.BadParameter(
+            "daemon URL must be an HTTP(S) origin without userinfo, path, query, or fragment"
+        )
+    return f"{base_url.rstrip('/')}{path}"
+
+
+def _daemon_request(method: str, path: str, daemon_url: str) -> object:
+    try:
+        response = httpx.request(
+            method,
+            _daemon_endpoint(daemon_url, path),
+            timeout=10.0,
+            follow_redirects=False,
+        )
+        document = response.json()
+    except (httpx.HTTPError, ValueError):
+        typer.echo("daemon request failed", err=True)
+        raise typer.Exit(1) from None
+    if response.is_error:
+        _json(document)
+        raise typer.Exit(1)
+    return document
 
 
 @app.command()
@@ -58,6 +96,13 @@ def capabilities(summary: Annotated[bool, typer.Option(help="Print category tota
         )
         return
     _json(registry.as_document())
+
+
+@app.command()
+def contracts() -> None:
+    """Show public contract versions and deterministic JSON Schema hashes."""
+
+    _json(contract_manifest())
 
 
 @app.command()
@@ -209,6 +254,23 @@ def run_snapshot(run_id: UUID) -> None:
     asyncio.run(run())
 
 
+@app.command("cancel")
+def cancel_run(
+    run_id: UUID,
+    daemon_url: Annotated[
+        str,
+        typer.Option(
+            "--daemon-url",
+            envvar="FETECH_DAEMON_URL",
+            help="Origin of the running Fetech daemon that owns the run.",
+        ),
+    ] = DEFAULT_DAEMON_URL,
+) -> None:
+    """Idempotently cancel a run owned by the active daemon."""
+
+    _json(_daemon_request("DELETE", f"/v1/runs/{run_id}", daemon_url))
+
+
 @app.command("project-runtime-graph")
 def project_runtime_graph() -> None:
     """Rebuild the disposable runtime graph from the authoritative ledger."""
@@ -234,12 +296,14 @@ def context_search(
     question: str,
     repository: Annotated[Path, typer.Option("--repository", "-r")] = DEFAULT_REPOSITORY,
     vault: Annotated[Path | None, typer.Option("--vault")] = None,
+    runtime_graph: Annotated[Path | None, typer.Option("--runtime-graph")] = None,
     token_budget: Annotated[int, typer.Option("--tokens")] = 4_000,
 ) -> None:
     """Retrieve bounded Graphify, QMD, and exact-source context."""
 
     async def run() -> None:
-        broker = ContextBroker(repository, vault=vault)
+        configured_runtime_graph = runtime_graph or Settings.from_environment().runtime_graph_path
+        broker = ContextBroker(repository, runtime_graph=configured_runtime_graph, vault=vault)
         _json(await broker.search(question, token_budget=token_budget))
 
     asyncio.run(run())

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import AsyncIterator, Mapping
+from pathlib import Path
 from uuid import UUID
 
 from fetech.adapters.cache import SnapshotConnector
@@ -11,9 +12,19 @@ from fetech.adapters.media import MediaAdapter
 from fetech.auth import CredentialProvider
 from fetech.auth_flows import FormSubmissionProvider, SessionProvider
 from fetech.config import Settings
+from fetech.context import ContextBroker
+from fetech.contracts import contract_manifest
 from fetech.gateway import UniversalFetchGateway
 from fetech.logic.models import ReasoningResult
-from fetech.models import FetchPlan, FetchRequest, FetchResult, FetchRun, ProvenanceEvent
+from fetech.models import (
+    ContextBundle,
+    ContractManifest,
+    FetchPlan,
+    FetchRequest,
+    FetchResult,
+    FetchRun,
+    ProvenanceEvent,
+)
 
 
 class FetchHandle:
@@ -25,11 +36,14 @@ class FetchHandle:
         return await self._gateway.wait(self.run_id)
 
     async def events(self) -> AsyncIterator[ProvenanceEvent]:
-        async for event in self._gateway.ledger.stream(self.run_id):
+        async for event in self._gateway.events(self.run_id):
             yield event
 
     async def snapshot(self) -> FetchRun:
         return await self._gateway.get_run(self.run_id)
+
+    async def cancel(self) -> FetchRun:
+        return await self._gateway.cancel(self.run_id)
 
 
 class FetechClient:
@@ -44,6 +58,9 @@ class FetechClient:
         pdf_ocr_provider: PDFOCRProvider | None = None,
         media_adapter: MediaAdapter | None = None,
         snapshot_connectors: Mapping[str, SnapshotConnector] | None = None,
+        repository: Path | None = None,
+        vault: Path | None = None,
+        qmd_index: str = "obsidian-mind",
     ) -> None:
         self.gateway = UniversalFetchGateway(
             settings,
@@ -55,6 +72,12 @@ class FetechClient:
             media_adapter=media_adapter,
             snapshot_connectors=snapshot_connectors,
         )
+        self.context_broker = ContextBroker(
+            repository or Path.cwd(),
+            runtime_graph=self.gateway.settings.runtime_graph_path,
+            vault=vault,
+            qmd_index=qmd_index,
+        )
 
     async def __aenter__(self) -> FetechClient:
         await self.gateway.initialize()
@@ -65,6 +88,16 @@ class FetechClient:
 
     async def close(self) -> None:
         await self.gateway.close()
+
+    def contracts(self) -> ContractManifest:
+        """Return the deterministic public-contract inventory."""
+
+        return contract_manifest()
+
+    async def context(self, question: str, *, token_budget: int = 4_000) -> ContextBundle:
+        """Retrieve bounded code, runtime, decision, and exact-source evidence."""
+
+        return await self.context_broker.search(question, token_budget=token_budget)
 
     async def plan(self, request: FetchRequest) -> FetchPlan:
         return await self.gateway.plan_async(request)
@@ -88,3 +121,6 @@ class FetechClient:
     async def submit(self, request: FetchRequest) -> FetchHandle:
         run = await self.gateway.submit(request)
         return FetchHandle(run.run_id, self.gateway)
+
+    async def cancel(self, run_id: UUID) -> FetchRun:
+        return await self.gateway.cancel(run_id)

@@ -7,10 +7,11 @@ import json
 from collections.abc import AsyncIterator
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 from uuid import UUID
 
-from sqlalchemy import DateTime, Integer, String, Text, select
+from sqlalchemy import DateTime, Integer, String, Text, select, update
+from sqlalchemy.engine import CursorResult
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
@@ -115,6 +116,81 @@ class EventLedger:
         if state == RunState.FINISHED:
             for queue in self._subscribers.get(run_id, set()):
                 queue.put_nowait(None)
+
+    async def finish_run(
+        self,
+        event: ProvenanceEvent,
+        result: FetchResult,
+    ) -> bool:
+        """Atomically persist one terminal event and result; the first finalizer wins."""
+
+        if event.run_id != result.run_id:
+            raise ValueError("terminal event and result must identify the same run")
+        run_id = event.run_id
+        authenticated = run_id in self._authenticated_runs
+        payload = _sanitize_payload(event.payload, authenticated=authenticated)
+        sanitized_event = event.model_copy(update={"payload": payload})
+        result_json = json.dumps(
+            _sanitize_payload(
+                result.model_dump(mode="json"),
+                authenticated=authenticated,
+            ),
+            sort_keys=True,
+            default=str,
+        )
+        async with self.sessions() as session:
+            outcome = cast(
+                CursorResult[Any],
+                await session.execute(
+                    update(RunRow)
+                    .where(
+                        RunRow.run_id == str(run_id),
+                        RunRow.state != RunState.FINISHED.value,
+                    )
+                    .values(
+                        state=RunState.FINISHED.value,
+                        result_json=result_json,
+                    )
+                )
+            )
+            if outcome.rowcount != 1:
+                await session.rollback()
+                if await session.get(RunRow, str(run_id)) is None:
+                    raise KeyError(f"unknown run: {run_id}")
+                return False
+            session.add(
+                EventRow(
+                    event_id=str(event.event_id),
+                    run_id=str(run_id),
+                    event_type=event.event_type,
+                    timestamp=event.timestamp,
+                    actor=event.actor,
+                    payload_json=json.dumps(payload, sort_keys=True, default=str),
+                    parent_event_ids_json=json.dumps(
+                        [str(identifier) for identifier in event.parent_event_ids]
+                    ),
+                )
+            )
+            await session.commit()
+        for queue in self._subscribers.get(run_id, set()):
+            queue.put_nowait(sanitized_event)
+            queue.put_nowait(None)
+        return True
+
+    async def request_document(self, run_id: UUID) -> dict[str, Any]:
+        """Return the sanitized request metadata retained for lifecycle recovery."""
+
+        async with self.sessions() as session:
+            row = await session.get(RunRow, str(run_id))
+            if row is None:
+                raise KeyError(f"unknown run: {run_id}")
+            try:
+                document = json.loads(row.request_json)
+            except (json.JSONDecodeError, TypeError) as exc:
+                raise ValueError(f"run {run_id} has malformed request metadata") from exc
+        if not isinstance(document, dict):
+            raise ValueError(f"run {run_id} has malformed request metadata")
+        return document
 
     async def run_snapshot(self, run_id: UUID) -> tuple[RunState, datetime, FetchResult | None]:
         async with self.sessions() as session:

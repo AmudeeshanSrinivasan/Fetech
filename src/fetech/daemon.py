@@ -15,9 +15,17 @@ from fetech.adapters.media import MediaAdapter
 from fetech.auth import CredentialProvider
 from fetech.auth_flows import FormSubmissionProvider, SessionProvider
 from fetech.context import ContextBroker
+from fetech.contracts import contract_manifest
 from fetech.gateway import UniversalFetchGateway
 from fetech.logic.models import ReasoningResult
-from fetech.models import ContextBundle, FetchPlan, FetchRequest, FetchRun, InspectionResult
+from fetech.models import (
+    ContextBundle,
+    ContractManifest,
+    FetchPlan,
+    FetchRequest,
+    FetchRun,
+    InspectionResult,
+)
 from fetech.storage import CASIntegrityError, CASReadLimitError
 from fetech.version import __version__
 
@@ -49,7 +57,11 @@ def create_app(
     )
     repository = Path(os.environ.get("FETECH_REPOSITORY", Path.cwd())).resolve()
     vault_value = os.environ.get("FETECH_OBSIDIAN_VAULT")
-    broker = ContextBroker(repository, vault=Path(vault_value) if vault_value else None)
+    broker = ContextBroker(
+        repository,
+        runtime_graph=gateway.settings.runtime_graph_path,
+        vault=Path(vault_value) if vault_value else None,
+    )
 
     @asynccontextmanager
     async def lifespan(_: object) -> AsyncIterator[None]:
@@ -111,14 +123,23 @@ def create_app(
         except KeyError as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
 
+    @app.delete("/v1/runs/{run_id}", response_model=FetchRun)
+    async def cancel_run(run_id: UUID) -> FetchRun:
+        try:
+            return await gateway.cancel(run_id)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+
     @app.get("/v1/runs/{run_id}/events")
     async def events(run_id: UUID) -> Any:
+        try:
+            await gateway.get_run(run_id)
+        except KeyError as exc:
+            raise HTTPException(status_code=404, detail=str(exc)) from exc
+
         async def stream() -> AsyncIterator[str]:
-            try:
-                async for event in gateway.ledger.stream(run_id):
-                    yield f"event: {event.event_type}\ndata: {event.model_dump_json()}\n\n"
-            except KeyError:
-                yield 'event: error\ndata: {"detail":"run not found"}\n\n'
+            async for event in gateway.events(run_id):
+                yield f"event: {event.event_type}\ndata: {event.model_dump_json()}\n\n"
 
         return StreamingResponse(stream(), media_type="text/event-stream")
 
@@ -147,6 +168,10 @@ def create_app(
     @app.get("/v1/capabilities")
     async def capabilities() -> dict[str, object]:
         return gateway.registry.as_document()
+
+    @app.get("/v1/contracts", response_model=ContractManifest)
+    async def contracts() -> ContractManifest:
+        return contract_manifest()
 
     @app.post("/v1/context/search", response_model=ContextBundle)
     async def context_search(

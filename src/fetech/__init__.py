@@ -31,11 +31,21 @@ from fetech.auth_flows import (
     extract_csrf_token,
 )
 from fetech.client import FetechClient
+from fetech.context import ContextBroker, ContextBudget, classify_context_needs
+from fetech.contracts import contract_manifest
 from fetech.logic.models import ReasoningQuery, ReasoningResult
 from fetech.models import (
     Artifact,
     CapabilityOutcome,
     CapabilityOutcomeStatus,
+    ContextBundle,
+    ContextNeed,
+    ContextProviderReport,
+    ContextProviderStatus,
+    ContextSource,
+    ContextTokenUsage,
+    ContractDescriptor,
+    ContractManifest,
     CrawlReport,
     DiscoveredTarget,
     FetchPlan,
@@ -52,6 +62,16 @@ __all__ = [
     "Artifact",
     "CapabilityOutcome",
     "CapabilityOutcomeStatus",
+    "ContextBroker",
+    "ContextBudget",
+    "ContextBundle",
+    "ContextNeed",
+    "ContextProviderReport",
+    "ContextProviderStatus",
+    "ContextSource",
+    "ContextTokenUsage",
+    "ContractDescriptor",
+    "ContractManifest",
     "CrawlReport",
     "CredentialMaterial",
     "CredentialNotFoundError",
@@ -89,5 +109,7 @@ __all__ = [
     "WaybackSnapshotConnector",
     "YouTubeMetadataProvider",
     "__version__",
+    "classify_context_needs",
+    "contract_manifest",
     "extract_csrf_token",
 ]

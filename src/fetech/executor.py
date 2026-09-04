@@ -101,6 +101,116 @@ class ExecutionEngine:
             "planner",
             {"plan_id": str(plan.plan_id), "classifier": plan.classifier},
         )
+        try:
+            (
+                policy_blocked,
+                dependency_missing,
+                budget_exhausted,
+                auth_required,
+                not_found,
+                failed,
+            ) = await self._execute_nodes(
+                run_id,
+                plan,
+                context,
+                root.event_id,
+                execution_started,
+            )
+        except asyncio.CancelledError as exc:
+            remaining_budget = self._remaining_budget(plan, context, execution_started)
+            partial = FetchResult(
+                run_id=run_id,
+                status=ResultStatus.PARTIAL if context.artifacts else ResultStatus.FAILED,
+                resources=tuple(context.resources),
+                artifacts=tuple(context.artifacts),
+                attempts=tuple(context.attempts),
+                capability_outcomes=tuple(context.capability_outcomes),
+                policy_decisions=tuple(context.policy_decisions),
+                diagnostics=(
+                    *context.diagnostics,
+                    Diagnostic(code="run_cancelled", message="fetch execution was cancelled"),
+                ),
+                provenance_event_ids=tuple(
+                    event.event_id for event in await self.ledger.events(run_id)
+                ),
+                remaining_budget=remaining_budget,
+                crawl_report=context.crawl_report,
+            )
+            partial = FetchResult.model_validate(
+                sanitize_output_for_request(
+                    partial.model_dump(mode="python"),
+                    execution_request,
+                )
+            )
+            raise ExecutionCancelledError(partial, root.event_id) from exc
+        context.record_outcome(
+            "fetch_attempt_logging",
+            CapabilityOutcomeStatus.APPLIED,
+            "ledger",
+            attempts=len(context.attempts),
+        )
+        context.record_outcome(
+            "timeout_diagnostics",
+            CapabilityOutcomeStatus.APPLIED,
+            "executor",
+            deadline_seconds=plan.request.budget.deadline_seconds,
+        )
+        if not any(outcome.capability_id == "cache_expiry_check" for outcome in context.capability_outcomes):
+            context.record_outcome(
+                "cache_expiry_check",
+                CapabilityOutcomeStatus.NOT_APPLICABLE,
+                "cache",
+                reason="no validated cache record was consulted",
+            )
+        status = self._status(
+            context,
+            policy_blocked,
+            dependency_missing,
+            budget_exhausted,
+            auth_required,
+            not_found,
+            failed,
+        )
+        remaining_budget = self._remaining_budget(plan, context, execution_started)
+        result = FetchResult(
+            run_id=run_id,
+            status=status,
+            resources=tuple(context.resources),
+            artifacts=tuple(context.artifacts),
+            attempts=tuple(context.attempts),
+            capability_outcomes=tuple(context.capability_outcomes),
+            policy_decisions=tuple(context.policy_decisions),
+            diagnostics=tuple(context.diagnostics),
+            provenance_event_ids=tuple(event.event_id for event in await self.ledger.events(run_id)),
+            remaining_budget=remaining_budget,
+            crawl_report=context.crawl_report,
+        )
+        final = ProvenanceEvent(
+            run_id=run_id,
+            event_type="run.finished",
+            actor="executor",
+            payload={"status": status.value},
+            parent_event_ids=(root.event_id,),
+        )
+        result = result.model_copy(
+            update={"provenance_event_ids": (*result.provenance_event_ids, final.event_id)}
+        )
+        result = FetchResult.model_validate(
+            sanitize_output_for_request(
+                result.model_dump(mode="python"),
+                execution_request,
+            )
+        )
+        return await self._finish_result(final, result)
+
+    async def _execute_nodes(
+        self,
+        run_id: UUID,
+        plan: FetchPlan,
+        context: ExecutionContext,
+        root_event_id: UUID,
+        execution_started: float,
+    ) -> tuple[bool, bool, bool, bool, bool, bool]:
         completed: set[str] = set()
         dependency_missing = False
         policy_blocked = False
@@ -147,7 +257,7 @@ class ExecutionEngine:
                     plan,
                     batch,
                     branch_contexts,
-                    root.event_id,
+                    root_event_id,
                     execution_started,
                     baseline,
                 )
@@ -176,7 +286,7 @@ class ExecutionEngine:
                 plan,
                 node,
                 context,
-                root.event_id,
+                root_event_id,
                 execution_started,
             )
             if node_result.completed:
@@ -190,27 +300,7 @@ class ExecutionEngine:
             node_index += 1
             if node_result.stop:
                 break
-        context.record_outcome(
-            "fetch_attempt_logging",
-            CapabilityOutcomeStatus.APPLIED,
-            "ledger",
-            attempts=len(context.attempts),
-        )
-        context.record_outcome(
-            "timeout_diagnostics",
-            CapabilityOutcomeStatus.APPLIED,
-            "executor",
-            deadline_seconds=plan.request.budget.deadline_seconds,
-        )
-        if not any(outcome.capability_id == "cache_expiry_check" for outcome in context.capability_outcomes):
-            context.record_outcome(
-                "cache_expiry_check",
-                CapabilityOutcomeStatus.NOT_APPLICABLE,
-                "cache",
-                reason="no validated cache record was consulted",
-            )
-        status = self._status(
-            context,
+        return (
             policy_blocked,
             dependency_missing,
             budget_exhausted,
@@ -218,34 +308,23 @@ class ExecutionEngine:
             not_found,
             failed,
         )
-        remaining_budget = self._remaining_budget(plan, context, execution_started)
-        result = FetchResult(
-            run_id=run_id,
-            status=status,
-            resources=tuple(context.resources),
-            artifacts=tuple(context.artifacts),
-            attempts=tuple(context.attempts),
-            capability_outcomes=tuple(context.capability_outcomes),
-            policy_decisions=tuple(context.policy_decisions),
-            diagnostics=tuple(context.diagnostics),
-            provenance_event_ids=tuple(event.event_id for event in await self.ledger.events(run_id)),
-            remaining_budget=remaining_budget,
-            crawl_report=context.crawl_report,
-        )
-        final = await self._emit(
-            run_id, "run.finished", "executor", {"status": status.value}, (root.event_id,)
-        )
-        result = result.model_copy(
-            update={"provenance_event_ids": (*result.provenance_event_ids, final.event_id)}
-        )
-        result = FetchResult.model_validate(
-            sanitize_output_for_request(
-                result.model_dump(mode="python"),
-                execution_request,
-            )
-        )
-        await self.ledger.update_run(run_id, RunState.FINISHED, result)
-        return result
+
+    async def _finish_result(
+        self,
+        event: ProvenanceEvent,
+        result: FetchResult,
+    ) -> FetchResult:
+        finalizer = asyncio.create_task(self.ledger.finish_run(event, result))
+        try:
+            won = await asyncio.shield(finalizer)
+        except asyncio.CancelledError:
+            won = await finalizer
+        if won:
+            return result
+        _, _, stored = await self.ledger.run_snapshot(result.run_id)
+        if stored is None:
+            raise RuntimeError(f"run {result.run_id} finished without a stored result")
+        return stored
 
     async def _execute_node(
         self,
@@ -875,6 +954,15 @@ class ExecutionEngine:
 
 class BudgetExhaustedError(RuntimeError):
     """Raised before an adapter can exceed a reserved run budget."""
+
+
+class ExecutionCancelledError(asyncio.CancelledError):
+    """Carry a sanitized partial result across the gateway cancellation boundary."""
+
+    def __init__(self, result: FetchResult, parent_event_id: UUID) -> None:
+        super().__init__("fetch execution was cancelled")
+        self.result = result
+        self.parent_event_id = parent_event_id
 
 
 def _adapter_retry_code(error: AdapterExecutionError) -> str | None:

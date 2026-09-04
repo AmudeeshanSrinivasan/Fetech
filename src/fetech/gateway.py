@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Mapping
+from collections.abc import AsyncIterator, Mapping
 from contextlib import suppress
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
@@ -35,7 +35,7 @@ from fetech.auth_flows import (
 from fetech.browser_reader import BrowserReaderWorker
 from fetech.browser_render import BrowserRenderWorker, RemoteBrowserConnector
 from fetech.config import Settings
-from fetech.executor import ExecutionEngine
+from fetech.executor import ExecutionCancelledError, ExecutionEngine
 from fetech.ledger import EventLedger
 from fetech.logic import LogicCoordinator, ReasoningResult
 from fetech.logic.models import PlanProposal
@@ -203,6 +203,8 @@ class UniversalFetchGateway:
         }
         self.executor = ExecutionEngine(adapters=self.adapters, cas=self.cas, ledger=self.ledger)
         self._tasks: dict[UUID, asyncio.Task[FetchResult]] = {}
+        self._cancellation_reasons: dict[UUID, str] = {}
+        self._runtime_graph_lock = asyncio.Lock()
         self._artifacts: dict[UUID, Artifact] = {}
         self._initialized = False
 
@@ -214,12 +216,21 @@ class UniversalFetchGateway:
             self._initialized = True
 
     async def close(self) -> None:
-        running = [task for task in self._tasks.values() if not task.done()]
-        for task in running:
+        running = [
+            (run_id, task)
+            for run_id, task in self._tasks.items()
+            if not task.done()
+        ]
+        for run_id, task in running:
+            self._cancellation_reasons.setdefault(run_id, "shutdown")
             task.cancel()
         if running:
-            await asyncio.gather(*running, return_exceptions=True)
+            await asyncio.gather(*(task for _, task in running), return_exceptions=True)
+        for run_id, _ in running:
+            with suppress(KeyError):
+                await self._finish_cancelled_if_needed(run_id, "shutdown")
         await self.ledger.close()
+        self._cancellation_reasons.clear()
         self._initialized = False
 
     def plan(self, request: FetchRequest) -> FetchPlan:
@@ -259,8 +270,20 @@ class UniversalFetchGateway:
         run_id = uuid4()
         submitted_at = datetime.now(UTC)
         await self.ledger.create_run(run_id, request.model_dump(mode="json"), submitted_at)
+        await self.ledger.update_run(run_id, RunState.PLANNING)
         try:
             proposal = await self.logic.plan(request)
+            await self._record_plan(run_id, proposal)
+        except asyncio.CancelledError:
+            await self._record_terminal_failure(
+                run_id,
+                code="run_cancelled",
+                message="fetch planning was cancelled",
+                remaining_budget=request.budget,
+                event_type="run.cancelled",
+                reason="caller_cancelled",
+            )
+            raise
         except Exception:
             result = await self._record_planning_failure(run_id, request)
             return FetchRun(
@@ -269,19 +292,21 @@ class UniversalFetchGateway:
                 submitted_at=submitted_at,
                 result=result,
             )
-        await self._record_plan(run_id, proposal)
         plan = proposal.plan
         task = asyncio.create_task(self._execute_and_project(run_id, plan), name=f"fetech:{run_id}")
         self._tasks[run_id] = task
-        task.add_done_callback(lambda _: self._tasks.pop(run_id, None))
-        return FetchRun(run_id=run_id, state=RunState.QUEUED, submitted_at=submitted_at)
+        task.add_done_callback(lambda _: self._discard_task(run_id))
+        return await self.get_run(run_id)
 
     async def fetch(self, request: FetchRequest) -> FetchResult:
         run = await self.submit(request)
         if run.result is not None:
             return run.result
-        task = self._tasks[run.run_id]
-        return await task
+        try:
+            return await self.wait(run.run_id)
+        except asyncio.CancelledError:
+            await self._cancel(run.run_id, reason="caller_cancelled")
+            raise
 
     async def get_run(self, run_id: UUID) -> FetchRun:
         await self.initialize()
@@ -291,11 +316,34 @@ class UniversalFetchGateway:
     async def wait(self, run_id: UUID) -> FetchResult:
         task = self._tasks.get(run_id)
         if task is not None:
-            return await task
+            try:
+                return await asyncio.shield(task)
+            except asyncio.CancelledError:
+                current = asyncio.current_task()
+                if current is not None and current.cancelling():
+                    raise
         snapshot = await self.get_run(run_id)
         if snapshot.result is None:
             raise RuntimeError(f"run {run_id} has no active task or stored result")
         return snapshot.result
+
+    async def cancel(self, run_id: UUID) -> FetchRun:
+        """Idempotently cancel an active run and return its durable terminal snapshot."""
+
+        return await self._cancel(run_id, reason="requested")
+
+    async def events(self, run_id: UUID) -> AsyncIterator[ProvenanceEvent]:
+        """Stream one known run and terminate after its single terminal event."""
+
+        await self.get_run(run_id)
+        async for event in self.ledger.stream(run_id):
+            yield event
+
+    async def provenance(self, run_id: UUID) -> tuple[ProvenanceEvent, ...]:
+        """Return the current immutable trace for one known run."""
+
+        await self.get_run(run_id)
+        return await self.ledger.events(run_id)
 
     def get_artifact(self, artifact_id: UUID) -> Artifact:
         try:
@@ -321,7 +369,6 @@ class UniversalFetchGateway:
                     "previous_state": previous_state.value,
                 },
             )
-            await self.ledger.append(event)
             result = FetchResult(
                 run_id=run_id,
                 status=ResultStatus.FAILED,
@@ -336,55 +383,100 @@ class UniversalFetchGateway:
                 provenance_event_ids=(event.event_id,),
                 remaining_budget=remaining_budget,
             )
-            await self.ledger.update_run(run_id, RunState.FINISHED, result)
+            await self.ledger.finish_run(event, result)
 
     async def _execute_and_project(self, run_id: UUID, plan: FetchPlan) -> FetchResult:
         try:
             result = await self.executor.execute(run_id, plan)
+        except ExecutionCancelledError as exc:
+            result = await self._record_terminal_failure(
+                run_id,
+                code="run_cancelled",
+                message="fetch execution was cancelled",
+                remaining_budget=exc.result.remaining_budget,
+                event_type="run.cancelled",
+                reason=self._cancellation_reasons.get(run_id, "caller_cancelled"),
+                base_result=exc.result,
+                parent_event_ids=(exc.parent_event_id,),
+            )
+            self._artifacts.update(
+                {artifact.artifact_id: artifact for artifact in result.artifacts}
+            )
+            with suppress(Exception):
+                await self._project_runtime_graph()
+            raise
         except asyncio.CancelledError:
             await self._record_terminal_failure(
                 run_id,
-                plan,
                 code="run_cancelled",
                 message="fetch execution was cancelled",
+                remaining_budget=plan.request.budget,
+                event_type="run.cancelled",
+                reason=self._cancellation_reasons.get(run_id, "caller_cancelled"),
             )
             raise
         except Exception:
             result = await self._record_terminal_failure(
                 run_id,
-                plan,
                 code="internal_error",
                 message="fetch execution failed at an internal boundary",
+                remaining_budget=plan.request.budget,
             )
         self._artifacts.update({artifact.artifact_id: artifact for artifact in result.artifacts})
         with suppress(Exception):
-            await build_runtime_graph(self.ledger, self.settings.runtime_graph_path)
+            await self._project_runtime_graph()
         return result
+
+    async def _project_runtime_graph(self) -> None:
+        """Serialize projections so an older concurrent snapshot cannot replace a newer one."""
+
+        async with self._runtime_graph_lock:
+            await build_runtime_graph(self.ledger, self.settings.runtime_graph_path)
 
     async def _record_terminal_failure(
         self,
         run_id: UUID,
-        plan: FetchPlan,
         *,
         code: str,
         message: str,
+        remaining_budget: ResourceBudget,
+        event_type: str = "run.failed",
+        reason: str | None = None,
+        base_result: FetchResult | None = None,
+        parent_event_ids: tuple[UUID, ...] = (),
     ) -> FetchResult:
+        payload = {"code": code}
+        if reason is not None:
+            payload["reason"] = reason
         event = ProvenanceEvent(
             run_id=run_id,
-            event_type="run.failed",
+            event_type=event_type,
             actor="gateway",
-            payload={"code": code},
+            payload=payload,
+            parent_event_ids=parent_event_ids,
         )
-        await self.ledger.append(event)
-        result = FetchResult(
-            run_id=run_id,
-            status=ResultStatus.FAILED,
-            diagnostics=(Diagnostic(code=code, message=message),),
-            provenance_event_ids=(event.event_id,),
-            remaining_budget=plan.request.budget,
-        )
-        await self.ledger.update_run(run_id, RunState.FINISHED, result)
-        return result
+        if base_result is None:
+            result = FetchResult(
+                run_id=run_id,
+                status=ResultStatus.FAILED,
+                diagnostics=(Diagnostic(code=code, message=message),),
+                provenance_event_ids=(event.event_id,),
+                remaining_budget=remaining_budget,
+            )
+        else:
+            diagnostics = tuple(
+                diagnostic for diagnostic in base_result.diagnostics if diagnostic.code != code
+            )
+            result = base_result.model_copy(
+                update={
+                    "diagnostics": (*diagnostics, Diagnostic(code=code, message=message)),
+                    "provenance_event_ids": (
+                        *base_result.provenance_event_ids,
+                        event.event_id,
+                    ),
+                }
+            )
+        return await self._finish_terminal(event, result)
 
     async def _record_planning_failure(
         self,
@@ -397,7 +489,6 @@ class UniversalFetchGateway:
             actor="planner",
             payload={"code": "planning_failed"},
         )
-        await self.ledger.append(event)
         result = FetchResult(
             run_id=run_id,
             status=ResultStatus.FAILED,
@@ -410,8 +501,64 @@ class UniversalFetchGateway:
             provenance_event_ids=(event.event_id,),
             remaining_budget=request.budget,
         )
-        await self.ledger.update_run(run_id, RunState.FINISHED, result)
-        return result
+        return await self._finish_terminal(event, result)
+
+    async def _finish_terminal(
+        self,
+        event: ProvenanceEvent,
+        result: FetchResult,
+    ) -> FetchResult:
+        finalizer = asyncio.create_task(self.ledger.finish_run(event, result))
+        try:
+            won = await asyncio.shield(finalizer)
+        except asyncio.CancelledError:
+            won = await finalizer
+        if won:
+            return result
+        snapshot = await self.get_run(result.run_id)
+        if snapshot.result is None:
+            raise RuntimeError(f"run {result.run_id} finished without a stored result")
+        return snapshot.result
+
+    async def _cancel(self, run_id: UUID, *, reason: str) -> FetchRun:
+        snapshot = await self.get_run(run_id)
+        if snapshot.state == RunState.FINISHED:
+            return snapshot
+        task = self._tasks.get(run_id)
+        if task is not None and not task.done():
+            if run_id not in self._cancellation_reasons:
+                self._cancellation_reasons[run_id] = reason
+                task.cancel()
+            try:
+                await asyncio.shield(task)
+            except asyncio.CancelledError:
+                current = asyncio.current_task()
+                if current is not None and current.cancelling():
+                    raise
+        await self._finish_cancelled_if_needed(run_id, reason)
+        return await self.get_run(run_id)
+
+    async def _finish_cancelled_if_needed(self, run_id: UUID, reason: str) -> None:
+        snapshot = await self.get_run(run_id)
+        if snapshot.state == RunState.FINISHED:
+            return
+        request_document = await self.ledger.request_document(run_id)
+        try:
+            budget = ResourceBudget.model_validate(request_document.get("budget", {}))
+        except ValueError:
+            budget = ResourceBudget()
+        await self._record_terminal_failure(
+            run_id,
+            code="run_cancelled",
+            message="fetch execution was cancelled",
+            remaining_budget=budget,
+            event_type="run.cancelled",
+            reason=reason,
+        )
+
+    def _discard_task(self, run_id: UUID) -> None:
+        self._tasks.pop(run_id, None)
+        self._cancellation_reasons.pop(run_id, None)
 
     async def _record_plan(self, run_id: UUID, proposal: PlanProposal) -> None:
         payload = {
