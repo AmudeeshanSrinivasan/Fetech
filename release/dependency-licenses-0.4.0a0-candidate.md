@@ -35,11 +35,11 @@ report does not make legal conclusions.
 | `uv.lock` | `51ef2dbe3fd8c8c614172e6d5e22b91985b69e42719f74b2f15498829ccdec60` |
 | `capabilities/manifest.yaml` | `0e51a9d84fb92fe35aa1fb4e486f5729a453dd17ffc6b3df524b5e9562ed6039` |
 | `.github/workflows/ci.yml` | `9b000ddde53feba5aadefbbd25bb6d43989517cd6a5115febecb6c86dd17c951` |
-| `deploy/systemd/fetech.service.example` | `06b944096aafcf6b6971efb9acbc8583acdd6b24f75379fb73184af8f49f2ab1` |
+| `deploy/systemd/fetech.service.example` | `8b17b85608e16d948302e8e635641c884b697b1b04301f60497a092837c776a4` |
 | `docs/architecture.md` | `94fd4cb576e0048e68635987c6e3ec99b31a68a99de552d576fec5009f21ca25` |
 | `docs/capability-catalog.md` | `90ee03e51598c54ac848915d94576331f712fc7acff327b3f7f751821995ac65` |
 | `docs/competitor-matrix.md` | `0fb05beae77614406176a50108eafb085b1fb110a8692ac300e696d60d17e651` |
-| `docs/deployment-containment.md` | `927bea0eaca0dd0cd9eb09bc921fc0fb485e9f145159fdd1ecc32e23a092658d` |
+| `docs/deployment-containment.md` | `7f76211a48b389f71e7bdd72a2e7effd24dfb694403b17b5fa964001a701546b` |
 | `docs/security-threat-model.md` | `db32478a000f55aa6174b94f272557c38b658b18358ef99e33ab970924828b8e` |
 | `docs/v0.4-conformance.md` | `2aa2ac6871cef746c9f23628bc2964d6fd058caafa180ea9ad5605760a84de8c` |
 | `docs/releases/v0.4.0a0.md` | `dad69a1fbb3454f8e09a50fad5243687d91096d31e8aefe9089cc822e84464c6` |
@@ -109,7 +109,7 @@ report does not make legal conclusions.
 | `tests/test_v04_release_artifacts.py` | `61fcbc4dc526a59272a0b8e99669fb8317d0efa776c6a2e365a3ec24fe3a1d3d` |
 | `tests/test_v04_smoke_verifier.py` | `d2e13ff3f29e152537080089163b4b9bf3b44ff4fadbcfa9de518f7403249bf1` |
 | `tests/test_storage_cas.py` | `f11e443948cddace9df0c9efa834f7e8d0837c65a48472ab1ef0075e6da76381` |
-| `tests/test_systemd_unit.py` | `6b0218c69ddb50b00030c704e6e3443a3e37b98639d182aaf9bcdcbb403f4f72` |
+| `tests/test_systemd_unit.py` | `3149acbee1284ca4c97651a740f9b6ec02c65744baa433106daf70190d73fa77` |
 | `tests/test_v01_conformance.py` | `e46f7f357d291c109ea6678d3e794e70bee8f4a5e1d095ddb2239f12a675dd05` |
 | `tests/test_v02_browser.py` | `b43a868f9cd608d1d73d2116c3453e80c69fbeddccd0a2fc40a9552dbeaa2b59` |
 | `tests/test_v02_conformance.py` | `564606b8dbf1d62333a0d0f87660f379063869ac9161718e46f4102705b8e101` |

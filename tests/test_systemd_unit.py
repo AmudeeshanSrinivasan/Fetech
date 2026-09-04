@@ -61,15 +61,19 @@ def test_reference_unit_preserves_security_critical_protections() -> None:
         "PrivateDevices": "yes",
         "ProtectSystem": "strict",
         "ProtectHome": "yes",
-        "ProtectKernelTunables": "yes",
+        # These settings must remain compatible with Bubblewrap's nested
+        # mount/proc namespace setup. See the reference unit comments.
+        "ProtectKernelTunables": "no",
         "ProtectKernelModules": "yes",
-        "ProtectKernelLogs": "yes",
+        "ProtectKernelLogs": "no",
         "ProtectClock": "yes",
-        "RestrictSUIDSGID": "yes",
+        "RestrictSUIDSGID": "no",
         "RestrictRealtime": "yes",
         "LockPersonality": "yes",
         "RemoveIPC": "yes",
-        "RestrictAddressFamilies": "AF_UNIX AF_INET AF_INET6",
+        # AF_NETLINK is required by Bubblewrap to initialize loopback inside a
+        # worker's private network namespace. Keep packet sockets excluded.
+        "RestrictAddressFamilies": "AF_UNIX AF_INET AF_INET6 AF_NETLINK",
         "SystemCallArchitectures": "native",
     }
 

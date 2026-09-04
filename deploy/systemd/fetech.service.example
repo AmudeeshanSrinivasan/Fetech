@@ -28,9 +28,13 @@ PrivateDevices=yes
 ProtectSystem=strict
 ProtectHome=yes
 ReadWritePaths=/var/lib/fetech
-ProtectKernelTunables=yes
+# Bubblewrap must create nested mount/proc namespaces. The three settings kept
+# disabled below install locked mounts or syscall filters that prevent that
+# setup. The service remains an unprivileged account with no capabilities, and
+# workers apply their own read-only mounts, namespace isolation, and seccomp.
+ProtectKernelTunables=no
 ProtectKernelModules=yes
-ProtectKernelLogs=yes
+ProtectKernelLogs=no
 # Delegate only the controllers used for per-worker leaves. The private cgroup
 # view exposes this service's delegated root as /sys/fs/cgroup. The private
 # value requires systemd 257 or newer.
@@ -38,13 +42,15 @@ Delegate=cpu memory pids
 DelegateSubgroup=daemon
 ProtectControlGroups=private
 ProtectClock=yes
-RestrictSUIDSGID=yes
+RestrictSUIDSGID=no
 RestrictRealtime=yes
 LockPersonality=yes
 RemoveIPC=yes
 CapabilityBoundingSet=
 AmbientCapabilities=
-RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+# Bubblewrap uses a NETLINK_ROUTE socket to initialize the loopback device
+# inside each private network namespace. CapabilityBoundingSet remains empty.
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6 AF_NETLINK
 SystemCallArchitectures=native
 LimitCORE=0
 LimitNOFILE=4096

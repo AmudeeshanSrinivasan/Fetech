@@ -182,6 +182,23 @@ The unit uses `ProtectControlGroups=private` together with
 is `/sys/fs/cgroup`. Do not change the unit to expose the host control-group
 tree. Do not give the daemon a Docker socket or rootful container API.
 
+`RestrictAddressFamilies` includes `AF_NETLINK` because Bubblewrap opens a
+`NETLINK_ROUTE` socket while initializing loopback inside a worker's private
+network namespace. The service still omits packet sockets and has an empty
+capability bounding set; removing `AF_NETLINK` makes required-mode parser
+workers fail before their isolated command starts.
+
+The reference unit deliberately leaves `ProtectKernelTunables`,
+`ProtectKernelLogs`, and `RestrictSUIDSGID` disabled. Their locked mounts and
+syscall filters prevent an unprivileged Bubblewrap process from constructing
+the nested mount and proc filesystems required by the worker sandbox. This does
+not grant the service kernel privileges: it runs as the dedicated `fetech`
+account, `NoNewPrivileges` is enabled, and both capability sets are empty.
+Worker processes then enter their own namespaces, read-only mount view, cgroup
+leaf, and seccomp policy before parsing untrusted content. Re-enable any of
+these three directives only after an installed-unit smoke test proves the
+required-mode worker still starts and its isolation checks still pass.
+
 The service-wide `MemoryMax` and `TasksMax` remain outer emergency ceilings.
 They must be larger than any permitted worker leaf plus the daemon itself.
 
