@@ -34,21 +34,30 @@ model-artifact bundle.
 Run the repository verification commands in `AGENTS.md` before submitting changes. Generated
 Graphify output and local runtime data must remain untracked.
 
-Changes to the manifest, universal lock, license catalog, or v0.4 conformance document must verify
-the immutable published v0.3 evidence and regenerate and check the explicitly unreleased v0.4.0a0
-candidate evidence. Never regenerate published evidence from a later candidate lock:
+Build or packaging changes must also pass the complete same-host reproducibility gate from a clean
+Git worktree:
+
+```bash
+uv run python scripts/verify_reproducible_builds.py \
+  --output /tmp/fetech-beta-reproducible-build.json
+```
+
+The gate performs clean wheel and source-distribution installs. Its `--skip-install-smoke` option is
+for local comparison debugging only and is not valid CI or release evidence. See
+[`docs/reproducible-builds.md`](docs/reproducible-builds.md) for the evidence boundary.
+
+The v0.4.0a0 candidate is frozen. Beta changes must verify its recorded commit and artifact hashes;
+they must not regenerate that candidate's evidence from later source. Published evidence is also
+immutable:
 
 ```bash
 uv run python scripts/generate_release_evidence.py --check-published
-uv run python scripts/check_v04_release_readiness.py --check
-uv run python scripts/generate_release_evidence.py \
-  --overlay-profile scripts/release_v04_candidate.toml
-uv run python scripts/generate_release_evidence.py \
-  --overlay-profile scripts/release_v04_candidate.toml --check
+uv run pytest tests/test_release_evidence.py
 ```
 
-The ordinary readiness `--check` confirms that the tracked candidate report is exact, including
-truthful blockers. It does not mean the release is publishable. Only the final release environment
+For a future explicitly unfrozen candidate, generate and check evidence only under that candidate's
+own profile. An ordinary readiness `--check` confirms that its tracked report is exact, including
+truthful blockers; it does not mean a release is publishable. Only the final release environment
 may run `--require-publishable`, and it must not provide or relabel evidence that did not actually
 pass.
 

@@ -395,6 +395,7 @@ controls, not proofs against unknown vulnerabilities.
 | Cache fallback ordering, quality admission, exact representations, CAS hashing, authenticated/region isolation, snapshot integrity, revalidation/SWR, Wayback destination/budget policy, and crash-safe immutable writes | `tests/test_v04_cache_archives.py`, `tests/test_wayback.py`, `tests/test_v04_planning.py`, storage and ledger tests |
 | Bounded JSON, XML, feed, OpenAPI, and GraphQL normalization | `tests/test_v03_api.py`, structured-API regression tests |
 | Deterministic malformed-input properties for request/URL, structured-data, document, archive, media, Clingo, and Prolog boundaries | `tests/test_beta_parser_fuzz.py`, `docs/fuzzing.md` |
+| Same-host deterministic wheel/sdist bytes, bounded archive metadata, wheel `RECORD`, and clean artifact installs | `tests/test_beta_reproducible_builds.py`, `scripts/verify_reproducible_builds.py`, mandatory Beta CI evidence |
 | SDK, REST, CLI, and MCP behavioral parity | `tests/test_v03_interfaces.py`, runtime conformance tests |
 
 Release verification also runs the full test suite, Ruff, mypy, and
@@ -411,7 +412,7 @@ golden-result, invalid-output, timeout, and pure-Python fallback coverage.
 | Development-mode workers, logic workers, injected providers, and macOS processes do not receive the required Linux boundary | High | Never use development mode for hostile production input; isolate or disable injected/logic providers and keep release daemon mode `required` |
 | Public HTTP content can be observed or modified in transit | Medium | Disable public HTTP for integrity- or confidentiality-sensitive work |
 | Optional remote connectors, content-processing providers, and session providers are trusted processors | Medium | Review, pin, scope, monitor, and disable unless required |
-| Third-party parser, browser, curl, Clingo, or Prolog supply-chain compromise | Medium | Pin dependencies, produce an SBOM/license report, scan, and update deliberately |
+| Third-party parser, browser, curl, Clingo, Prolog, or build-tool supply-chain compromise | Medium | Pin dependencies and the release build toolchain, produce an SBOM/license report, scan, compare reproducible builds, and update deliberately |
 | CAS/SQLite growth can exhaust disk across otherwise bounded runs | Medium | Apply external filesystem quotas, monitoring, retention, and alerting |
 | Content-address deduplication can confirm equality across auth scopes to a storage-level observer | Low–Medium | Restrict metadata/storage access; add scoped physical storage where needed |
 | SQLite ledger is append-only by application convention, not cryptographically tamper-evident | Low–Medium | Restrict filesystem access and use external audit/backup controls when required |

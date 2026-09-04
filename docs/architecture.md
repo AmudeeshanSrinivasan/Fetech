@@ -81,9 +81,11 @@ counts cross the boundary; rejected values, validator context, exception text, a
 field names do not. Ordinary acquisition outcomes remain `FetchResult` values rather than
 exceptions. A deterministic first parser-fuzzing slice now covers request/URL, structured-data,
 native document, archive, media, and logic validation boundaries; its scope and remaining
-format-aware expansion are recorded in [`fuzzing.md`](fuzzing.md). The remaining fourth-increment
-work covers that expansion, reproducible builds, storage lifecycle, and the complete failure
-catalogue.
+format-aware expansion are recorded in [`fuzzing.md`](fuzzing.md). A same-host reproducible-build
+gate now compares independent clean-source wheel and source-distribution builds, validates their
+archive metadata, and clean-installs both artifacts; its evidence boundary is documented in
+[`reproducible-builds.md`](reproducible-builds.md). The remaining fourth-increment work covers
+format-aware fuzz expansion, storage lifecycle, and the complete failure catalogue.
 
 ## Runtime flow
 

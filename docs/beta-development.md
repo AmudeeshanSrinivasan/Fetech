@@ -21,7 +21,8 @@ used to authorize their own actions.
 four blocked gate IDs, and hashes of tracked and local candidate evidence. It is a Beta boundary
 record, not approval evidence. Repository tests verify tracked evidence against the frozen commit;
 when ignored local artifacts are present, their hashes are checked too. Beta never regenerates the
-v0.4 SBOM or license report from later source.
+v0.4 SBOM or license report from later source. CI exercises that frozen-evidence test instead of
+running the old candidate profile against later Beta commits.
 
 ## Stabilization sequence
 
@@ -33,8 +34,9 @@ Beta work proceeds in bounded increments:
    (implemented);
 3. complete dual-graph and bounded-context behavior with source verification (implemented);
 4. normalize public validation errors, then extend fuzzing, reproducible-build, storage-lifecycle,
-   and failure-documentation evidence (validation normalization and the first native-parser fuzz
-   slice are implemented; remaining work is in progress);
+   and failure-documentation evidence (validation normalization, the first native-parser fuzz
+   slice, and same-host reproducible-build evidence are implemented; remaining work is in
+   progress);
 5. freeze release-candidate APIs only after compatibility and migration tests pass.
 
 No Beta distribution version has been assigned. Package metadata remains `0.4.0a0` until a separate
@@ -144,9 +146,16 @@ archives, media headers/metadata, and logic-engine validation. It found and fixe
 escape, missing document serialized-output enforcement, and untyped malformed Clingo output. See
 [`fuzzing.md`](fuzzing.md) and `tests/test_beta_parser_fuzz.py` for the exact evidence boundary.
 
-The remaining Increment 4 work is format-aware fuzz expansion, reproducible-build evidence,
-storage quota/retention/garbage-collection/crash-recovery behavior, and a complete public failure
-catalogue. Focused validation coverage lives in `tests/test_beta_validation_errors.py`.
+The reproducible-build gate creates two independent tracked-source copies, fixes
+`SOURCE_DATE_EPOCH` to the source commit, requires identical wheel and source-distribution bytes,
+validates bounded archive metadata and wheel `RECORD`, and clean-installs both artifact kinds. Beta
+CI retains its machine-readable receipt. This is same-host build-stability evidence, not a signed
+release attestation or proof of cross-platform reproducibility. See
+[`reproducible-builds.md`](reproducible-builds.md).
+
+The remaining Increment 4 work is format-aware fuzz expansion, storage
+quota/retention/garbage-collection/crash-recovery behavior, and a complete public failure catalogue.
+Focused validation coverage lives in `tests/test_beta_validation_errors.py`.
 
 ## Verification
 
@@ -156,6 +165,7 @@ uv run pytest tests/test_beta_lifecycle.py
 uv run pytest tests/test_beta_context.py
 uv run pytest tests/test_beta_validation_errors.py
 uv run pytest tests/test_beta_parser_fuzz.py
+uv run pytest tests/test_beta_reproducible_builds.py
 uv run pytest
 uv run ruff check .
 uv run mypy src/fetech
