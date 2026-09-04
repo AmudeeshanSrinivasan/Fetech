@@ -446,6 +446,8 @@ def test_v04_candidate_overlay_is_reproducible_without_relabeling_package(
     required_bound_inputs = {
         "scripts/generate_release_evidence.py",
         "scripts/release_published.toml",
+        "scripts/verify_v04_ci_attestation.py",
+        "scripts/verify_v04_ytdlp_release_claim.py",
         "src/fetech/adapters/archive.py",
         "src/fetech/adapters/cache.py",
         "src/fetech/adapters/documents.py",
@@ -464,10 +466,12 @@ def test_v04_candidate_overlay_is_reproducible_without_relabeling_package(
         "tests/test_release_evidence.py",
         "tests/test_storage_cas.py",
         "tests/test_v04_capability_matrix.py",
+        "tests/test_v04_ci_attestation.py",
         "tests/test_v04_documents.py",
         "tests/test_v04_media.py",
         "tests/test_v04_smoke_evidence.py",
         "tests/test_v04_ytdlp.py",
+        "tests/test_v04_ytdlp_release_claim.py",
         "tests/test_wayback.py",
         "tests/test_worker_audit.py",
         "tests/test_worker_isolation.py",
@@ -498,6 +502,7 @@ def test_v04_candidate_overlay_is_reproducible_without_relabeling_package(
     assert "Docling" in expected_report
     assert "Tesseract OCR" in expected_report
     assert "FFmpeg and FFprobe" in expected_report
+    assert "GitHub CLI" in expected_report
     assert (
         "--overlay-profile scripts/release_v04_candidate.toml --check"
         in expected_report

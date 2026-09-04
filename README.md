@@ -32,6 +32,8 @@ registration.
 > verified wheel/source distributions and checksums, a tag, and package publication remain release
 > gates. Candidate evidence and notes are not published-release artifacts.
 
+Fetech permits local yt-dlp only in development mode; required mode refuses it until brokered, allowlisted egress is configured.
+
 Fetech uses a deliberately narrow polyglot design. Python 3.12 is the required runtime and remains
 authoritative for public APIs, security, budgets, adapters, artifacts, and persistence. A pure-Python
 planner is always available. Optional Clingo and SWI-Prolog backends can add constraint optimization

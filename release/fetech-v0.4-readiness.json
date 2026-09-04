@@ -13,7 +13,7 @@
       "evidence_kind": "attestation",
       "id": "quality-suite",
       "phase": "prepublication",
-      "reason": "A branch-local run is not immutable release-commit evidence.",
+      "reason": "A canonical GitHub CI receipt was not supplied.",
       "state": "blocked"
     },
     {
@@ -61,7 +61,7 @@
       "evidence_kind": "attestation",
       "id": "release-commit-ci",
       "phase": "prepublication",
-      "reason": "Current branch CI is not an attestation for a finalized release commit.",
+      "reason": "A canonical GitHub CI receipt was not supplied.",
       "state": "blocked"
     },
     {
@@ -77,8 +77,8 @@
       "evidence_kind": "attestation",
       "id": "ytdlp-egress-or-narrowed-claim",
       "phase": "prepublication",
-      "reason": "The checker must confirm the narrower claim remains explicit throughout release documentation.",
-      "state": "blocked"
+      "reason": "Verified tracked source-tree fail-closed required-mode enforcement and the canonical development-only local yt-dlp claim across release documentation.",
+      "state": "passed"
     },
     {
       "description": "A human reviewer approves exact model, NVIDIA, pypdfium2, browser, and binary notices and redistribution terms.",
@@ -116,11 +116,11 @@
   "schema_version": "1",
   "state": "blocked",
   "summary": {
-    "blocked_count": 10,
+    "blocked_count": 9,
     "gate_count": 14,
-    "passed_count": 4,
+    "passed_count": 5,
     "postpublication_blocked_count": 2,
-    "prepublication_blocked_count": 8
+    "prepublication_blocked_count": 7
   },
   "target_version": "0.4.0a0"
 }

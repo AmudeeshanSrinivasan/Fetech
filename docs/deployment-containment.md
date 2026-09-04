@@ -103,6 +103,8 @@ closed for the local provider. Its Python URL/DNS/redirect checks remain useful
 in development but are not a replacement for a brokered kernel network
 boundary.
 
+Fetech permits local yt-dlp only in development mode; required mode refuses it until brokered, allowlisted egress is configured.
+
 ## Docling model bundle deployment
 
 The optional `fetech[documents]` path uses

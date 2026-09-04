@@ -319,6 +319,8 @@ brokered isolated connector or leave it disabled. Other media providers have
 runtime type/schema/size checks and generic error reporting, but providers that
 receive content remain trusted processors for that content.
 
+Fetech permits local yt-dlp only in development mode; required mode refuses it until brokered, allowlisted egress is configured.
+
 ## Operational assumptions and deployment requirements
 
 A secure v0.4 deployment assumes:

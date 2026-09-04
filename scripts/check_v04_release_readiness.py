@@ -19,6 +19,7 @@ import yaml
 
 TARGET_VERSION: Final = "0.4.0a0"
 SMOKE_EVIDENCE_FILENAME: Final = f"fetech-v{TARGET_VERSION}-smoke.json"
+CI_ATTESTATION_FILENAME: Final = f"fetech-v{TARGET_VERSION}-github-ci.json"
 REPORT_SCHEMA_VERSION: Final = "1"
 DEFAULT_PROFILE: Final = Path("scripts/release_v04_candidate.toml")
 DEFAULT_OUTPUT: Final = Path("release/fetech-v0.4-readiness.json")
@@ -582,6 +583,106 @@ def _check_complete_smoke(
     )
 
 
+def _verify_ci_attestation(
+    project_root: Path,
+    artifact_dir: Path | None,
+) -> tuple[bool, str]:
+    if artifact_dir is None:
+        return False, "A canonical GitHub CI receipt was not supplied."
+    verifier = project_root / "scripts" / "verify_v04_ci_attestation.py"
+    if verifier.is_symlink() or not verifier.is_file():
+        return False, "The GitHub CI attestation verifier is unavailable."
+    try:
+        process = subprocess.run(
+            [
+                sys.executable,
+                str(verifier),
+                "--project-root",
+                str(project_root),
+                "--receipt",
+                str(artifact_dir / CI_ATTESTATION_FILENAME),
+            ],
+            cwd=project_root,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=180,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return False, "GitHub CI attestation verification did not complete."
+    if process.returncode != 0:
+        return False, "GitHub CI attestation verification failed."
+    return True, "Verified exact default-branch GitHub CI evidence."
+
+
+def _check_ci_gate(
+    gate: PublicationGate,
+    verification: tuple[bool, str],
+) -> GateResult:
+    if gate.check != "github_ci_attestation_v1":
+        return _blocked(
+            gate,
+            "The GitHub CI gate lacks its canonical verifier ID.",
+        )
+    verified, reason = verification
+    if not verified:
+        return _blocked(gate, reason)
+    if gate.id == "quality-suite":
+        return _passed(
+            gate,
+            "Verified the exact release commit passed the required test, lint, "
+            "typing, evidence, and distribution-build steps on the default branch.",
+        )
+    return _passed(
+        gate,
+        "Verified the exact release commit passed the required verify and Linux "
+        "containment jobs on the default branch.",
+    )
+
+
+def _check_ytdlp_release_claim(
+    project_root: Path,
+    gate: PublicationGate,
+    *,
+    require_committed: bool,
+) -> GateResult:
+    if gate.check != "ytdlp_narrowed_claim_v1":
+        return _blocked(
+            gate,
+            "The yt-dlp release-claim gate lacks its canonical verifier ID.",
+        )
+    verifier = project_root / "scripts" / "verify_v04_ytdlp_release_claim.py"
+    if verifier.is_symlink() or not verifier.is_file():
+        return _blocked(gate, "The yt-dlp release-claim verifier is unavailable.")
+    arguments = [
+        sys.executable,
+        str(verifier),
+        "--project-root",
+        str(project_root),
+    ]
+    if require_committed:
+        arguments.append("--require-committed")
+    try:
+        process = subprocess.run(
+            arguments,
+            cwd=project_root,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=60,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return _blocked(gate, "yt-dlp release-claim verification did not complete.")
+    if process.returncode != 0:
+        return _blocked(gate, "yt-dlp release-claim verification failed.")
+    scope = "committed" if require_committed else "tracked source-tree"
+    return _passed(
+        gate,
+        f"Verified {scope} fail-closed required-mode enforcement and the canonical "
+        "development-only local yt-dlp claim across release documentation.",
+    )
+
+
 def evaluate_gates(
     project_root: Path,
     gates: Sequence[PublicationGate],
@@ -592,9 +693,20 @@ def evaluate_gates(
 
     root = project_root.resolve()
     results: list[GateResult] = []
+    ci_verification: tuple[bool, str] | None = None
     for gate in gates:
         if gate.id == "manifest-13-155":
             results.append(_check_manifest(root, gate))
+        elif gate.id in {"quality-suite", "release-commit-ci"}:
+            if gate.check != "github_ci_attestation_v1":
+                results.append(_check_ci_gate(gate, (False, gate.pending_reason)))
+                continue
+            if ci_verification is None:
+                ci_verification = _verify_ci_attestation(
+                    root,
+                    release_artifacts_dir,
+                )
+            results.append(_check_ci_gate(gate, ci_verification))
         elif gate.id == "published-history-integrity":
             results.append(_check_published_history(root, gate))
         elif gate.id == "release-version-0.4.0a0":
@@ -608,6 +720,14 @@ def evaluate_gates(
         elif gate.id == "complete-artifact-smoke":
             results.append(
                 _check_complete_smoke(root, gate, release_artifacts_dir)
+            )
+        elif gate.id == "ytdlp-egress-or-narrowed-claim":
+            results.append(
+                _check_ytdlp_release_claim(
+                    root,
+                    gate,
+                    require_committed=release_artifacts_dir is not None,
+                )
             )
         else:
             # A profile assertion or an evidence file's mere existence is not a

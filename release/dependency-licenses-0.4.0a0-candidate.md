@@ -27,26 +27,28 @@ report does not make legal conclusions.
 
 | Input | SHA-256 |
 |---|---|
-| `scripts/release_v04_candidate.toml` | `abdfe8cab774a0a9b17488d27dc853a5f46742769e0db863bbefefefeed61125` |
-| `README.md` | `8950f2a06689abeab96f7c15f6e4edbb9f2ebe6d1fe003356947a5ad1b3e6188` |
+| `scripts/release_v04_candidate.toml` | `5b1116b1dbb3afc306d6fdd3d83a6a1197be497560a9b3e6b0bd7b45b37dbe0d` |
+| `README.md` | `ab579d7aa4d068ab058f8d11664bd9a06997d16dc59f2a15db922c6f2a15a3e5` |
 | `SECURITY.md` | `d6a5930c9e4b9b5a303f037328670e39b48c1694b0d19382907bbcc00eaf1f60` |
 | `CONTRIBUTING.md` | `b3e1bff72a1ae1db85243a20435501b111db235442a4db234fbf6d198be52d19` |
 | `pyproject.toml` | `d2e62560f342b771d8eeda7682f87bb7170677a27579347a59fc9ba55f819ab3` |
 | `uv.lock` | `51ef2dbe3fd8c8c614172e6d5e22b91985b69e42719f74b2f15498829ccdec60` |
 | `capabilities/manifest.yaml` | `0e51a9d84fb92fe35aa1fb4e486f5729a453dd17ffc6b3df524b5e9562ed6039` |
-| `.github/workflows/ci.yml` | `1520f02f2abd632beec718c5b89b5a521b52e6f6414300e4376ed9c26991c7d3` |
+| `.github/workflows/ci.yml` | `9b000ddde53feba5aadefbbd25bb6d43989517cd6a5115febecb6c86dd17c951` |
 | `deploy/systemd/fetech.service.example` | `06b944096aafcf6b6971efb9acbc8583acdd6b24f75379fb73184af8f49f2ab1` |
 | `docs/architecture.md` | `94fd4cb576e0048e68635987c6e3ec99b31a68a99de552d576fec5009f21ca25` |
-| `docs/capability-catalog.md` | `781255c61d4043665012db8968f5bb141b7bb3c90c45881feb9d58138efa9639` |
-| `docs/competitor-matrix.md` | `ec7f67f96282bef1c35f8e28173bba2c86987952e53a22f81853e4050abfbf63` |
-| `docs/deployment-containment.md` | `23112d35030920adad8a1ff0887471615bc30b862fe02801aeac09f1a48562df` |
-| `docs/security-threat-model.md` | `84fdd00b0d2b669888c1cdfdaf5a6b03ed02698129797c812e2b6cf85c8320db` |
-| `docs/v0.4-conformance.md` | `6b050c22c8bbea98fc921dfe478ac5fcacdb93f8dd624cb60483b564783f8f3b` |
-| `docs/releases/v0.4.0a0.md` | `af862e9c0f5c0140abe11829b8301f4a1763eb74572cbb19e047be2b5890b6f3` |
+| `docs/capability-catalog.md` | `90ee03e51598c54ac848915d94576331f712fc7acff327b3f7f751821995ac65` |
+| `docs/competitor-matrix.md` | `0fb05beae77614406176a50108eafb085b1fb110a8692ac300e696d60d17e651` |
+| `docs/deployment-containment.md` | `927bea0eaca0dd0cd9eb09bc921fc0fb485e9f145159fdd1ecc32e23a092658d` |
+| `docs/security-threat-model.md` | `db32478a000f55aa6174b94f272557c38b658b18358ef99e33ab970924828b8e` |
+| `docs/v0.4-conformance.md` | `ec200400ca0f6a7e5e3ddea1d68a62d4329d6b0b44f85c91e50454af88256a67` |
+| `docs/releases/v0.4.0a0.md` | `ff028a442c0cf5dd56b8e486de1cc81f4076f1cbe9e4551b419cb2d54c6762c9` |
 | `scripts/generate_release_evidence.py` | `13efee887298c94e4ece0cc317fc189bbaa02847b0c7296075b7fa98eb8fb9db` |
-| `scripts/check_v04_release_readiness.py` | `c71196529ea75466160bbddb2b4e7d07c54612ff8b99ae5a58ad44d593338c85` |
+| `scripts/check_v04_release_readiness.py` | `8a28e3e451c966c70c02bdb895ef899649e27a5ee7bf465133bdfdfc0019336f` |
+| `scripts/verify_v04_ci_attestation.py` | `c93706d4ff8071d5f64fcb6de7b29e2601bdbcb7254c720ec3f22fdcfec67334` |
 | `scripts/verify_v04_release_artifacts.py` | `c37e0cad6119d2d5fcd5cdfa650096a8b5ddc507c2cdccbc64d470841536ca1e` |
 | `scripts/verify_v04_smoke_evidence.py` | `12cca7e0e93c6474a8e76ec86eb57cc0fb2c08ae0a20eab85a490ddf3cf6d79e` |
+| `scripts/verify_v04_ytdlp_release_claim.py` | `fe966ea4a8d41d39532e39b92635eb43030adc01161e9c21a0866ff533532ed6` |
 | `scripts/release_license_catalog.toml` | `eb2332a9f2fa9d1280f24fdfc3cb80d54f15f7ba54dc0d20ef5c3f66c29de93c` |
 | `scripts/release_published.toml` | `9ec0d58866ac9fdcda7b2c21b8a5957ecf0aef8c5909390f12f7712087e35731` |
 | `scripts/collect_v04_smoke_evidence.py` | `c430402b0e1df2b8b23ff439b815e987dbd92d5cb5ee1ac5614b601ae1b233ec` |
@@ -96,8 +98,9 @@ report does not make legal conclusions.
 | `tests/test_http_adapter.py` | `776a640dd37a9980b4636d9842c4db05054a77c7bc46f3f96eea2a9876425005` |
 | `tests/test_logic_backends.py` | `9140c1c49e7ba6577e8e79fdf6f1b5180c0e8ae28e4fc78b8a2c381612c6901c` |
 | `tests/test_network_scheduling.py` | `5cb5bc78bd6a0cc216749aadd5b3670b4d99feee1ebeb18d72f808caa0b9c462` |
-| `tests/test_release_evidence.py` | `ba204847aeefe48c0dcc817211f9332c5f21743450b43aec0f8a2f24e63bb6e0` |
-| `tests/test_release_readiness.py` | `f57e78c0bb89868caabb2671c97c3a17dd5d3cd234a8e3a48250894d833f5070` |
+| `tests/test_release_evidence.py` | `2017232d7a18bf1257e75dcf918bbaf49bbb9cd6c66a7be0d54bb74f56d94c5b` |
+| `tests/test_release_readiness.py` | `f06424f3d8fbe393b1c8c08c01f6c606e77126cdc1eb3bb402314e2c06d4d551` |
+| `tests/test_v04_ci_attestation.py` | `f89fd81b63526d7b330bafe9fad5fb02e822522dfb48a9bcc0761aec156f85f1` |
 | `tests/test_v04_release_artifacts.py` | `61fcbc4dc526a59272a0b8e99669fb8317d0efa776c6a2e365a3ec24fe3a1d3d` |
 | `tests/test_v04_smoke_verifier.py` | `d2e13ff3f29e152537080089163b4b9bf3b44ff4fadbcfa9de518f7403249bf1` |
 | `tests/test_storage_cas.py` | `f11e443948cddace9df0c9efa834f7e8d0837c65a48472ab1ef0075e6da76381` |
@@ -121,6 +124,7 @@ report does not make legal conclusions.
 | `tests/test_v04_planning.py` | `f42935c8bfd85760a53af067b938de52edd06b942ced22577d8268937d9240c2` |
 | `tests/test_v04_smoke_evidence.py` | `8487f56159ddd1f266ef61928fd668b8f9254e36e598d51560368a2707479de1` |
 | `tests/test_v04_ytdlp.py` | `70ae4e2d2228794882becd0063dfa9a644c6fe10d0b75584c9bdf2adfd57bcef` |
+| `tests/test_v04_ytdlp_release_claim.py` | `3227ed4434f226f3be41baee1577fb243a0b3214ea76777dd12d347f3e4970c6` |
 | `tests/test_wayback.py` | `988c8d23d8109ddd5de9c057c4bab3ac0dd704c52d8866ef9161077aa23078c5` |
 | `tests/test_worker_audit.py` | `3544ff10e69ecea8533ac50338148c82fa84950d5894a9f74f0cb5d041629de0` |
 | `tests/test_worker_isolation.py` | `04fa64ee748056527c276a676154dbd0d3f74c10f6051ab8817f410977ac73db` |
@@ -149,6 +153,7 @@ version, build options, licenses, notices, and transitive libraries.
 |---|---|---|---|---|
 | SWI-Prolog | Optional logic executable installed separately and not shipped by Fetech. | `BSD-2-Clause` for the core. | The selected build may link GMP or load add-ons with additional terms. Inspect it with the `license.` predicate. | [Upstream](https://www.swi-prolog.org/license.html) |
 | curl | Optional HTTP/3 executable installed separately and not shipped by Fetech. | SPDX `curl`. | Record the selected build, linked libraries, license texts, and notices before redistributing a system image. | [Upstream](https://curl.se/docs/copyright.html) |
+| GitHub CLI | Release-attestation executable installed separately and not shipped by Fetech. | MIT license. | Use an authenticated, reviewed gh installation only in the release environment; it is not a runtime dependency. | [Upstream](https://github.com/cli/cli/blob/trunk/LICENSE) |
 | Playwright browser binaries | Downloaded separately by the Playwright CLI and not contained in the Python wheel. | Varies by browser and build. | Record each selected browser build and preserve its bundled licenses and notices. | [Upstream](https://playwright.dev/python/docs/browsers) |
 | Tesseract OCR | Optional OCR executable discovered at runtime and not shipped by Fetech. | Apache-2.0 for the upstream engine. | Record the exact executable, trained-data packages, linked libraries, licenses, and notices used by a distribution. | [Upstream](https://github.com/tesseract-ocr/tesseract/blob/main/LICENSE) |
 | FFmpeg and FFprobe | Optional media executables discovered at runtime and not shipped by Fetech. | `LGPL-2.1-or-later` baseline. | GPL-covered build options can change the complete build license. Record configure flags and linked libraries. | [Upstream](https://ffmpeg.org/legal.html) |

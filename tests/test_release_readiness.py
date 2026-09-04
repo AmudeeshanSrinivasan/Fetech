@@ -67,10 +67,14 @@ def _gate_profile(*, duplicate: bool = False, omit_last: bool = False) -> str:
         ]
         if gate_id == "final-sbom-and-license-report":
             lines.append('check = "candidate_evidence_v1"')
+        elif gate_id in {"quality-suite", "release-commit-ci"}:
+            lines.append('check = "github_ci_attestation_v1"')
         elif gate_id == "wheel-sdist-checksums":
             lines.append('check = "release_artifacts_v1"')
         elif gate_id == "complete-artifact-smoke":
             lines.append('check = "complete_smoke_v2"')
+        elif gate_id == "ytdlp-egress-or-narrowed-claim":
+            lines.append('check = "ytdlp_narrowed_claim_v1"')
         sections.append(
             "\n".join(lines)
         )
@@ -443,6 +447,69 @@ def test_complete_smoke_gate_passes_only_through_the_dedicated_verifier(
         gate
         for gate in failed["gates"]
         if gate["id"] == "complete-artifact-smoke"
+    )
+    assert failed_gate["state"] == "blocked"
+
+
+def test_ci_gates_pass_together_only_through_live_verifier(
+    tmp_path: Path,
+) -> None:
+    profile = _write_project(tmp_path, version="0.4.0a0")
+    verifier = tmp_path / "scripts" / "verify_v04_ci_attestation.py"
+    verifier.write_text("raise SystemExit(0)\n", encoding="utf-8")
+    artifact_dir = tmp_path / "dist"
+    artifact_dir.mkdir()
+
+    without_receipt = build_report(tmp_path, profile)
+    without_states = {
+        gate["id"]: gate["state"] for gate in without_receipt["gates"]
+    }
+    assert without_states["quality-suite"] == "blocked"
+    assert without_states["release-commit-ci"] == "blocked"
+
+    verified = build_report(
+        tmp_path,
+        profile,
+        release_artifacts_dir=artifact_dir,
+    )
+    verified_states = {gate["id"]: gate["state"] for gate in verified["gates"]}
+    assert verified_states["quality-suite"] == "passed"
+    assert verified_states["release-commit-ci"] == "passed"
+    assert verified["summary"]["passed_count"] == 5
+
+    verifier.write_text("raise SystemExit(1)\n", encoding="utf-8")
+    failed = build_report(
+        tmp_path,
+        profile,
+        release_artifacts_dir=artifact_dir,
+    )
+    failed_states = {gate["id"]: gate["state"] for gate in failed["gates"]}
+    assert failed_states["quality-suite"] == "blocked"
+    assert failed_states["release-commit-ci"] == "blocked"
+
+
+def test_ytdlp_gate_passes_only_through_committed_source_verifier(
+    tmp_path: Path,
+) -> None:
+    profile = _write_project(tmp_path, version="0.4.0a0")
+    verifier = tmp_path / "scripts" / "verify_v04_ytdlp_release_claim.py"
+    verifier.write_text("raise SystemExit(0)\n", encoding="utf-8")
+
+    verified = build_report(tmp_path, profile)
+    gate = next(
+        gate
+        for gate in verified["gates"]
+        if gate["id"] == "ytdlp-egress-or-narrowed-claim"
+    )
+    assert gate["state"] == "passed"
+    assert verified["summary"]["passed_count"] == 4
+
+    verifier.write_text("raise SystemExit(1)\n", encoding="utf-8")
+    failed = build_report(tmp_path, profile)
+    failed_gate = next(
+        gate
+        for gate in failed["gates"]
+        if gate["id"] == "ytdlp-egress-or-narrowed-claim"
     )
     assert failed_gate["state"] == "blocked"
 

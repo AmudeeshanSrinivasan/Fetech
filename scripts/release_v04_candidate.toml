@@ -27,8 +27,10 @@ evidence_inputs = [
   "docs/releases/v0.4.0a0.md",
   "scripts/generate_release_evidence.py",
   "scripts/check_v04_release_readiness.py",
+  "scripts/verify_v04_ci_attestation.py",
   "scripts/verify_v04_release_artifacts.py",
   "scripts/verify_v04_smoke_evidence.py",
+  "scripts/verify_v04_ytdlp_release_claim.py",
   "scripts/release_license_catalog.toml",
   "scripts/release_published.toml",
   "scripts/collect_v04_smoke_evidence.py",
@@ -80,6 +82,7 @@ evidence_inputs = [
   "tests/test_network_scheduling.py",
   "tests/test_release_evidence.py",
   "tests/test_release_readiness.py",
+  "tests/test_v04_ci_attestation.py",
   "tests/test_v04_release_artifacts.py",
   "tests/test_v04_smoke_verifier.py",
   "tests/test_storage_cas.py",
@@ -103,6 +106,7 @@ evidence_inputs = [
   "tests/test_v04_planning.py",
   "tests/test_v04_smoke_evidence.py",
   "tests/test_v04_ytdlp.py",
+  "tests/test_v04_ytdlp_release_claim.py",
   "tests/test_wayback.py",
   "tests/test_worker_audit.py",
   "tests/test_worker_isolation.py",
@@ -130,6 +134,7 @@ phase = "prepublication"
 evidence_kind = "attestation"
 description = "The release commit passes the full test, Ruff, mypy, lock, and diff verification suite."
 pending_reason = "A branch-local run is not immutable release-commit evidence."
+check = "github_ci_attestation_v1"
 
 [[publication_gates]]
 id = "published-history-integrity"
@@ -174,7 +179,8 @@ id = "release-commit-ci"
 phase = "prepublication"
 evidence_kind = "attestation"
 description = "Required verify and Linux containment jobs pass for the exact release commit."
-pending_reason = "Current branch CI is not an attestation for a finalized release commit."
+pending_reason = "A successful canonical CI push run on the default branch has not been verified against the exact release commit."
+check = "github_ci_attestation_v1"
 
 [[publication_gates]]
 id = "target-systemd-attestation"
@@ -189,6 +195,7 @@ phase = "prepublication"
 evidence_kind = "attestation"
 description = "Required-mode yt-dlp has brokered allowlisted egress, or release claims explicitly limit it to development mode."
 pending_reason = "The checker must confirm the narrower claim remains explicit throughout release documentation."
+check = "ytdlp_narrowed_claim_v1"
 
 [[publication_gates]]
 id = "artifact-legal-review"
@@ -231,6 +238,13 @@ status = "Optional HTTP/3 executable installed separately and not shipped by Fet
 license_observation = "SPDX `curl`."
 required_review = "Record the selected build, linked libraries, license texts, and notices before redistributing a system image."
 source_url = "https://curl.se/docs/copyright.html"
+
+[[external_components]]
+name = "GitHub CLI"
+status = "Release-attestation executable installed separately and not shipped by Fetech."
+license_observation = "MIT license."
+required_review = "Use an authenticated, reviewed gh installation only in the release environment; it is not a runtime dependency."
+source_url = "https://github.com/cli/cli/blob/trunk/LICENSE"
 
 [[external_components]]
 name = "Playwright browser binaries"

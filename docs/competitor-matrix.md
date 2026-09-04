@@ -37,6 +37,8 @@ candidate adds 36 importable native or typed optional paths for 155/155, but it 
 credited as a published release, audited production runtime, or proof that optional tools and
 connectors are installed.
 
+Fetech permits local yt-dlp only in development mode; required mode refuses it until brokered, allowlisted egress is configured.
+
 ## Scope matrix
 
 | Project | Officially checked scope | Material overlap with Fetech | Different or not established in the checked scope | Upstream license statement |

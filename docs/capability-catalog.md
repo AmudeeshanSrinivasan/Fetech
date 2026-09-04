@@ -157,6 +157,8 @@ Primary HTTP and Wayback use shared request admission. Local yt-dlp uses process
 admission in development, while required mode refuses it until its multi-host traffic has brokered
 egress.
 
+Fetech permits local yt-dlp only in development mode; required mode refuses it until brokered, allowlisted egress is configured.
+
 ### Document and file capability evidence
 
 The document-worker request protocol contains acquired bytes, a path suffix, a canonical capability,
