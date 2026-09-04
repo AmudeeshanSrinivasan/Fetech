@@ -35,6 +35,7 @@ from typing import Final
 
 TARGET_VERSION: Final = "0.4.0a0"
 PROJECT_NAME: Final = "fetech"
+CORE_METADATA_VERSION: Final = "2.5"
 WHEEL_FILENAME: Final = f"fetech-{TARGET_VERSION}-py3-none-any.whl"
 SDIST_FILENAME: Final = f"fetech-{TARGET_VERSION}.tar.gz"
 CHECKSUMS_FILENAME: Final = "SHA256SUMS"
@@ -466,7 +467,10 @@ def _verify_core_metadata(
     project: Mapping[str, object],
     expected_version: str,
 ) -> None:
-    if _single_header(message, "Metadata-Version", required=True) != "2.4":
+    if (
+        _single_header(message, "Metadata-Version", required=True)
+        != CORE_METADATA_VERSION
+    ):
         raise _fail("package metadata uses an unexpected metadata version")
     name = _single_header(message, "Name", required=True)
     version = _single_header(message, "Version", required=True)

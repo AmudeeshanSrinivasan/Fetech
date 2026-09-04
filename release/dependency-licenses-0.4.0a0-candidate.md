@@ -45,7 +45,7 @@ report does not make legal conclusions.
 | `docs/releases/v0.4.0a0.md` | `af862e9c0f5c0140abe11829b8301f4a1763eb74572cbb19e047be2b5890b6f3` |
 | `scripts/generate_release_evidence.py` | `13efee887298c94e4ece0cc317fc189bbaa02847b0c7296075b7fa98eb8fb9db` |
 | `scripts/check_v04_release_readiness.py` | `c71196529ea75466160bbddb2b4e7d07c54612ff8b99ae5a58ad44d593338c85` |
-| `scripts/verify_v04_release_artifacts.py` | `f9fb9d8925a0e260e72063ec5eca5bca3db65303269f36f13600281be34caaa3` |
+| `scripts/verify_v04_release_artifacts.py` | `c37e0cad6119d2d5fcd5cdfa650096a8b5ddc507c2cdccbc64d470841536ca1e` |
 | `scripts/verify_v04_smoke_evidence.py` | `12cca7e0e93c6474a8e76ec86eb57cc0fb2c08ae0a20eab85a490ddf3cf6d79e` |
 | `scripts/release_license_catalog.toml` | `eb2332a9f2fa9d1280f24fdfc3cb80d54f15f7ba54dc0d20ef5c3f66c29de93c` |
 | `scripts/release_published.toml` | `9ec0d58866ac9fdcda7b2c21b8a5957ecf0aef8c5909390f12f7712087e35731` |
@@ -98,7 +98,7 @@ report does not make legal conclusions.
 | `tests/test_network_scheduling.py` | `5cb5bc78bd6a0cc216749aadd5b3670b4d99feee1ebeb18d72f808caa0b9c462` |
 | `tests/test_release_evidence.py` | `ba204847aeefe48c0dcc817211f9332c5f21743450b43aec0f8a2f24e63bb6e0` |
 | `tests/test_release_readiness.py` | `e8ee5e4213f33392d633f41983bedc9d40dfb18e5c0d787390f2260e0082cfd6` |
-| `tests/test_v04_release_artifacts.py` | `b29b1b7a42d5b73294264b0a787704f8f3d0f6a8a6bcb4c3e95a005f1b9d69f0` |
+| `tests/test_v04_release_artifacts.py` | `61fcbc4dc526a59272a0b8e99669fb8317d0efa776c6a2e365a3ec24fe3a1d3d` |
 | `tests/test_v04_smoke_verifier.py` | `d2e13ff3f29e152537080089163b4b9bf3b44ff4fadbcfa9de518f7403249bf1` |
 | `tests/test_storage_cas.py` | `f11e443948cddace9df0c9efa834f7e8d0837c65a48472ab1ef0075e6da76381` |
 | `tests/test_systemd_unit.py` | `6b0218c69ddb50b00030c704e6e3443a3e37b98639d182aaf9bcdcbb403f4f72` |

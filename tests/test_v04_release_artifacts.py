@@ -98,11 +98,14 @@ def _record(payloads: dict[str, bytes], record_name: str) -> bytes:
     return output.getvalue().encode()
 
 
-def _metadata(*extra_headers: str) -> bytes:
+def _metadata(
+    *extra_headers: str,
+    metadata_version: str = "2.5",
+) -> bytes:
     return (
         "\n".join(
             (
-                "Metadata-Version: 2.4",
+                f"Metadata-Version: {metadata_version}",
                 "Name: fetech",
                 "Version: 0.4.0a0",
                 "License-File: LICENSE",
@@ -120,6 +123,7 @@ def _wheel(
     corrupt_record: bool = False,
     mutate_source: bool = False,
     metadata_headers: tuple[str, ...] = (),
+    metadata_version: str = "2.5",
     wheel_headers: tuple[str, ...] = (),
     special_member_mode: bool = False,
 ) -> Path:
@@ -134,7 +138,10 @@ def _wheel(
         "fetech/__init__.py": source,
         "fetech/runtime.py": (root / "src/fetech/runtime.py").read_bytes(),
         "fetech/data/manifest.yaml": (root / "capabilities/manifest.yaml").read_bytes(),
-        f"{dist_info}/METADATA": _metadata(*metadata_headers),
+        f"{dist_info}/METADATA": _metadata(
+            *metadata_headers,
+            metadata_version=metadata_version,
+        ),
         f"{dist_info}/WHEEL": (
             b"Wheel-Version: 1.0\nGenerator: fixture\n"
             b"Root-Is-Purelib: true\nTag: py3-none-any\n"
@@ -172,6 +179,7 @@ def _sdist(
     *,
     extra_member: str | None = None,
     metadata_headers: tuple[str, ...] = (),
+    metadata_version: str = "2.5",
 ) -> Path:
     dist = root / "dist"
     dist.mkdir(exist_ok=True)
@@ -187,7 +195,10 @@ def _sdist(
         "uv.lock",
     )
     payloads = {f"{top}/{relative}": (root / relative).read_bytes() for relative in included}
-    payloads[f"{top}/PKG-INFO"] = _metadata(*metadata_headers)
+    payloads[f"{top}/PKG-INFO"] = _metadata(
+        *metadata_headers,
+        metadata_version=metadata_version,
+    )
     if extra_member is not None:
         payloads[extra_member] = b"unexpected"
     with tarfile.open(sdist, "w:gz") as archive:
@@ -406,6 +417,23 @@ def test_wheel_and_sdist_core_metadata_must_be_identical(tmp_path: Path) -> None
     checksums = _checksums(tmp_path, wheel, sdist)
 
     with pytest.raises(ArtifactVerificationError, match="core metadata differ"):
+        verify_release_artifacts(
+            tmp_path,
+            wheel_path=wheel,
+            sdist_path=sdist,
+            checksums_path=checksums,
+        )
+
+
+def test_release_artifacts_require_exact_core_metadata_version(
+    tmp_path: Path,
+) -> None:
+    _project(tmp_path)
+    wheel = _wheel(tmp_path, metadata_version="2.4")
+    sdist = _sdist(tmp_path, metadata_version="2.4")
+    checksums = _checksums(tmp_path, wheel, sdist)
+
+    with pytest.raises(ArtifactVerificationError, match="metadata version"):
         verify_release_artifacts(
             tmp_path,
             wheel_path=wheel,
