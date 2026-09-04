@@ -34,7 +34,7 @@ report does not make legal conclusions.
 | `pyproject.toml` | `d2e62560f342b771d8eeda7682f87bb7170677a27579347a59fc9ba55f819ab3` |
 | `uv.lock` | `51ef2dbe3fd8c8c614172e6d5e22b91985b69e42719f74b2f15498829ccdec60` |
 | `capabilities/manifest.yaml` | `0e51a9d84fb92fe35aa1fb4e486f5729a453dd17ffc6b3df524b5e9562ed6039` |
-| `.github/workflows/ci.yml` | `12559de45f3be2375b61eee81a002a7200a7116dc8eaa9b87a9d5926a0f70928` |
+| `.github/workflows/ci.yml` | `1520f02f2abd632beec718c5b89b5a521b52e6f6414300e4376ed9c26991c7d3` |
 | `deploy/systemd/fetech.service.example` | `06b944096aafcf6b6971efb9acbc8583acdd6b24f75379fb73184af8f49f2ab1` |
 | `docs/architecture.md` | `94fd4cb576e0048e68635987c6e3ec99b31a68a99de552d576fec5009f21ca25` |
 | `docs/capability-catalog.md` | `781255c61d4043665012db8968f5bb141b7bb3c90c45881feb9d58138efa9639` |
@@ -97,7 +97,7 @@ report does not make legal conclusions.
 | `tests/test_logic_backends.py` | `9140c1c49e7ba6577e8e79fdf6f1b5180c0e8ae28e4fc78b8a2c381612c6901c` |
 | `tests/test_network_scheduling.py` | `5cb5bc78bd6a0cc216749aadd5b3670b4d99feee1ebeb18d72f808caa0b9c462` |
 | `tests/test_release_evidence.py` | `ba204847aeefe48c0dcc817211f9332c5f21743450b43aec0f8a2f24e63bb6e0` |
-| `tests/test_release_readiness.py` | `e8ee5e4213f33392d633f41983bedc9d40dfb18e5c0d787390f2260e0082cfd6` |
+| `tests/test_release_readiness.py` | `f57e78c0bb89868caabb2671c97c3a17dd5d3cd234a8e3a48250894d833f5070` |
 | `tests/test_v04_release_artifacts.py` | `61fcbc4dc526a59272a0b8e99669fb8317d0efa776c6a2e365a3ec24fe3a1d3d` |
 | `tests/test_v04_smoke_verifier.py` | `d2e13ff3f29e152537080089163b4b9bf3b44ff4fadbcfa9de518f7403249bf1` |
 | `tests/test_storage_cas.py` | `f11e443948cddace9df0c9efa834f7e8d0837c65a48472ab1ef0075e6da76381` |

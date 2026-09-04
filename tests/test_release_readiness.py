@@ -32,6 +32,22 @@ main = MODULE.main
 render_report = MODULE.render_report
 
 
+def test_ci_jobs_checkout_and_assert_the_exact_event_commit() -> None:
+    workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(
+        encoding="utf-8"
+    )
+
+    assert workflow.count(
+        "FETECH_EXPECTED_COMMIT: "
+        "${{ github.event.pull_request.head.sha || github.sha }}"
+    ) == 2
+    assert workflow.count("ref: ${{ env.FETECH_EXPECTED_COMMIT }}") == 2
+    assert workflow.count("persist-credentials: false") == 2
+    assert workflow.count(
+        'run: test "$(git rev-parse HEAD)" = "$FETECH_EXPECTED_COMMIT"'
+    ) == 2
+
+
 def _gate_profile(*, duplicate: bool = False, omit_last: bool = False) -> str:
     gate_ids = list(CANONICAL_GATE_IDS)
     if duplicate:
