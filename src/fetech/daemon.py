@@ -16,6 +16,12 @@ from fetech.auth import CredentialProvider
 from fetech.auth_flows import FormSubmissionProvider, SessionProvider
 from fetech.context import ContextBroker
 from fetech.contracts import contract_manifest
+from fetech.errors import (
+    FetechValidationError,
+    public_validation_error,
+    validate_context_request,
+    validation_exception,
+)
 from fetech.gateway import UniversalFetchGateway
 from fetech.logic.models import ReasoningResult
 from fetech.models import (
@@ -25,6 +31,7 @@ from fetech.models import (
     FetchRequest,
     FetchRun,
     InspectionResult,
+    PublicError,
 )
 from fetech.storage import CASIntegrityError, CASReadLimitError
 from fetech.version import __version__
@@ -42,7 +49,8 @@ def create_app(
 ) -> Any:
     try:
         from fastapi import FastAPI, HTTPException, Query
-        from fastapi.responses import Response, StreamingResponse
+        from fastapi.exceptions import RequestValidationError
+        from fastapi.responses import JSONResponse, Response, StreamingResponse
     except ImportError as exc:
         raise RuntimeError("install fetech[server] to run the daemon") from exc
 
@@ -73,24 +81,52 @@ def create_app(
 
     app = FastAPI(title="Fetech", version=__version__, lifespan=lifespan)
     app.state.gateway = gateway
+    validation_responses: dict[int | str, dict[str, Any]] = {
+        422: {
+            "model": PublicError,
+            "description": "Sanitized request validation failure",
+        }
+    }
 
-    @app.post("/v1/fetch", response_model=FetchRun, status_code=202)
+    @app.exception_handler(RequestValidationError)
+    async def request_validation_error(_: object, exc: RequestValidationError) -> JSONResponse:
+        error = public_validation_error(exc)
+        return JSONResponse(
+            status_code=error.status_code,
+            content=error.model_dump(mode="json"),
+        )
+
+    @app.exception_handler(FetechValidationError)
+    async def fetech_validation_error(_: object, exc: FetechValidationError) -> JSONResponse:
+        return JSONResponse(
+            status_code=exc.error.status_code,
+            content=exc.error.model_dump(mode="json"),
+        )
+
+    @app.post(
+        "/v1/fetch",
+        response_model=FetchRun,
+        status_code=202,
+        responses=validation_responses,
+    )
     async def fetch(request: FetchRequest) -> FetchRun:
         return await gateway.submit(request)
 
-    @app.post("/v1/crawl", response_model=FetchRun, status_code=202)
+    @app.post(
+        "/v1/crawl",
+        response_model=FetchRun,
+        status_code=202,
+        responses=validation_responses,
+    )
     async def crawl(request: FetchRequest) -> FetchRun:
         return await gateway.submit(request.model_copy(update={"intent": "crawl"}))
 
-    @app.post("/v1/plan", response_model=FetchPlan)
+    @app.post("/v1/plan", response_model=FetchPlan, responses=validation_responses)
     async def plan(request: FetchRequest) -> FetchPlan:
         try:
             return await gateway.plan_async(request)
         except ValueError as exc:
-            raise HTTPException(
-                status_code=422,
-                detail="request could not produce a valid execution plan",
-            ) from exc
+            raise validation_exception(exc) from None
 
     @app.get("/v1/capabilities/{capability_id}/explanation", response_model=ReasoningResult)
     async def explain_capability(capability_id: str) -> ReasoningResult:
@@ -99,38 +135,39 @@ def create_app(
         except KeyError as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
 
-    @app.post("/v1/capabilities/{capability_id}/explanation", response_model=ReasoningResult)
+    @app.post(
+        "/v1/capabilities/{capability_id}/explanation",
+        response_model=ReasoningResult,
+        responses=validation_responses,
+    )
     async def explain_capability_for_request(capability_id: str, request: FetchRequest) -> ReasoningResult:
         try:
             return await gateway.explain_capability(capability_id, request=request)
         except KeyError as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
 
-    @app.post("/v1/inspect", response_model=InspectionResult)
+    @app.post("/v1/inspect", response_model=InspectionResult, responses=validation_responses)
     async def inspect(request: FetchRequest) -> InspectionResult:
         try:
             return await gateway.inspect(request)
         except ValueError as exc:
-            raise HTTPException(
-                status_code=422,
-                detail="request could not be inspected safely",
-            ) from exc
+            raise validation_exception(exc) from None
 
-    @app.get("/v1/runs/{run_id}", response_model=FetchRun)
+    @app.get("/v1/runs/{run_id}", response_model=FetchRun, responses=validation_responses)
     async def get_run(run_id: UUID) -> FetchRun:
         try:
             return await gateway.get_run(run_id)
         except KeyError as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
 
-    @app.delete("/v1/runs/{run_id}", response_model=FetchRun)
+    @app.delete("/v1/runs/{run_id}", response_model=FetchRun, responses=validation_responses)
     async def cancel_run(run_id: UUID) -> FetchRun:
         try:
             return await gateway.cancel(run_id)
         except KeyError as exc:
             raise HTTPException(status_code=404, detail=str(exc)) from exc
 
-    @app.get("/v1/runs/{run_id}/events")
+    @app.get("/v1/runs/{run_id}/events", responses=validation_responses)
     async def events(run_id: UUID) -> Any:
         try:
             await gateway.get_run(run_id)
@@ -143,7 +180,7 @@ def create_app(
 
         return StreamingResponse(stream(), media_type="text/event-stream")
 
-    @app.get("/v1/artifacts/{artifact_id}")
+    @app.get("/v1/artifacts/{artifact_id}", responses=validation_responses)
     async def artifact(
         artifact_id: UUID,
         content: bool = Query(default=False),
@@ -173,15 +210,20 @@ def create_app(
     async def contracts() -> ContractManifest:
         return contract_manifest()
 
-    @app.post("/v1/context/search", response_model=ContextBundle)
+    @app.post(
+        "/v1/context/search",
+        response_model=ContextBundle,
+        responses=validation_responses,
+    )
     async def context_search(
-        question: str = Query(min_length=1, max_length=16_384),
-        token_budget: int = Query(default=4_000, ge=1, le=8_000),
+        question: str = Query(),
+        token_budget: int = Query(default=4_000),
     ) -> ContextBundle:
+        validated_question, validated_budget = validate_context_request(question, token_budget)
         try:
-            return await broker.search(question, token_budget=token_budget)
+            return await broker.search(validated_question, token_budget=validated_budget)
         except ValueError as exc:
-            raise HTTPException(status_code=422, detail=str(exc)) from exc
+            raise validation_exception(exc, location=("question",)) from None
 
     return app
 

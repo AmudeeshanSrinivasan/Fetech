@@ -4,12 +4,11 @@ from __future__ import annotations
 
 import asyncio
 import json
+from collections.abc import Coroutine
 from dataclasses import replace
-from enum import StrEnum
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Any, NoReturn
 from urllib.parse import urlsplit
-from uuid import UUID
 
 import httpx
 import typer
@@ -18,7 +17,13 @@ from fetech.client import FetechClient
 from fetech.config import Settings
 from fetech.context import ContextBroker
 from fetech.contracts import contract_manifest
-from fetech.models import FetchRequest, ResourceBudget
+from fetech.errors import (
+    FetechValidationError,
+    validate_context_request,
+    validate_fetch_request,
+    validate_uuid,
+    validation_exception,
+)
 from fetech.provenance import build_runtime_graph
 from fetech.registry import CapabilityRegistry
 
@@ -31,18 +36,23 @@ DEFAULT_REPOSITORY = Path.cwd()
 DEFAULT_DAEMON_URL = "http://127.0.0.1:8787"
 
 
-class PrivacyProfile(StrEnum):
-    """CLI-safe projection of the public request privacy profiles."""
-
-    PUBLIC = "public"
-    PRIVATE = "private"
-
-
-def _json(document: object) -> None:
+def _json(document: object, *, err: bool = False) -> None:
     if hasattr(document, "model_dump_json"):
-        typer.echo(document.model_dump_json(indent=2))
+        typer.echo(document.model_dump_json(indent=2), err=err)
     else:
-        typer.echo(json.dumps(document, indent=2, sort_keys=True, default=str))
+        typer.echo(json.dumps(document, indent=2, sort_keys=True, default=str), err=err)
+
+
+def _run_cli(command: Coroutine[Any, Any, None]) -> None:
+    try:
+        asyncio.run(command)
+    except FetechValidationError as exc:
+        _validation_exit(exc)
+
+
+def _validation_exit(exc: FetechValidationError) -> NoReturn:
+    _json(exc.error, err=True)
+    raise typer.Exit(2) from None
 
 
 def _daemon_endpoint(base_url: str, path: str) -> str:
@@ -115,9 +125,9 @@ def plan(
         typer.Option("--auth-ref", help="Opaque reference for a configured provider."),
     ] = None,
     privacy_profile: Annotated[
-        PrivacyProfile,
-        typer.Option("--privacy", help="Request privacy profile."),
-    ] = PrivacyProfile.PUBLIC,
+        str,
+        typer.Option("--privacy", help="Request privacy profile.", metavar="public|private"),
+    ] = "public",
     approve: Annotated[
         list[str] | None,
         typer.Option("--approve", help="Explicitly approve a capability."),
@@ -126,12 +136,14 @@ def plan(
     """Build a validated fetch plan without making a network request."""
 
     async def run() -> None:
-        request = FetchRequest(
-            target=target,
-            output_requirements=tuple(output or ["clean_text"]),
-            authentication_ref=authentication_ref,
-            privacy_profile=privacy_profile.value,
-            approved_capabilities=frozenset(approve or ()),
+        request = validate_fetch_request(
+            {
+                "target": target,
+                "output_requirements": output or ["clean_text"],
+                "authentication_ref": authentication_ref,
+                "privacy_profile": privacy_profile,
+                "approved_capabilities": approve or [],
+            }
         )
         settings = Settings.from_environment()
         if backend:
@@ -139,7 +151,7 @@ def plan(
         async with FetechClient(settings) as client:
             _json(await client.plan(request))
 
-    asyncio.run(run())
+    _run_cli(run())
 
 
 @app.command()
@@ -155,9 +167,11 @@ def explain(
         if backend:
             settings = replace(settings, reasoner_backend=backend.lower())
         request = (
-            FetchRequest(
-                target="https://policy.invalid/",
-                deny_capabilities=frozenset({capability_id}),
+            validate_fetch_request(
+                {
+                    "target": "https://policy.invalid/",
+                    "deny_capabilities": [capability_id],
+                }
             )
             if deny
             else None
@@ -165,7 +179,7 @@ def explain(
         async with FetechClient(settings) as client:
             _json(await client.explain_capability(capability_id, request=request))
 
-    asyncio.run(run())
+    _run_cli(run())
 
 
 @app.command()
@@ -174,9 +188,9 @@ def inspect(target: str) -> None:
 
     async def run() -> None:
         async with FetechClient() as client:
-            _json(await client.gateway.inspect(FetchRequest(target=target)))
+            _json(await client.inspect({"target": target}))
 
-    asyncio.run(run())
+    _run_cli(run())
 
 
 @app.command()
@@ -189,9 +203,9 @@ def fetch(
         typer.Option("--auth-ref", help="Opaque reference for a configured provider."),
     ] = None,
     privacy_profile: Annotated[
-        PrivacyProfile,
-        typer.Option("--privacy", help="Request privacy profile."),
-    ] = PrivacyProfile.PUBLIC,
+        str,
+        typer.Option("--privacy", help="Request privacy profile.", metavar="public|private"),
+    ] = "public",
     approve: Annotated[
         list[str] | None,
         typer.Option("--approve", help="Explicitly approve a capability."),
@@ -200,18 +214,20 @@ def fetch(
     """Fetch a target and print its canonical result."""
 
     async def run() -> None:
-        request = FetchRequest(
-            target=target,
-            output_requirements=tuple(output or ["clean_text"]),
-            authentication_ref=authentication_ref,
-            privacy_profile=privacy_profile.value,
-            approved_capabilities=frozenset(approve or ()),
-            budget=ResourceBudget(bytes=maximum_bytes),
+        request = validate_fetch_request(
+            {
+                "target": target,
+                "output_requirements": output or ["clean_text"],
+                "authentication_ref": authentication_ref,
+                "privacy_profile": privacy_profile,
+                "approved_capabilities": approve or [],
+                "budget": {"bytes": maximum_bytes},
+            }
         )
         async with FetechClient() as client:
             _json(await client.fetch(request))
 
-    asyncio.run(run())
+    _run_cli(run())
 
 
 @app.command()
@@ -227,36 +243,38 @@ def crawl(
     """Crawl one public domain within explicit page and depth limits."""
 
     async def run() -> None:
-        request = FetchRequest(
-            target=target,
-            intent="crawl",
-            policy_profile="allow_search_discovery" if search else "default",
-            budget=ResourceBudget(
-                attempts=min(100, maximum_pages + 1),
-                crawl_pages=maximum_pages,
-                crawl_depth=maximum_depth,
-            ),
+        request = validate_fetch_request(
+            {
+                "target": target,
+                "intent": "crawl",
+                "policy_profile": "allow_search_discovery" if search else "default",
+                "budget": {
+                    "attempts": min(100, maximum_pages + 1),
+                    "crawl_pages": maximum_pages,
+                    "crawl_depth": maximum_depth,
+                },
+            }
         )
         async with FetechClient() as client:
             _json(await client.crawl(request))
 
-    asyncio.run(run())
+    _run_cli(run())
 
 
 @app.command("run")
-def run_snapshot(run_id: UUID) -> None:
+def run_snapshot(run_id: str) -> None:
     """Read a persisted run snapshot."""
 
     async def run() -> None:
         async with FetechClient() as client:
-            _json(await client.gateway.get_run(run_id))
+            _json(await client.gateway.get_run(validate_uuid(run_id, "run_id")))
 
-    asyncio.run(run())
+    _run_cli(run())
 
 
 @app.command("cancel")
 def cancel_run(
-    run_id: UUID,
+    run_id: str,
     daemon_url: Annotated[
         str,
         typer.Option(
@@ -268,7 +286,11 @@ def cancel_run(
 ) -> None:
     """Idempotently cancel a run owned by the active daemon."""
 
-    _json(_daemon_request("DELETE", f"/v1/runs/{run_id}", daemon_url))
+    try:
+        identifier = validate_uuid(run_id, "run_id")
+    except FetechValidationError as exc:
+        _validation_exit(exc)
+    _json(_daemon_request("DELETE", f"/v1/runs/{identifier}", daemon_url))
 
 
 @app.command("project-runtime-graph")
@@ -288,7 +310,7 @@ def project_runtime_graph() -> None:
                 }
             )
 
-    asyncio.run(run())
+    _run_cli(run())
 
 
 @app.command("context")
@@ -304,9 +326,13 @@ def context_search(
     async def run() -> None:
         configured_runtime_graph = runtime_graph or Settings.from_environment().runtime_graph_path
         broker = ContextBroker(repository, runtime_graph=configured_runtime_graph, vault=vault)
-        _json(await broker.search(question, token_budget=token_budget))
+        validated_question, validated_budget = validate_context_request(question, token_budget)
+        try:
+            _json(await broker.search(validated_question, token_budget=validated_budget))
+        except ValueError as exc:
+            raise validation_exception(exc, location=("question",)) from None
 
-    asyncio.run(run())
+    _run_cli(run())
 
 
 if __name__ == "__main__":

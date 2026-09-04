@@ -14,6 +14,13 @@ from fetech.auth_flows import FormSubmissionProvider, SessionProvider
 from fetech.config import Settings
 from fetech.context import ContextBroker
 from fetech.contracts import contract_manifest
+from fetech.errors import (
+    invalid_parameter,
+    validate_context_request,
+    validate_fetch_request,
+    validate_uuid,
+    validation_exception,
+)
 from fetech.gateway import UniversalFetchGateway
 from fetech.logic.models import ReasoningResult
 from fetech.models import (
@@ -23,6 +30,7 @@ from fetech.models import (
     FetchRequest,
     FetchResult,
     FetchRun,
+    InspectionResult,
     ProvenanceEvent,
 )
 
@@ -97,30 +105,61 @@ class FetechClient:
     async def context(self, question: str, *, token_budget: int = 4_000) -> ContextBundle:
         """Retrieve bounded code, runtime, decision, and exact-source evidence."""
 
-        return await self.context_broker.search(question, token_budget=token_budget)
+        validated_question, validated_budget = validate_context_request(question, token_budget)
+        try:
+            return await self.context_broker.search(
+                validated_question,
+                token_budget=validated_budget,
+            )
+        except ValueError as exc:
+            raise validation_exception(exc, location=("question",)) from None
 
-    async def plan(self, request: FetchRequest) -> FetchPlan:
-        return await self.gateway.plan_async(request)
+    async def plan(self, request: FetchRequest | Mapping[str, object]) -> FetchPlan:
+        try:
+            return await self.gateway.plan_async(validate_fetch_request(request))
+        except ValueError as exc:
+            raise validation_exception(exc) from None
 
-    def plan_deterministic(self, request: FetchRequest) -> FetchPlan:
-        return self.gateway.plan(request)
+    def plan_deterministic(self, request: FetchRequest | Mapping[str, object]) -> FetchPlan:
+        try:
+            return self.gateway.plan(validate_fetch_request(request))
+        except ValueError as exc:
+            raise validation_exception(exc) from None
 
     async def explain_capability(
         self, capability_id: str, *, request: FetchRequest | None = None
     ) -> ReasoningResult:
+        if not capability_id.strip() or len(capability_id.encode("utf-8")) > 256:
+            raise invalid_parameter(("capability_id",))
         return await self.gateway.explain_capability(capability_id, request=request)
 
-    async def fetch(self, request: FetchRequest) -> FetchResult:
-        return await self.gateway.fetch(request)
+    async def inspect(self, request: FetchRequest | Mapping[str, object]) -> InspectionResult:
+        try:
+            return await self.gateway.inspect(validate_fetch_request(request))
+        except ValueError as exc:
+            raise validation_exception(exc) from None
 
-    async def crawl(self, request: FetchRequest) -> FetchResult:
+    async def fetch(self, request: FetchRequest | Mapping[str, object]) -> FetchResult:
+        try:
+            return await self.gateway.fetch(validate_fetch_request(request))
+        except ValueError as exc:
+            raise validation_exception(exc) from None
+
+    async def crawl(self, request: FetchRequest | Mapping[str, object]) -> FetchResult:
         """Run a bounded crawl using the same canonical result contract."""
 
-        return await self.gateway.fetch(request.model_copy(update={"intent": "crawl"}))
+        try:
+            validated = validate_fetch_request(request)
+            return await self.gateway.fetch(validated.model_copy(update={"intent": "crawl"}))
+        except ValueError as exc:
+            raise validation_exception(exc) from None
 
-    async def submit(self, request: FetchRequest) -> FetchHandle:
-        run = await self.gateway.submit(request)
+    async def submit(self, request: FetchRequest | Mapping[str, object]) -> FetchHandle:
+        try:
+            run = await self.gateway.submit(validate_fetch_request(request))
+        except ValueError as exc:
+            raise validation_exception(exc) from None
         return FetchHandle(run.run_id, self.gateway)
 
-    async def cancel(self, run_id: UUID) -> FetchRun:
-        return await self.gateway.cancel(run_id)
+    async def cancel(self, run_id: UUID | str) -> FetchRun:
+        return await self.gateway.cancel(validate_uuid(run_id, "run_id"))

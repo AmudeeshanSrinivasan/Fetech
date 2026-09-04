@@ -12,7 +12,7 @@ from fetech.auth import NullCredentialProvider
 from fetech.auth_flows import NullFormSubmissionProvider, NullSessionProvider
 from fetech.cli import app as cli_app
 from fetech.daemon import create_app
-from fetech.models import FetchRequest, FetchResult, ResultStatus
+from fetech.models import FetchRequest, FetchResult, PublicError, ResultStatus
 
 
 def test_fetch_request_v03_fields_round_trip_without_secret_material() -> None:
@@ -96,9 +96,10 @@ def test_daemon_openapi_and_plan_preserve_v03_request_fields(
     }
     assert invalid.status_code == 422
     assert unsafe_plan.status_code == 422
-    assert unsafe_plan.json()["detail"] == (
-        "request could not produce a valid execution plan"
-    )
+    assert PublicError.model_validate(invalid.json()).code == "INVALID_REQUEST"
+    unsafe_error = PublicError.model_validate(unsafe_plan.json())
+    assert unsafe_error.code == "INVALID_REQUEST"
+    assert unsafe_error.issues[0].location == ("request",)
     assert failed_run.status_code == 202
     assert failed_run.json()["state"] == "FINISHED"
     assert failed_run.json()["result"]["status"] == "FAILED"

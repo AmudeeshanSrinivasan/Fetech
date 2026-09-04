@@ -39,7 +39,9 @@ registration.
 > contract manifest shared by the SDK, CLI, REST daemon, and MCP server. The second increment adds
 > durable, idempotent cancellation and one first-writer-wins terminal transition across those
 > interfaces. The third increment adds deterministic dual-graph context routing, typed provider
-> degradation, hash-based deduplication, and exact-source verification. See the
+> degradation, hash-based deduplication, and exact-source verification. The first slice of the fourth
+> increment adds one bounded, redacted `PublicError` validation contract across SDK, REST, CLI, and
+> MCP while leaving acquisition failures as canonical `FetchResult` statuses. See the
 > [Beta development guide](docs/beta-development.md).
 
 Fetech permits local yt-dlp only in development mode; required mode refuses it until brokered, allowlisted egress is configured.

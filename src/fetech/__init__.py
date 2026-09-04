@@ -33,6 +33,13 @@ from fetech.auth_flows import (
 from fetech.client import FetechClient
 from fetech.context import ContextBroker, ContextBudget, classify_context_needs
 from fetech.contracts import contract_manifest
+from fetech.errors import (
+    FetechValidationError,
+    public_validation_error,
+    validate_context_request,
+    validate_fetch_request,
+    validate_uuid,
+)
 from fetech.logic.models import ReasoningQuery, ReasoningResult
 from fetech.models import (
     Artifact,
@@ -51,8 +58,11 @@ from fetech.models import (
     FetchPlan,
     FetchRequest,
     FetchResult,
+    PublicError,
+    PublicErrorCode,
     ResourceBudget,
     ResultStatus,
+    ValidationIssue,
 )
 from fetech.version import __version__
 from fetech.wayback import WaybackSnapshotConnector
@@ -83,6 +93,7 @@ __all__ = [
     "FetchRequest",
     "FetchResult",
     "FetechClient",
+    "FetechValidationError",
     "FormSubmission",
     "FormSubmissionApproval",
     "FormSubmissionProvider",
@@ -98,6 +109,8 @@ __all__ = [
     "PDFOCRPage",
     "PDFOCRProvider",
     "PrivateWorkspaceTarget",
+    "PublicError",
+    "PublicErrorCode",
     "ReasoningQuery",
     "ReasoningResult",
     "RefreshableCredentialProvider",
@@ -106,10 +119,15 @@ __all__ = [
     "SessionProvider",
     "SnapshotConnector",
     "TranscriptProvider",
+    "ValidationIssue",
     "WaybackSnapshotConnector",
     "YouTubeMetadataProvider",
     "__version__",
     "classify_context_needs",
     "contract_manifest",
     "extract_csrf_token",
+    "public_validation_error",
+    "validate_context_request",
+    "validate_fetch_request",
+    "validate_uuid",
 ]

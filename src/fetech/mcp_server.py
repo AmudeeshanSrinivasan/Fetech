@@ -6,7 +6,6 @@ import os
 from collections.abc import Mapping
 from pathlib import Path
 from typing import Literal
-from uuid import UUID
 
 from fetech.adapters.cache import SnapshotConnector
 from fetech.adapters.documents import GitLFSResolver, PDFOCRProvider
@@ -16,8 +15,15 @@ from fetech.auth_flows import FormSubmissionProvider, SessionProvider
 from fetech.config import Settings
 from fetech.context import ContextBroker
 from fetech.contracts import contract_manifest
+from fetech.errors import (
+    invalid_parameter,
+    validate_context_request,
+    validate_fetch_request,
+    validate_uuid,
+    validation_exception,
+)
 from fetech.gateway import UniversalFetchGateway
-from fetech.models import FetchRequest, ResourceBudget
+from fetech.models import FetchRequest
 
 
 def _fetch_request(
@@ -28,15 +34,15 @@ def _fetch_request(
     privacy_profile: Literal["public", "private"],
     approved_capabilities: list[str] | None,
 ) -> FetchRequest:
-    if not 1 <= maximum_bytes <= 2_000_000_000:
-        raise ValueError("maximum_bytes must be between 1 and 2000000000")
-    return FetchRequest(
-        target=target,
-        output_requirements=tuple(outputs or ["clean_text"]),
-        authentication_ref=authentication_ref,
-        privacy_profile=privacy_profile,
-        approved_capabilities=frozenset(approved_capabilities or ()),
-        budget=ResourceBudget(bytes=maximum_bytes),
+    return validate_fetch_request(
+        {
+            "target": target,
+            "output_requirements": outputs or ["clean_text"],
+            "authentication_ref": authentication_ref,
+            "privacy_profile": privacy_profile,
+            "approved_capabilities": approved_capabilities or [],
+            "budget": {"bytes": maximum_bytes},
+        }
     )
 
 
@@ -123,7 +129,7 @@ def build_server(
     async def cancel_fetch(run_id: str) -> str:
         """Idempotently cancel an active fetch run."""
 
-        return (await gateway.cancel(UUID(run_id))).model_dump_json()
+        return (await gateway.cancel(validate_uuid(run_id, "run_id"))).model_dump_json()
 
     @server.tool()
     async def inspect_target(target: str) -> str:
@@ -134,15 +140,17 @@ def build_server(
     async def crawl_domain(target: str, maximum_pages: int = 20, maximum_depth: int = 2) -> str:
         """Submit a bounded domain crawl request."""
         if not 1 <= maximum_pages <= 99:
-            raise ValueError("maximum_pages must be between 1 and 99")
-        request = FetchRequest(
-            target=target,
-            intent="crawl",
-            budget=ResourceBudget(
-                attempts=maximum_pages + 1,
-                crawl_pages=maximum_pages,
-                crawl_depth=maximum_depth,
-            ),
+            raise invalid_parameter(("maximum_pages",), code="less_than_equal")
+        request = validate_fetch_request(
+            {
+                "target": target,
+                "intent": "crawl",
+                "budget": {
+                    "attempts": maximum_pages + 1,
+                    "crawl_pages": maximum_pages,
+                    "crawl_depth": maximum_depth,
+                },
+            }
         )
         return (await gateway.fetch(request)).model_dump_json()
 
@@ -163,7 +171,7 @@ def build_server(
     @server.tool()
     async def get_fetch_trace(run_id: str) -> str:
         """Return the stored run snapshot and its sanitized event trace."""
-        identifier = UUID(run_id)
+        identifier = validate_uuid(run_id, "run_id")
         snapshot = await gateway.get_run(identifier)
         events = await gateway.provenance(identifier)
         return "\n".join([snapshot.model_dump_json(), *(event.model_dump_json() for event in events)])
@@ -171,12 +179,19 @@ def build_server(
     @server.tool()
     async def query_provenance(run_id: str) -> str:
         """Query immutable provenance events for one run."""
-        return "\n".join(event.model_dump_json() for event in await gateway.provenance(UUID(run_id)))
+        identifier = validate_uuid(run_id, "run_id")
+        return "\n".join(event.model_dump_json() for event in await gateway.provenance(identifier))
 
     @server.tool()
     async def get_context(question: str, token_budget: int = 4_000) -> str:
         """Return bounded Graphify, QMD, and exact source context for Codex."""
-        return (await broker.search(question, token_budget=token_budget)).model_dump_json()
+        validated_question, validated_budget = validate_context_request(question, token_budget)
+        try:
+            return (
+                await broker.search(validated_question, token_budget=validated_budget)
+            ).model_dump_json()
+        except ValueError as exc:
+            raise validation_exception(exc, location=("question",)) from None
 
     @server.tool()
     async def get_contracts() -> str:
@@ -187,12 +202,16 @@ def build_server(
     @server.tool()
     async def explain_capability(capability_id: str, allowed: bool = True) -> str:
         """Explain capability eligibility through the configured bounded reasoner."""
+        if not capability_id.strip() or len(capability_id.encode("utf-8")) > 256:
+            raise invalid_parameter(("capability_id",))
         request = (
             None
             if allowed
-            else FetchRequest(
-                target="https://policy.invalid/",
-                deny_capabilities=frozenset({capability_id}),
+            else validate_fetch_request(
+                {
+                    "target": "https://policy.invalid/",
+                    "deny_capabilities": [capability_id],
+                }
             )
         )
         return (await gateway.explain_capability(capability_id, request=request)).model_dump_json()

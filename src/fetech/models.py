@@ -22,7 +22,11 @@ def utc_now() -> datetime:
 
 
 class ContractModel(BaseModel):
-    model_config = ConfigDict(extra="forbid", use_enum_values=False)
+    model_config = ConfigDict(
+        extra="forbid",
+        use_enum_values=False,
+        hide_input_in_errors=True,
+    )
 
 
 class CapabilityKind(StrEnum):
@@ -100,6 +104,12 @@ class ContextProviderStatus(StrEnum):
     TIMED_OUT = "TIMED_OUT"
     OUTPUT_LIMIT = "OUTPUT_LIMIT"
     FAILED = "FAILED"
+
+
+class PublicErrorCode(StrEnum):
+    """Stable machine-readable failures returned by public interfaces."""
+
+    INVALID_REQUEST = "INVALID_REQUEST"
 
 
 class PageState(StrEnum):
@@ -385,6 +395,26 @@ class Diagnostic(ContractModel):
     message: str
     retryable: bool = False
     details: dict[str, str | int | float | bool | None] = Field(default_factory=dict)
+
+
+class ValidationIssue(ContractModel):
+    """One sanitized validation issue without rejected input or exception context."""
+
+    location: tuple[str | int, ...] = Field(max_length=8)
+    code: str = Field(min_length=1, max_length=128, pattern=r"^[a-z0-9_.-]+$")
+    message: str = Field(min_length=1, max_length=256)
+
+
+class PublicError(ContractModel):
+    """Bounded error envelope shared by the SDK, REST, CLI, and MCP."""
+
+    schema_version: Literal["1.0"] = "1.0"
+    code: PublicErrorCode
+    message: str = Field(min_length=1, max_length=256)
+    status_code: int = Field(ge=400, le=599)
+    retryable: bool = False
+    issues: tuple[ValidationIssue, ...] = Field(default=(), max_length=32)
+    omitted_issues: int = Field(default=0, ge=0, le=1_000_000)
 
 
 class DiscoveredTarget(ContractModel):

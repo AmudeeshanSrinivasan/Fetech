@@ -16,7 +16,7 @@ from fetech.cli import app as cli_app
 from fetech.client import FetechClient
 from fetech.config import Settings
 from fetech.contracts import contract_manifest
-from fetech.models import Artifact, FetchPlan, FetchRequest, FetchResult
+from fetech.models import Artifact, FetchPlan, FetchRequest, FetchResult, PublicError
 
 
 def _settings(tmp_path: Path) -> Settings:
@@ -91,8 +91,10 @@ def test_contract_manifest_is_ordered_unique_and_deterministic() -> None:
         "FetchPlan",
         "FetchRequest",
         "FetchResult",
+        "PublicError",
         "ReasoningQuery",
         "ReasoningResult",
+        "ValidationIssue",
     } <= set(names)
     assert all(len(descriptor.json_schema_sha256) == 64 for descriptor in first.contracts)
 
@@ -142,4 +144,7 @@ def test_rest_rejects_unknown_request_schema_version(
         )
 
     assert response.status_code == 422
-    assert response.json()["detail"][0]["loc"] == ["body", "schema_version"]
+    error = PublicError.model_validate(response.json())
+    assert error.code == "INVALID_REQUEST"
+    assert error.issues[0].location == ("schema_version",)
+    assert error.issues[0].code == "literal_error"

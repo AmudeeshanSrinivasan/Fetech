@@ -74,6 +74,14 @@ bounded exact-source windows before being marked verified. All provider outcomes
 usage are typed and observable, while missing Graphify or QMD providers degrade to exact source
 without affecting fetch execution. See [`context-broker.md`](context-broker.md).
 
+The first slice of the fourth Beta increment normalizes request validation. `PublicError` is the
+single bounded error envelope for SDK exceptions, REST 422 responses, CLI validation failures, and
+MCP tool errors. Only allowlisted field locations, stable codes, generic messages, and omission
+counts cross the boundary; rejected values, validator context, exception text, and user-controlled
+field names do not. Ordinary acquisition outcomes remain `FetchResult` values rather than
+exceptions. The remaining fourth-increment work covers fuzzing, reproducible builds, storage
+lifecycle, and the complete failure catalogue.
+
 ## Runtime flow
 
 ```text

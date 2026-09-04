@@ -30,9 +30,11 @@ Beta work proceeds in bounded increments:
 1. version and publish the machine-readable Python, REST, CLI, and MCP contract inventory
    (implemented);
 2. expand cross-interface conformance for lifecycle operations, cancellation, and event streaming
-   (implemented; broader validation-error normalization remains);
+   (implemented);
 3. complete dual-graph and bounded-context behavior with source verification (implemented);
-4. extend fuzzing, reproducible-build, storage-lifecycle, and failure-documentation evidence;
+4. normalize public validation errors, then extend fuzzing, reproducible-build, storage-lifecycle,
+   and failure-documentation evidence (validation normalization implemented; remaining work is in
+   progress);
 5. freeze release-candidate APIs only after compatibility and migration tests pass.
 
 No Beta distribution version has been assigned. Package metadata remains `0.4.0a0` until a separate
@@ -118,12 +120,36 @@ metadata and ledger locators, use atomic file replacement, and are serialized by
 See [`context-broker.md`](context-broker.md) for the routing, budget, authority, and interface
 contracts. Focused coverage lives in `tests/test_beta_context.py`.
 
+## Increment 4: validation errors and hardening evidence
+
+`PublicError` is the versioned, bounded validation-error envelope shared by the Python SDK, REST,
+CLI, and MCP. `INVALID_REQUEST` errors carry an HTTP-equivalent status, retryability, at most 32
+sanitized issues, and an omitted-issue count. Issues expose only allowlisted field locations,
+stable error codes, and generic messages. They never include rejected input, Pydantic context,
+exception text, URLs, credentials, or secret-bearing user-defined field names.
+
+`FetechValidationError` is the SDK exception boundary and serializes to the same `PublicError`
+document. SDK request methods accept either an already validated `FetchRequest` or a mapping and
+validate mappings through this boundary. FastAPI replaces its default request-validation response,
+the CLI emits the document to standard error with exit code 2, and MCP surfaces the same serialized
+document as its tool error. Framework-level failures that happen before a command/tool handler can
+run remain transport errors; inputs accepted by a Fetech handler use the shared contract.
+
+This does not change acquisition failures. Policy blocks, authentication requirements, missing
+dependencies, budget exhaustion, low quality, not-found resources, partial output, and execution
+failures remain canonical `FetchResult.status` values with diagnostics and provenance.
+
+The remaining Increment 4 work is parser fuzzing and malformed-input corpora, reproducible-build
+evidence, storage quota/retention/garbage-collection/crash-recovery behavior, and a complete public
+failure catalogue. Focused validation coverage lives in `tests/test_beta_validation_errors.py`.
+
 ## Verification
 
 ```bash
 uv run pytest tests/test_beta_contracts.py tests/test_v04_interfaces.py tests/test_runtime_conformance.py
 uv run pytest tests/test_beta_lifecycle.py
 uv run pytest tests/test_beta_context.py
+uv run pytest tests/test_beta_validation_errors.py
 uv run pytest
 uv run ruff check .
 uv run mypy src/fetech

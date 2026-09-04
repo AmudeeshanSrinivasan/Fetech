@@ -25,8 +25,10 @@ from fetech.models import (
     InspectionResult,
     PlanNode,
     ProvenanceEvent,
+    PublicError,
     Resource,
     ResourceBudget,
+    ValidationIssue,
 )
 from fetech.version import __version__
 
@@ -46,10 +48,12 @@ _PUBLIC_CONTRACTS: tuple[type[BaseModel], ...] = (
     InspectionResult,
     PlanNode,
     ProvenanceEvent,
+    PublicError,
     Resource,
     ResourceBudget,
     ReasoningQuery,
     ReasoningResult,
+    ValidationIssue,
 )
 
 
