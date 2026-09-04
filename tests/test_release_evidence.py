@@ -108,8 +108,8 @@ def _inputs():
 def test_license_catalog_exactly_covers_the_universal_lock() -> None:
     inputs = _inputs()
 
-    assert len(inputs.packages) == 167
-    assert len(inputs.licenses) == 167
+    assert len(inputs.packages) == 168
+    assert len(inputs.licenses) == 168
     assert all(inputs.scopes.values())
     assert all(
         expression and expression != "NOASSERTION"

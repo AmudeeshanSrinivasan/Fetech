@@ -33,8 +33,8 @@ Beta work proceeds in bounded increments:
    (implemented);
 3. complete dual-graph and bounded-context behavior with source verification (implemented);
 4. normalize public validation errors, then extend fuzzing, reproducible-build, storage-lifecycle,
-   and failure-documentation evidence (validation normalization implemented; remaining work is in
-   progress);
+   and failure-documentation evidence (validation normalization and the first native-parser fuzz
+   slice are implemented; remaining work is in progress);
 5. freeze release-candidate APIs only after compatibility and migration tests pass.
 
 No Beta distribution version has been assigned. Package metadata remains `0.4.0a0` until a separate
@@ -139,9 +139,14 @@ This does not change acquisition failures. Policy blocks, authentication require
 dependencies, budget exhaustion, low quality, not-found resources, partial output, and execution
 failures remain canonical `FetchResult.status` values with diagnostics and provenance.
 
-The remaining Increment 4 work is parser fuzzing and malformed-input corpora, reproducible-build
-evidence, storage quota/retention/garbage-collection/crash-recovery behavior, and a complete public
-failure catalogue. Focused validation coverage lives in `tests/test_beta_validation_errors.py`.
+The first deterministic fuzz slice covers request/URL handling, JSON/XML, native document formats,
+archives, media headers/metadata, and logic-engine validation. It found and fixed raw CSV-error
+escape, missing document serialized-output enforcement, and untyped malformed Clingo output. See
+[`fuzzing.md`](fuzzing.md) and `tests/test_beta_parser_fuzz.py` for the exact evidence boundary.
+
+The remaining Increment 4 work is format-aware fuzz expansion, reproducible-build evidence,
+storage quota/retention/garbage-collection/crash-recovery behavior, and a complete public failure
+catalogue. Focused validation coverage lives in `tests/test_beta_validation_errors.py`.
 
 ## Verification
 
@@ -150,6 +155,7 @@ uv run pytest tests/test_beta_contracts.py tests/test_v04_interfaces.py tests/te
 uv run pytest tests/test_beta_lifecycle.py
 uv run pytest tests/test_beta_context.py
 uv run pytest tests/test_beta_validation_errors.py
+uv run pytest tests/test_beta_parser_fuzz.py
 uv run pytest
 uv run ruff check .
 uv run mypy src/fetech

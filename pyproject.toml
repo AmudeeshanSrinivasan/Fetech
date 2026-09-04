@@ -46,6 +46,7 @@ documents = [
 media = ["pillow>=11.0", "yt-dlp>=2026.7.4,<2026.8"]
 dev = [
   "coverage>=7.6",
+  "hypothesis>=6.135",
   "mypy>=1.14",
   "pre-commit>=4.0",
   "pytest>=8.3",

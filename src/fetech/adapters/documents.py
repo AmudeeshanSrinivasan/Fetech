@@ -1082,26 +1082,29 @@ def _parse(
         capability = _detect_document_format(target, body)
 
     if capability in {"plain_text_file", "txt", "markdown"}:
-        return _parse_text(capability, body, limits)
-    if capability == "dataset_file":
-        return _parse_binary_dataset(body)
-    if capability == "csv":
-        return _parse_csv(body, limits)
-    if capability == "json_file":
-        return _parse_json(body, limits)
-    if capability == "xml_file":
-        return _parse_xml(body, limits)
-    if capability in {"pdf", "scanned_pdf"}:
-        return _parse_pdf(body, limits)
-    if capability == "docx":
-        return _parse_docx(body, limits)
-    if capability == "pptx":
-        return _parse_pptx(body, limits)
-    if capability == "xlsx":
-        return _parse_xlsx(body, limits)
-    if capability == "zip_archive":
-        return _parse_zip(body, limits)
-    raise ValueError(f"unsupported document capability: {capability}")
+        result = _parse_text(capability, body, limits)
+    elif capability == "dataset_file":
+        result = _parse_binary_dataset(body)
+    elif capability == "csv":
+        result = _parse_csv(body, limits)
+    elif capability == "json_file":
+        result = _parse_json(body, limits)
+    elif capability == "xml_file":
+        result = _parse_xml(body, limits)
+    elif capability in {"pdf", "scanned_pdf"}:
+        result = _parse_pdf(body, limits)
+    elif capability == "docx":
+        result = _parse_docx(body, limits)
+    elif capability == "pptx":
+        result = _parse_pptx(body, limits)
+    elif capability == "xlsx":
+        result = _parse_xlsx(body, limits)
+    elif capability == "zip_archive":
+        result = _parse_zip(body, limits)
+    else:
+        raise ValueError(f"unsupported document capability: {capability}")
+    _enforce_output_limit(result[0], limits)
+    return result
 
 
 def _validate_worker_result(
@@ -1438,7 +1441,9 @@ def _parse_csv(
     body: bytes,
     limits: DocumentLimits,
 ) -> tuple[dict[str, Any], tuple[str, ...], str]:
-    rows = csv.reader(io.StringIO(body.decode("utf-8-sig", errors="replace")))
+    rows = csv.reader(
+        io.StringIO(body.decode("utf-8-sig", errors="replace"), newline="")
+    )
     blocks: list[dict[str, Any]] = []
     for index, row in enumerate(rows, start=1):
         if index > limits.maximum_blocks:
@@ -1799,6 +1804,21 @@ def _locators(blocks: list[dict[str, Any]]) -> tuple[str, ...]:
 def _enforce_block_limit(count: int, limits: DocumentLimits) -> None:
     if count > limits.maximum_blocks:
         raise ValueError("document block limit exceeded")
+
+
+def _enforce_output_limit(document: dict[str, Any], limits: DocumentLimits) -> None:
+    try:
+        encoded = json.dumps(
+            document,
+            ensure_ascii=False,
+            sort_keys=True,
+            separators=(",", ":"),
+            allow_nan=False,
+        ).encode("utf-8")
+    except (TypeError, UnicodeError, ValueError) as exc:
+        raise ValueError("document parser produced invalid output") from exc
+    if len(encoded) > limits.maximum_output_bytes:
+        raise ValueError("document parser output exceeds the decompressed-byte budget")
 
 
 def _unique_json_object(pairs: list[tuple[str, object]]) -> dict[str, object]:

@@ -79,8 +79,11 @@ single bounded error envelope for SDK exceptions, REST 422 responses, CLI valida
 MCP tool errors. Only allowlisted field locations, stable codes, generic messages, and omission
 counts cross the boundary; rejected values, validator context, exception text, and user-controlled
 field names do not. Ordinary acquisition outcomes remain `FetchResult` values rather than
-exceptions. The remaining fourth-increment work covers fuzzing, reproducible builds, storage
-lifecycle, and the complete failure catalogue.
+exceptions. A deterministic first parser-fuzzing slice now covers request/URL, structured-data,
+native document, archive, media, and logic validation boundaries; its scope and remaining
+format-aware expansion are recorded in [`fuzzing.md`](fuzzing.md). The remaining fourth-increment
+work covers that expansion, reproducible builds, storage lifecycle, and the complete failure
+catalogue.
 
 ## Runtime flow
 

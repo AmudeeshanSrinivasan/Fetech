@@ -7,6 +7,7 @@ import json
 import re
 import shutil
 import sys
+from collections.abc import Mapping
 from importlib.util import find_spec
 from pathlib import Path
 
@@ -116,13 +117,27 @@ class ClingoPlannerBackend:
     def _selected_nodes(output: bytes) -> set[str]:
         try:
             document = json.loads(output)
-            witnesses = document["Call"][0]["Witnesses"]
-        except (json.JSONDecodeError, KeyError, IndexError, TypeError) as exc:
+        except (UnicodeError, json.JSONDecodeError, RecursionError) as exc:
             raise BackendOutputError("Clingo returned malformed JSON") from exc
+
+        if not isinstance(document, Mapping):
+            raise BackendOutputError("Clingo returned malformed JSON")
+        calls = document.get("Call")
+        if not isinstance(calls, list) or len(calls) != 1 or not isinstance(calls[0], Mapping):
+            raise BackendOutputError("Clingo returned malformed JSON")
+        witnesses = calls[0].get("Witnesses")
+        if not isinstance(witnesses, list):
+            raise BackendOutputError("Clingo returned malformed JSON")
         if len(witnesses) != 1:
             raise BackendOutputError(f"Clingo returned {len(witnesses)} answer sets; expected exactly one")
+        witness = witnesses[0]
+        if not isinstance(witness, Mapping):
+            raise BackendOutputError("Clingo returned malformed JSON")
+        values = witness.get("Value", [])
+        if not isinstance(values, list) or not all(isinstance(value, str) for value in values):
+            raise BackendOutputError("Clingo returned malformed JSON")
         selected: set[str] = set()
-        for value in witnesses[0].get("Value", []):
+        for value in values:
             match = _SELECTED.fullmatch(value)
             if match:
                 selected.add(match.group(1))
