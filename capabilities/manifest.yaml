@@ -292,23 +292,94 @@ categories:
   - id: documents
     name: Documents and files
     closure_release: v0.4
-    adapter: document
+    adapter: documents
     risk_class: high
     capabilities:
-      - {id: pdf, kind: format_handler}
-      - {id: scanned_pdf, kind: format_handler}
-      - {id: docx, kind: format_handler}
-      - {id: pptx, kind: format_handler}
-      - {id: xlsx, kind: format_handler}
-      - {id: csv, kind: format_handler}
-      - {id: txt, kind: format_handler}
-      - {id: markdown, kind: format_handler}
-      - {id: json_file, kind: format_handler}
-      - {id: xml_file, kind: format_handler}
-      - {id: zip_archive, kind: format_handler}
-      - {id: github_raw, kind: connector}
-      - {id: git_lfs, kind: connector}
-      - {id: dataset_file, kind: format_handler}
+      - id: pdf
+        kind: format_handler
+        reference: docs/capability-catalog.md#pdf
+        tests:
+          - tests/test_v04_capability_matrix.py::test_v04_capability_evidence_matrix[pdf]
+          - tests/test_v04_documents.py::test_real_isolated_worker_normalizes_every_document_capability[pdf]
+      - id: scanned_pdf
+        kind: format_handler
+        reference: docs/capability-catalog.md#scanned-pdf
+        tests:
+          - tests/test_v04_capability_matrix.py::test_v04_capability_evidence_matrix[scanned_pdf]
+          - tests/test_v04_documents.py::test_configured_pdf_ocr_transitions_needs_ocr_to_accepted_with_lineage
+      - id: docx
+        kind: format_handler
+        reference: docs/capability-catalog.md#docx
+        tests:
+          - tests/test_v04_capability_matrix.py::test_v04_capability_evidence_matrix[docx]
+          - tests/test_v04_documents.py::test_real_isolated_worker_normalizes_every_document_capability[docx]
+      - id: pptx
+        kind: format_handler
+        reference: docs/capability-catalog.md#pptx
+        tests:
+          - tests/test_v04_capability_matrix.py::test_v04_capability_evidence_matrix[pptx]
+          - tests/test_v04_documents.py::test_real_isolated_worker_normalizes_every_document_capability[pptx]
+      - id: xlsx
+        kind: format_handler
+        reference: docs/capability-catalog.md#xlsx
+        tests:
+          - tests/test_v04_capability_matrix.py::test_v04_capability_evidence_matrix[xlsx]
+          - tests/test_v04_documents.py::test_real_isolated_worker_normalizes_every_document_capability[xlsx]
+      - id: csv
+        kind: format_handler
+        reference: docs/capability-catalog.md#csv
+        tests:
+          - tests/test_v04_capability_matrix.py::test_v04_capability_evidence_matrix[csv]
+          - tests/test_v04_documents.py::test_real_isolated_worker_normalizes_every_document_capability[csv]
+      - id: txt
+        kind: format_handler
+        reference: docs/capability-catalog.md#txt
+        tests:
+          - tests/test_v04_capability_matrix.py::test_v04_capability_evidence_matrix[txt]
+          - tests/test_v04_documents.py::test_real_isolated_worker_normalizes_every_document_capability[txt]
+      - id: markdown
+        kind: format_handler
+        reference: docs/capability-catalog.md#markdown
+        tests:
+          - tests/test_v04_capability_matrix.py::test_v04_capability_evidence_matrix[markdown]
+          - tests/test_v04_documents.py::test_real_isolated_worker_normalizes_every_document_capability[markdown]
+      - id: json_file
+        kind: format_handler
+        reference: docs/capability-catalog.md#json-file
+        tests:
+          - tests/test_v04_capability_matrix.py::test_v04_capability_evidence_matrix[json_file]
+          - tests/test_v04_documents.py::test_real_isolated_worker_normalizes_every_document_capability[json_file]
+      - id: xml_file
+        kind: format_handler
+        reference: docs/capability-catalog.md#xml-file
+        tests:
+          - tests/test_v04_capability_matrix.py::test_v04_capability_evidence_matrix[xml_file]
+          - tests/test_v04_documents.py::test_real_isolated_worker_normalizes_every_document_capability[xml_file]
+      - id: zip_archive
+        kind: format_handler
+        adapter: archive
+        reference: docs/capability-catalog.md#zip-archive
+        tests:
+          - tests/test_v04_capability_matrix.py::test_v04_capability_evidence_matrix[zip_archive]
+          - tests/test_v04_cache_archives.py::test_real_archive_worker_is_ephemeral_and_returns_bounded_members
+      - id: github_raw
+        kind: connector
+        reference: docs/capability-catalog.md#github-raw
+        tests:
+          - tests/test_v04_capability_matrix.py::test_v04_capability_evidence_matrix[github_raw]
+          - tests/test_v04_documents.py::test_github_raw_accepts_only_the_exact_raw_origin_and_file_path
+      - id: git_lfs
+        kind: connector
+        reference: docs/capability-catalog.md#git-lfs
+        tests:
+          - tests/test_v04_capability_matrix.py::test_v04_capability_evidence_matrix[git_lfs]
+          - tests/test_v04_documents.py::test_git_lfs_resolver_is_exact_origin_sanitized_bounded_and_lineaged
+      - id: dataset_file
+        kind: format_handler
+        reference: docs/capability-catalog.md#dataset-file
+        tests:
+          - tests/test_v04_capability_matrix.py::test_v04_capability_evidence_matrix[dataset_file]
+          - tests/test_v04_documents.py::test_real_isolated_worker_normalizes_every_document_capability[dataset_file]
 
   - id: media
     name: Images, audio, video, and media
@@ -316,17 +387,72 @@ categories:
     adapter: media
     risk_class: high
     capabilities:
-      - {id: image, kind: format_handler}
-      - {id: image_metadata, kind: extractor}
-      - {id: image_ocr, kind: extractor}
-      - {id: screenshot_to_text, kind: extractor}
-      - {id: video_metadata, kind: extractor}
-      - {id: audio_metadata, kind: extractor}
-      - {id: transcript, kind: extractor}
-      - {id: youtube_metadata, kind: connector}
-      - {id: podcast_feed, kind: connector}
-      - {id: thumbnail, kind: extractor}
-      - {id: exif_metadata, kind: extractor}
+      - id: image
+        kind: format_handler
+        reference: docs/capability-catalog.md#image
+        tests:
+          - tests/test_v04_capability_matrix.py::test_v04_capability_evidence_matrix[image]
+          - tests/test_v04_media.py::test_all_eleven_media_capabilities_have_bounded_artifact_paths
+      - id: image_metadata
+        kind: extractor
+        reference: docs/capability-catalog.md#image-metadata
+        tests:
+          - tests/test_v04_capability_matrix.py::test_v04_capability_evidence_matrix[image_metadata]
+          - tests/test_v04_media.py::test_all_eleven_media_capabilities_have_bounded_artifact_paths
+      - id: image_ocr
+        kind: extractor
+        reference: docs/capability-catalog.md#image-ocr
+        tests:
+          - tests/test_v04_capability_matrix.py::test_v04_capability_evidence_matrix[image_ocr]
+          - tests/test_v04_media.py::test_all_eleven_media_capabilities_have_bounded_artifact_paths
+      - id: screenshot_to_text
+        kind: extractor
+        reference: docs/capability-catalog.md#screenshot-to-text
+        tests:
+          - tests/test_v04_capability_matrix.py::test_v04_capability_evidence_matrix[screenshot_to_text]
+          - tests/test_v04_media.py::test_all_eleven_media_capabilities_have_bounded_artifact_paths
+      - id: video_metadata
+        kind: extractor
+        reference: docs/capability-catalog.md#video-metadata
+        tests:
+          - tests/test_v04_capability_matrix.py::test_v04_capability_evidence_matrix[video_metadata]
+          - tests/test_v04_media.py::test_all_eleven_media_capabilities_have_bounded_artifact_paths
+      - id: audio_metadata
+        kind: extractor
+        reference: docs/capability-catalog.md#audio-metadata
+        tests:
+          - tests/test_v04_capability_matrix.py::test_v04_capability_evidence_matrix[audio_metadata]
+          - tests/test_v04_media.py::test_all_eleven_media_capabilities_have_bounded_artifact_paths
+      - id: transcript
+        kind: extractor
+        reference: docs/capability-catalog.md#transcript
+        tests:
+          - tests/test_v04_capability_matrix.py::test_v04_capability_evidence_matrix[transcript]
+          - tests/test_v04_media.py::test_all_eleven_media_capabilities_have_bounded_artifact_paths
+      - id: youtube_metadata
+        kind: connector
+        reference: docs/capability-catalog.md#youtube-metadata
+        tests:
+          - tests/test_v04_capability_matrix.py::test_v04_capability_evidence_matrix[youtube_metadata]
+          - tests/test_v04_ytdlp.py::test_ytdlp_provider_uses_a_fixed_isolated_bounded_worker
+      - id: podcast_feed
+        kind: connector
+        reference: docs/capability-catalog.md#podcast-feed
+        tests:
+          - tests/test_v04_capability_matrix.py::test_v04_capability_evidence_matrix[podcast_feed]
+          - tests/test_v04_media.py::test_all_eleven_media_capabilities_have_bounded_artifact_paths
+      - id: thumbnail
+        kind: extractor
+        reference: docs/capability-catalog.md#thumbnail
+        tests:
+          - tests/test_v04_capability_matrix.py::test_v04_capability_evidence_matrix[thumbnail]
+          - tests/test_v04_media.py::test_all_eleven_media_capabilities_have_bounded_artifact_paths
+      - id: exif_metadata
+        kind: extractor
+        reference: docs/capability-catalog.md#exif-metadata
+        tests:
+          - tests/test_v04_capability_matrix.py::test_v04_capability_evidence_matrix[exif_metadata]
+          - tests/test_v04_media.py::test_all_eleven_media_capabilities_have_bounded_artifact_paths
 
   - id: cache
     name: Cache, snapshots, and archives
@@ -334,17 +460,72 @@ categories:
     adapter: cache
     risk_class: medium
     capabilities:
-      - {id: search_snippet_cache, kind: storage_strategy}
-      - {id: search_cache, kind: storage_strategy}
-      - {id: search_engine_cache_adapter, kind: connector}
-      - {id: alternate_search_cache_adapter, kind: connector}
-      - {id: web_archive, kind: connector}
-      - {id: internet_archive_snapshot, kind: connector}
-      - {id: local_snapshot, kind: storage_strategy}
-      - {id: previous_successful_snapshot, kind: storage_strategy}
-      - {id: cdn_copy, kind: connector}
-      - {id: browser_cache, kind: storage_strategy}
-      - {id: rag_document_cache, kind: storage_strategy}
+      - id: search_snippet_cache
+        kind: storage_strategy
+        reference: docs/capability-catalog.md#search-snippet-cache
+        tests:
+          - tests/test_v04_capability_matrix.py::test_v04_capability_evidence_matrix[search_snippet_cache]
+          - tests/test_v04_cache_archives.py::test_native_storage_strategies_store_only_validated_immutable_artifacts
+      - id: search_cache
+        kind: storage_strategy
+        reference: docs/capability-catalog.md#search-cache
+        tests:
+          - tests/test_v04_capability_matrix.py::test_v04_capability_evidence_matrix[search_cache]
+          - tests/test_v04_cache_archives.py::test_native_storage_strategies_store_only_validated_immutable_artifacts
+      - id: search_engine_cache_adapter
+        kind: connector
+        reference: docs/capability-catalog.md#search-engine-cache-adapter
+        tests:
+          - tests/test_v04_capability_matrix.py::test_v04_capability_evidence_matrix[search_engine_cache_adapter]
+          - tests/test_v04_cache_archives.py::test_optional_connectors_preserve_original_authority_and_store_snapshot
+      - id: alternate_search_cache_adapter
+        kind: connector
+        reference: docs/capability-catalog.md#alternate-search-cache-adapter
+        tests:
+          - tests/test_v04_capability_matrix.py::test_v04_capability_evidence_matrix[alternate_search_cache_adapter]
+          - tests/test_v04_cache_archives.py::test_optional_connectors_preserve_original_authority_and_store_snapshot
+      - id: web_archive
+        kind: connector
+        reference: docs/capability-catalog.md#web-archive
+        tests:
+          - tests/test_v04_capability_matrix.py::test_v04_capability_evidence_matrix[web_archive]
+          - tests/test_v04_cache_archives.py::test_optional_connectors_preserve_original_authority_and_store_snapshot
+      - id: internet_archive_snapshot
+        kind: connector
+        reference: docs/capability-catalog.md#internet-archive-snapshot
+        tests:
+          - tests/test_v04_capability_matrix.py::test_v04_capability_evidence_matrix[internet_archive_snapshot]
+          - tests/test_wayback.py::test_builtin_wayback_connector_fetches_an_exact_bounded_capture
+      - id: local_snapshot
+        kind: storage_strategy
+        reference: docs/capability-catalog.md#local-snapshot
+        tests:
+          - tests/test_v04_capability_matrix.py::test_v04_capability_evidence_matrix[local_snapshot]
+          - tests/test_v04_cache_archives.py::test_native_storage_strategies_store_only_validated_immutable_artifacts
+      - id: previous_successful_snapshot
+        kind: storage_strategy
+        reference: docs/capability-catalog.md#previous-successful-snapshot
+        tests:
+          - tests/test_v04_capability_matrix.py::test_v04_capability_evidence_matrix[previous_successful_snapshot]
+          - tests/test_v04_cache_archives.py::test_previous_successful_snapshot_restores_the_exact_partition
+      - id: cdn_copy
+        kind: connector
+        reference: docs/capability-catalog.md#cdn-copy
+        tests:
+          - tests/test_v04_capability_matrix.py::test_v04_capability_evidence_matrix[cdn_copy]
+          - tests/test_v04_cache_archives.py::test_optional_connectors_preserve_original_authority_and_store_snapshot
+      - id: browser_cache
+        kind: storage_strategy
+        reference: docs/capability-catalog.md#browser-cache
+        tests:
+          - tests/test_v04_capability_matrix.py::test_v04_capability_evidence_matrix[browser_cache]
+          - tests/test_v04_cache_archives.py::test_native_storage_strategies_store_only_validated_immutable_artifacts
+      - id: rag_document_cache
+        kind: storage_strategy
+        reference: docs/capability-catalog.md#rag-document-cache
+        tests:
+          - tests/test_v04_capability_matrix.py::test_v04_capability_evidence_matrix[rag_document_cache]
+          - tests/test_v04_cache_archives.py::test_native_storage_strategies_store_only_validated_immutable_artifacts
 
   - id: validation
     name: Validation, provenance, and observability

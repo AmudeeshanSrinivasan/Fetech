@@ -165,7 +165,11 @@ async def test_mcp_fetch_content_exposes_scoped_v03_request_parameters(
     assert providers == {
         "credential_provider": credential_provider,
         "form_submission_provider": form_submission_provider,
+        "git_lfs_resolver": None,
+        "media_adapter": None,
+        "pdf_ocr_provider": None,
         "session_provider": session_provider,
+        "snapshot_connectors": None,
     }
 
 
@@ -177,7 +181,7 @@ def test_cli_plan_and_fetch_expose_strict_v03_options() -> None:
         assert help_result.exit_code == 0, help_result.output
         assert "--auth-ref" in help_result.output
         assert "--privacy" in help_result.output
-        assert "<public|private>" in help_result.output
+        assert "public|private" in help_result.output
         assert "--approve" in help_result.output
 
         invalid = runner.invoke(

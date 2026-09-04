@@ -70,6 +70,70 @@ _V03_OPTIONAL: dict[str, str] = {
     "sso": "fetech.adapters.auth.AuthAdapter[configured SSO session connector]",
 }
 
+_V04_NATIVE: dict[str, str] = {
+    "browser_cache": "fetech.adapters.cache.CacheAdapter[validated SnapshotStore]",
+    "csv": "fetech.adapters.documents.DocumentAdapter[bounded DocumentParseWorker]",
+    "dataset_file": "fetech.adapters.documents.DocumentAdapter[signature-first routing]",
+    "exif_metadata": "fetech.adapters.media.MediaAdapter[bounded EXIF parser]",
+    "github_raw": (
+        "fetech.adapters.documents.DocumentAdapter[exact raw.githubusercontent.com origin]"
+    ),
+    "internet_archive_snapshot": (
+        "fetech.wayback.WaybackSnapshotConnector[pinned exact-host Wayback client]"
+    ),
+    "json_file": "fetech.adapters.documents.DocumentAdapter[bounded JSON parser]",
+    "local_snapshot": "fetech.adapters.cache.CacheAdapter[validated SnapshotStore]",
+    "markdown": "fetech.adapters.documents.DocumentAdapter[bounded DocumentParseWorker]",
+    "podcast_feed": "fetech.adapters.media.MediaAdapter[bounded RSS parser]",
+    "previous_successful_snapshot": (
+        "fetech.adapters.cache.CacheAdapter[integrity-verified SnapshotStore lookup]"
+    ),
+    "rag_document_cache": "fetech.adapters.cache.CacheAdapter[validated SnapshotStore]",
+    "search_cache": "fetech.adapters.cache.CacheAdapter[validated SnapshotStore]",
+    "search_snippet_cache": "fetech.adapters.cache.CacheAdapter[validated SnapshotStore]",
+    "txt": "fetech.adapters.documents.DocumentAdapter[bounded DocumentParseWorker]",
+    "xml_file": "fetech.adapters.documents.DocumentAdapter[DTD-free XML parser]",
+    "zip_archive": "fetech.adapters.archive.ArchiveAdapter[bounded ArchiveParseWorker]",
+}
+
+_V04_OPTIONAL: dict[str, str] = {
+    "alternate_search_cache_adapter": (
+        "fetech.adapters.cache.CacheAdapter[configured SnapshotConnector]"
+    ),
+    "audio_metadata": "fetech.adapters.media.MediaAdapter[WAV or bounded FFprobeWorker]",
+    "cdn_copy": "fetech.adapters.cache.CacheAdapter[configured SnapshotConnector]",
+    "docx": "fetech.adapters.documents.DocumentAdapter[python-docx worker]",
+    "git_lfs": (
+        "fetech.adapters.documents.DocumentAdapter[configured exact-origin LFS resolver]"
+    ),
+    "image_ocr": "fetech.adapters.media.MediaAdapter[bounded TesseractOCRWorker]",
+    "image": (
+        "fetech.adapters.media.MediaAdapter[bounded header parser + "
+        "PillowImageValidationWorker]"
+    ),
+    "image_metadata": (
+        "fetech.adapters.media.MediaAdapter[bounded header parser + "
+        "PillowImageValidationWorker]"
+    ),
+    "pdf": "fetech.adapters.documents.DocumentAdapter[pypdf worker]",
+    "pptx": "fetech.adapters.documents.DocumentAdapter[python-pptx worker]",
+    "scanned_pdf": (
+        "fetech.adapters.documents.DocumentAdapter[pypdf worker + configured PDFOCRProvider]"
+    ),
+    "screenshot_to_text": "fetech.adapters.media.MediaAdapter[bounded TesseractOCRWorker]",
+    "search_engine_cache_adapter": (
+        "fetech.adapters.cache.CacheAdapter[configured SnapshotConnector]"
+    ),
+    "thumbnail": "fetech.adapters.media.MediaAdapter[bounded FFmpegThumbnailWorker]",
+    "transcript": "fetech.adapters.media.MediaAdapter[bounded parser or TranscriptProvider]",
+    "video_metadata": "fetech.adapters.media.MediaAdapter[bounded FFprobeWorker]",
+    "web_archive": "fetech.adapters.cache.CacheAdapter[configured SnapshotConnector]",
+    "xlsx": "fetech.adapters.documents.DocumentAdapter[openpyxl worker]",
+    "youtube_metadata": (
+        "fetech.yt_dlp.YTDLPMetadataWorker[bounded built-in yt-dlp metadata worker]"
+    ),
+}
+
 _IMPLEMENTATIONS = {
     "browser": "fetech.adapters.browser.BrowserAdapter[fetech[browser]]",
     "core": "fetech.gateway._CoreAdapter",
@@ -95,6 +159,16 @@ def implementation_for(
         return {
             "status": ImplementationStatus.OPTIONAL,
             "implementation": _V03_OPTIONAL[capability_id],
+        }
+    if closure_release == "v0.4" and capability_id in _V04_NATIVE:
+        return {
+            "status": ImplementationStatus.NATIVE,
+            "implementation": _V04_NATIVE[capability_id],
+        }
+    if closure_release == "v0.4" and capability_id in _V04_OPTIONAL:
+        return {
+            "status": ImplementationStatus.OPTIONAL,
+            "implementation": _V04_OPTIONAL[capability_id],
         }
     if closure_release not in {"v0.1", "v0.2"}:
         return {
@@ -131,7 +205,12 @@ def release_report(
     return {
         "release": release,
         "capability_count": len(selected),
-        "available_count": sum(entry.available for entry in selected),
+        "implementation_path_count": sum(
+            entry.implementation_available for entry in selected
+        ),
+        "runtime_available_count": sum(
+            entry.runtime_available for entry in selected
+        ),
         "closure_ready": not gaps,
         "status_counts": dict(sorted(counts.items())),
         "gaps": gaps,

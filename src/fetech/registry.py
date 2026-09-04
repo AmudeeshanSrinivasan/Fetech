@@ -79,7 +79,21 @@ class CapabilityRegistry:
                         lifecycle_status=str(capability.get("status", "registered")),
                         implementation_status=implementation["status"],
                         implementation=implementation["implementation"],
-                        available=implementation["status"] != ImplementationStatus.PLANNED,
+                        implementation_available=(
+                            implementation["status"] != ImplementationStatus.PLANNED
+                        ),
+                        runtime_available=(
+                            implementation["status"] == ImplementationStatus.NATIVE
+                        ),
+                        availability_reason=(
+                            "included in the required runtime"
+                            if implementation["status"] == ImplementationStatus.NATIVE
+                            else (
+                                "requires an optional dependency or configured provider"
+                                if implementation["status"] == ImplementationStatus.OPTIONAL
+                                else "implementation is planned"
+                            )
+                        ),
                     )
                 )
         return str(raw.get("manifest_version", "unknown")), tuple(entries)

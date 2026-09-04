@@ -478,10 +478,13 @@ def test_v03_report_closes_authentication_and_structured_api_categories() -> Non
     report = release_report(registry, "v0.3")
 
     assert report["capability_count"] == 23
-    assert report["available_count"] == 23
+    assert report["implementation_path_count"] == 23
+    assert report["runtime_available_count"] == 21
     assert report["closure_ready"] is True
     assert report["status_counts"] == {"native": 21, "optional": 2}
     assert report["gaps"] == []
     assert all(
-        entry.available for entry in registry if entry.closure_release == "v0.3"
+        entry.implementation_available
+        for entry in registry
+        if entry.closure_release == "v0.3"
     )

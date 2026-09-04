@@ -4,14 +4,28 @@ from __future__ import annotations
 
 import json
 import sys
+from pathlib import Path
 
 from fetech.adapters.base import AdapterDependencyError, AdapterExecutionError
 from fetech.browser_worker import BROWSER_WORKER_ADDRESS_SPACE_MB
 from fetech.logic.base import LogicBackendError
 from fetech.logic.process import run_bounded
+from fetech.worker_isolation import (
+    WorkerIsolationProfile,
+    WorkerIsolationRuntime,
+)
 
 
 class BrowserReaderWorker:
+    def __init__(
+        self,
+        *,
+        isolation: WorkerIsolationRuntime | None = None,
+        browser_artifacts_path: Path | None = None,
+    ) -> None:
+        self.isolation = isolation or WorkerIsolationRuntime.from_environment()
+        self.browser_artifacts_path = browser_artifacts_path
+
     async def extract(
         self,
         document: str,
@@ -21,6 +35,7 @@ class BrowserReaderWorker:
         timeout_seconds: float,
         maximum_bytes: int,
     ) -> str:
+        del target
         if timeout_seconds <= 0:
             raise AdapterExecutionError("browser reader has no browser-time budget")
         worker_byte_limit = min(maximum_bytes, 50_000_000)
@@ -29,7 +44,6 @@ class BrowserReaderWorker:
         payload = json.dumps(
             {
                 "document": document,
-                "target": target,
                 "user_agent": user_agent,
                 "timeout_seconds": timeout_seconds,
                 "maximum_bytes": worker_byte_limit,
@@ -43,6 +57,25 @@ class BrowserReaderWorker:
                 timeout_seconds=timeout_seconds,
                 memory_mb=BROWSER_WORKER_ADDRESS_SPACE_MB,
                 maximum_output_bytes=worker_byte_limit + 4_096,
+                maximum_file_bytes=512_000_000,
+                isolation=self.isolation.request(
+                    WorkerIsolationProfile.BROWSER_OFFLINE,
+                    read_only_paths=(
+                        (self.browser_artifacts_path,)
+                        if self.browser_artifacts_path is not None
+                        else ()
+                    ),
+                    environment=(
+                        (
+                            (
+                                "PLAYWRIGHT_BROWSERS_PATH",
+                                str(self.browser_artifacts_path),
+                            ),
+                        )
+                        if self.browser_artifacts_path is not None
+                        else ()
+                    ),
+                ),
             )
         except LogicBackendError as exc:
             raise AdapterExecutionError("bounded browser reader process failed") from exc

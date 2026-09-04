@@ -11,7 +11,7 @@ import pytest
 from pydantic import ValidationError
 from sqlalchemy import select
 
-from fetech.adapters.base import ExecutionContext
+from fetech.adapters.base import AdapterBudgetExceededError, ExecutionContext
 from fetech.adapters.http import HTTPAdapter
 from fetech.adapters.reader import ReaderAdapter
 from fetech.browser_reader import BrowserReaderWorker
@@ -21,7 +21,9 @@ from fetech.gateway import UniversalFetchGateway
 from fetech.http3 import CurlHTTP3Client, HTTP3Response
 from fetech.ledger import EventLedger, RunRow
 from fetech.models import (
+    AttemptStatus,
     CapabilityOutcomeStatus,
+    FetchAttempt,
     FetchRequest,
     PlanNode,
     ResourceBudget,
@@ -61,7 +63,8 @@ def test_v01_inventory_is_truthful_and_cardinality_locked() -> None:
     assert report == {
         "release": "v0.1",
         "capability_count": 56,
-        "available_count": 56,
+        "implementation_path_count": 56,
+        "runtime_available_count": 51,
         "closure_ready": True,
         "status_counts": {"native": 51, "optional": 5},
         "gaps": [],
@@ -448,8 +451,18 @@ async def test_browser_reader_exit_two_without_json_is_dependency_missing(
         timeout_seconds: float,
         memory_mb: int,
         maximum_output_bytes: int,
+        maximum_file_bytes: int | None,
+        isolation: object,
     ) -> ProcessResult:
-        del arguments, stdin, timeout_seconds, memory_mb, maximum_output_bytes
+        del (
+            arguments,
+            stdin,
+            timeout_seconds,
+            memory_mb,
+            maximum_output_bytes,
+            maximum_file_bytes,
+            isolation,
+        )
         return ProcessResult(returncode=2, stdout=b"", stderr=b"private worker detail")
 
     monkeypatch.setattr("fetech.browser_reader.run_bounded", missing_worker)
@@ -480,8 +493,17 @@ async def test_browser_reader_crash_is_typed_bounded_and_does_not_leak_stderr(
         timeout_seconds: float,
         memory_mb: int,
         maximum_output_bytes: int,
+        maximum_file_bytes: int | None,
+        isolation: object,
     ) -> ProcessResult:
-        del arguments, stdin, timeout_seconds, maximum_output_bytes
+        del (
+            arguments,
+            stdin,
+            timeout_seconds,
+            maximum_output_bytes,
+            maximum_file_bytes,
+            isolation,
+        )
         nonlocal observed_memory_mb
         observed_memory_mb = memory_mb
         return ProcessResult(returncode=-9, stdout=b"", stderr=b"private worker detail")
@@ -550,6 +572,138 @@ async def test_configured_remote_reader_is_policy_scoped(
     artifact = context.artifacts[-1]
     assert artifact.source_resource_id == resource.resource_id
     assert artifact.extractor_version.startswith("jina-reader/")
+
+
+@pytest.mark.asyncio
+async def test_remote_reader_is_capped_by_the_remaining_decompressed_budget(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from fetech.models import QualityAssessment, Resource
+    from fetech.storage import build_artifact
+
+    cas = FileSystemCAS(tmp_path / "cas")
+    context = ExecutionContext(
+        run_id=uuid4(),
+        request=FetchRequest(
+            target="https://example.com",
+            output_requirements=("jina_reader",),
+            policy_profile="allow_remote_readers",
+            budget=ResourceBudget(decompressed_bytes=20),
+        ),
+        cas=cas,
+    )
+    resource = Resource(canonical_url="https://example.com/", requested_url="https://example.com/")
+    uri, digest, size = await cas.put(b"<main>original publisher body</main>")
+    context.resources.append(resource)
+    context.artifacts.append(
+        build_artifact(
+            role="source",
+            representation="raw",
+            media_type="text/html",
+            cas_uri=uri,
+            digest=digest,
+            size=size,
+            resource=resource,
+            extractor="fixture",
+            quality=QualityAssessment(),
+        )
+    )
+
+    async def remote(_: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, content=b"x" * 21)
+
+    adapter = ReaderAdapter(
+        remote_reader_template="https://reader.example/read?url={target}",
+        policy=_public_policy(monkeypatch),
+        remote_transport=httpx.MockTransport(remote),
+    )
+    with pytest.raises(
+        AdapterBudgetExceededError,
+        match="remaining decompressed byte budget",
+    ):
+        await adapter.execute(
+            PlanNode(id="reader", capability_id="jina_reader", adapter="reader"),
+            context,
+        )
+
+
+@pytest.mark.asyncio
+async def test_remote_reader_and_publisher_http_share_the_wire_byte_budget(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from fetech.models import QualityAssessment, Resource
+    from fetech.storage import build_artifact
+
+    publisher_body = b"<main>publisher body</main>"
+    remote_body = b"x" * 21
+    budget = ResourceBudget(
+        bytes=len(publisher_body) + len(remote_body) - 1,
+        decompressed_bytes=1_000,
+    )
+    cas = FileSystemCAS(tmp_path / "cas")
+    request = FetchRequest(
+        target="https://example.com",
+        output_requirements=("jina_reader",),
+        policy_profile="allow_remote_readers",
+        budget=budget,
+    )
+    context = ExecutionContext(run_id=uuid4(), request=request, cas=cas)
+    resource = Resource(
+        canonical_url="https://example.com/",
+        requested_url="https://example.com/",
+    )
+    uri, digest, size = await cas.put(publisher_body)
+    context.resources.append(resource)
+    context.artifacts.append(
+        build_artifact(
+            role="source",
+            representation="raw",
+            media_type="text/html",
+            cas_uri=uri,
+            digest=digest,
+            size=size,
+            resource=resource,
+            extractor="fixture",
+            quality=QualityAssessment(),
+        )
+    )
+    context.attempts.append(
+        FetchAttempt(
+            capability_id="http_get",
+            sanitized_destination=request.target,
+            status=AttemptStatus.SUCCEEDED,
+            consumed_budget={
+                "bytes": len(publisher_body),
+                "decompressed_bytes": len(publisher_body),
+            },
+        )
+    )
+
+    async def remote(_: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, content=remote_body)
+
+    adapter = ReaderAdapter(
+        remote_reader_template="https://reader.example/read?url={target}",
+        policy=_public_policy(monkeypatch),
+        remote_transport=httpx.MockTransport(remote),
+    )
+
+    with pytest.raises(
+        AdapterBudgetExceededError,
+        match="remaining wire byte budget",
+    ):
+        await adapter.execute(
+            PlanNode(id="reader", capability_id="jina_reader", adapter="reader"),
+            context,
+        )
+
+    assert context.attempts[-1].consumed_budget == {"bytes": len(remote_body)}
+    assert sum(
+        int(attempt.consumed_budget.get("bytes", 0))
+        for attempt in context.attempts
+    ) > budget.bytes
 
 
 def test_deterministic_language_detection_marks_mismatch() -> None:

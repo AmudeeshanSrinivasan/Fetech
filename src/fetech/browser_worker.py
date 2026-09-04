@@ -8,6 +8,8 @@ import json
 import sys
 from typing import Any
 
+from fetech.version import DEFAULT_USER_AGENT
+
 # Linux RLIMIT_AS measures reserved virtual address space rather than resident
 # memory. Modern 64-bit V8 reserves a 1 TiB sandbox plus guard regions before
 # rendering, so both local entry points share a finite 2 TiB compatibility
@@ -52,7 +54,7 @@ async def _extract(payload: dict[str, Any]) -> str:
                 context = await browser.new_context(
                     java_script_enabled=False,
                     service_workers="block",
-                    user_agent=str(payload.get("user_agent", "Fetech/0.1")),
+                    user_agent=str(payload.get("user_agent", DEFAULT_USER_AGENT)),
                 )
                 await context.set_offline(True)
                 page = await context.new_page()
@@ -122,7 +124,7 @@ async def _render(payload: dict[str, Any]) -> dict[str, Any]:
                 context = await browser.new_context(
                     java_script_enabled=True,
                     service_workers="block",
-                    user_agent=str(payload.get("user_agent", "Fetech/0.3")),
+                    user_agent=str(payload.get("user_agent", DEFAULT_USER_AGENT)),
                 )
                 await context.set_offline(True)
                 page = await context.new_page()

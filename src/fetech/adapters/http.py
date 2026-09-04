@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import re
 import time
+from contextlib import AsyncExitStack
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from html.parser import HTMLParser
@@ -17,6 +18,7 @@ import httpx
 from fetech.adapters.base import (
     AdapterAuthExpiredError,
     AdapterAuthRequiredError,
+    AdapterBudgetExceededError,
     AdapterDependencyError,
     AdapterExecutionError,
     AdapterNotFoundError,
@@ -42,6 +44,7 @@ from fetech.models import (
     Resource,
 )
 from fetech.quality import assess_binary, assess_text
+from fetech.scheduling import NetworkDeadlineExceededError, NetworkScheduler
 from fetech.security import (
     PolicyBlockedError,
     SafeURLPolicy,
@@ -61,6 +64,30 @@ _COOKIE_NAME = re.compile(r"^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$")
 _COOKIE_VALUE = re.compile(r"^[\x21\x23-\x2B\x2D-\x3A\x3C-\x5B\x5D-\x7E]*$")
 
 
+@dataclass(slots=True)
+class _HTTPUsage:
+    wire_bytes: int = 0
+    decompressed_bytes: int = 0
+    redirects: int = 0
+
+    def observe(
+        self,
+        *,
+        wire_bytes: int | None = None,
+        decompressed_bytes: int | None = None,
+        redirects: int | None = None,
+    ) -> None:
+        if wire_bytes is not None:
+            self.wire_bytes = max(self.wire_bytes, wire_bytes)
+        if decompressed_bytes is not None:
+            self.decompressed_bytes = max(
+                self.decompressed_bytes,
+                decompressed_bytes,
+            )
+        if redirects is not None:
+            self.redirects = max(self.redirects, redirects)
+
+
 class HTTPAdapter:
     def __init__(
         self,
@@ -73,18 +100,22 @@ class HTTPAdapter:
         per_host_concurrency: int = 2,
         per_host_min_interval_seconds: float = 0.0,
         http3_client: CurlHTTP3Client | None = None,
+        scheduler: NetworkScheduler | None = None,
     ) -> None:
         self.user_agent = user_agent
         self.policy = policy or SafeURLPolicy()
         self.credential_provider = credential_provider or NullCredentialProvider()
         self.transport = transport
-        self._global_concurrency = global_concurrency
-        self._global_limit = asyncio.Semaphore(global_concurrency)
-        self._per_host_concurrency = per_host_concurrency
-        self._host_limits: dict[str, asyncio.Semaphore] = {}
-        self._per_host_min_interval_seconds = max(0.0, per_host_min_interval_seconds)
-        self._rate_locks: dict[str, asyncio.Lock] = {}
-        self._last_request_at: dict[str, float] = {}
+        self.scheduler = scheduler or NetworkScheduler(
+            global_concurrency=global_concurrency,
+            per_host_concurrency=per_host_concurrency,
+            per_host_min_interval_seconds=per_host_min_interval_seconds,
+        )
+        self._global_concurrency = self.scheduler.global_concurrency
+        self._per_host_concurrency = self.scheduler.per_host_concurrency
+        self._per_host_min_interval_seconds = (
+            self.scheduler.per_host_min_interval_seconds
+        )
         self.http3_client = http3_client or CurlHTTP3Client()
 
     async def execute(self, node: PlanNode, context: ExecutionContext) -> None:
@@ -97,8 +128,10 @@ class HTTPAdapter:
             ),
             status=AttemptStatus.RUNNING,
         )
+        attempt_index = len(context.attempts)
         context.attempts.append(attempt)
-        started = datetime.now(UTC)
+        started = time.monotonic()
+        usage = _HTTPUsage()
         try:
             response, body, wire_bytes = await self._request(
                 destination,
@@ -108,6 +141,17 @@ class HTTPAdapter:
                     "anonymous"
                     if _anonymous_form_bootstrap(context)
                     else "request"
+                ),
+                usage=usage,
+            )
+            usage.observe(
+                wire_bytes=wire_bytes,
+                decompressed_bytes=(
+                    len(body)
+                    + int(response.extensions.get("fetech_auxiliary_bytes", 0))
+                ),
+                redirects=int(
+                    response.extensions.get("fetech_redirect_count", 0)
                 ),
             )
             media_type = (
@@ -154,7 +198,7 @@ class HTTPAdapter:
             context.artifacts.append(artifact)
             self._record_response_outcomes(context, response, body, media_type, digest, size)
             context.record_quality_outcomes(quality, stage="quality")
-            context.attempts[-1] = attempt.model_copy(
+            context.attempts[attempt_index] = attempt.model_copy(
                 update={
                     "status": AttemptStatus.SUCCEEDED,
                     "finished_at": datetime.now(UTC),
@@ -163,20 +207,53 @@ class HTTPAdapter:
                     "bytes_received": wire_bytes,
                     "artifact_ids": (artifact.artifact_id,),
                     "consumed_budget": {
-                        "bytes": wire_bytes,
-                        "decompressed_bytes": size
-                        + int(response.extensions.get("fetech_auxiliary_bytes", 0)),
-                        "redirects": int(response.extensions.get("fetech_redirect_count", 0)),
-                        "deadline_seconds": (datetime.now(UTC) - started).total_seconds(),
+                        "bytes": usage.wire_bytes,
+                        "decompressed_bytes": usage.decompressed_bytes,
+                        "redirects": usage.redirects,
+                        "deadline_seconds": time.monotonic() - started,
                     },
                 }
             )
         except PolicyBlockedError:
-            context.attempts[-1] = attempt.model_copy(
+            context.attempts[attempt_index] = attempt.model_copy(
                 update={
                     "status": AttemptStatus.FAILED,
                     "finished_at": datetime.now(UTC),
                     "failure_code": "policy",
+                    "bytes_received": usage.wire_bytes,
+                    "consumed_budget": _http_consumed_budget(
+                        usage,
+                        elapsed_seconds=time.monotonic() - started,
+                    ),
+                }
+            )
+            raise
+        except asyncio.CancelledError:
+            context.attempts[attempt_index] = attempt.model_copy(
+                update={
+                    "status": AttemptStatus.CANCELLED,
+                    "finished_at": datetime.now(UTC),
+                    "failure_code": "cancelled",
+                    "bytes_received": usage.wire_bytes,
+                    "consumed_budget": _http_consumed_budget(
+                        usage,
+                        elapsed_seconds=time.monotonic() - started,
+                    ),
+                }
+            )
+            raise
+        except NetworkDeadlineExceededError:
+            context.attempts[attempt_index] = attempt.model_copy(
+                update={
+                    "status": AttemptStatus.FAILED,
+                    "finished_at": datetime.now(UTC),
+                    "failure_code": "budget_exhausted",
+                    "bytes_received": usage.wire_bytes,
+                    "warnings": ("HTTP deadline budget exhausted",),
+                    "consumed_budget": _http_consumed_budget(
+                        usage,
+                        elapsed_seconds=time.monotonic() - started,
+                    ),
                 }
             )
             raise
@@ -187,25 +264,54 @@ class HTTPAdapter:
                 failure_code = "auth_required"
             elif isinstance(exc, AdapterNotFoundError):
                 failure_code = "not_found"
+            elif isinstance(exc, AdapterBudgetExceededError):
+                failure_code = "budget_exhausted"
             else:
                 failure_code = type(exc).__name__
-            context.attempts[-1] = attempt.model_copy(
+            context.attempts[attempt_index] = attempt.model_copy(
                 update={
                     "status": AttemptStatus.FAILED,
                     "finished_at": datetime.now(UTC),
                     "failure_code": failure_code,
                     "warnings": (str(exc),),
+                    "bytes_received": usage.wire_bytes,
+                    "consumed_budget": _http_consumed_budget(
+                        usage,
+                        elapsed_seconds=time.monotonic() - started,
+                    ),
                 }
             )
             raise
+        except httpx.TimeoutException as exc:
+            context.attempts[attempt_index] = attempt.model_copy(
+                update={
+                    "status": AttemptStatus.FAILED,
+                    "finished_at": datetime.now(UTC),
+                    "failure_code": "budget_exhausted",
+                    "warnings": ("HTTP deadline budget exhausted",),
+                    "bytes_received": usage.wire_bytes,
+                    "consumed_budget": _http_consumed_budget(
+                        usage,
+                        elapsed_seconds=time.monotonic() - started,
+                    ),
+                }
+            )
+            raise NetworkDeadlineExceededError(
+                "HTTP deadline budget exhausted"
+            ) from exc
         except (httpx.HTTPError, UnicodeError) as exc:
             message = f"HTTP transport failed: {type(exc).__name__}"
-            context.attempts[-1] = attempt.model_copy(
+            context.attempts[attempt_index] = attempt.model_copy(
                 update={
                     "status": AttemptStatus.FAILED,
                     "finished_at": datetime.now(UTC),
                     "failure_code": type(exc).__name__,
                     "warnings": (message,),
+                    "bytes_received": usage.wire_bytes,
+                    "consumed_budget": _http_consumed_budget(
+                        usage,
+                        elapsed_seconds=time.monotonic() - started,
+                    ),
                 }
             )
             raise AdapterExecutionError(message) from exc
@@ -221,7 +327,10 @@ class HTTPAdapter:
         extra_headers: dict[str, str] | None = None,
         allow_ephemeral_login_cookies: bool = False,
         credential_mode: Literal["request", "anonymous"] = "request",
+        usage: _HTTPUsage | None = None,
     ) -> tuple[httpx.Response, bytes, int]:
+        usage_tracker = usage or _HTTPUsage()
+        request_started = time.monotonic()
         if credential_mode not in {"request", "anonymous"}:
             raise AdapterExecutionError("HTTP credential mode is unsupported")
         if allow_ephemeral_login_cookies and credential_mode != "anonymous":
@@ -233,10 +342,26 @@ class HTTPAdapter:
                 raise AdapterDependencyError(
                     "ephemeral login cookie handoff is unavailable over HTTP/3"
                 )
-            return await self._request_http3(destination, context)
-        maximum_wire_bytes = context.request.budget.bytes
-        maximum_decompressed_bytes = context.request.budget.decompressed_bytes
-        timeout = httpx.Timeout(context.request.budget.deadline_seconds)
+            return await self._request_http3(
+                destination,
+                context,
+                request_started=request_started,
+                usage=usage_tracker,
+            )
+        maximum_wire_bytes = int(context.remaining_budget("bytes"))
+        maximum_decompressed_bytes = int(
+            context.remaining_budget("decompressed_bytes")
+        )
+        if maximum_wire_bytes <= 0 or maximum_decompressed_bytes <= 0:
+            raise AdapterBudgetExceededError(
+                "HTTP acquisition has no remaining byte budget"
+            )
+        timeout = httpx.Timeout(
+            _remaining_http_deadline(
+                request_started,
+                context.request.budget.deadline_seconds,
+            )
+        )
         method, headers = self._request_spec(node, context)
         if method_override is not None:
             method = method_override.strip().upper()
@@ -278,88 +403,446 @@ class HTTPAdapter:
             transport=transport,
         ) as client:
             for _ in range(context.request.budget.redirects + 1):
-                current, decisions = await self.policy.evaluate(current, previous_url=previous)
+                raw_host = _scheduler_host(current)
+                async with AsyncExitStack() as policy_stack:
+                    await policy_stack.enter_async_context(
+                        self.scheduler.slot(
+                            raw_host,
+                            deadline_seconds=_remaining_http_deadline(
+                                request_started,
+                                context.request.budget.deadline_seconds,
+                            ),
+                        )
+                    )
+                    current, decisions = await self.policy.evaluate(
+                        current,
+                        previous_url=previous,
+                    )
+                    context.policy_decisions.extend(decisions)
+                    for decision in decisions:
+                        context.record_outcome(
+                            decision.policy_id,
+                            (
+                                CapabilityOutcomeStatus.APPLIED
+                                if decision.allowed
+                                else CapabilityOutcomeStatus.BLOCKED
+                            ),
+                            "security",
+                            reason=decision.reason,
+                        )
+                    if (
+                        credential_mode == "request"
+                        and context.request.authentication_ref is not None
+                        and credential is None
+                    ):
+                        cached_credential = context.sensitive_state.get(
+                            "credential_material"
+                        )
+                        credential = (
+                            cached_credential
+                            if isinstance(cached_credential, CredentialMaterial)
+                            else await self._resolve_credential(
+                                context.request.authentication_ref
+                            )
+                        )
+                        if not credential.applies_to(current):
+                            reason = (
+                                "credential scope does not match the initial target origin"
+                            )
+                            decision = PolicyDecision(
+                                policy_id="credential_origin_scope",
+                                allowed=False,
+                                reason=reason,
+                                destination=sanitize_url(current),
+                            )
+                            context.record_outcome(
+                                "connector_auth",
+                                CapabilityOutcomeStatus.BLOCKED,
+                                "auth",
+                                reason=reason,
+                            )
+                            raise PolicyBlockedError(reason, (decision,))
+                        if credential.expired:
+                            if credential.capability_id != "bearer_token":
+                                raise AdapterAuthExpiredError(
+                                    "credential material is expired"
+                                )
+                            credential = await self._refresh_credential(
+                                context,
+                                credential,
+                                method=method,
+                                already_attempted=refresh_attempted,
+                            )
+                            refresh_attempted = True
+                            context.sensitive_state["credential_material"] = (
+                                credential
+                            )
+                    if current in visited:
+                        raise AdapterExecutionError("redirect loop detected")
+                    visited.add(current)
+                    host = urlsplit(current).hostname or ""
+                    if isinstance(transport, PinnedAsyncHTTPTransport):
+                        transport.pin(
+                            host,
+                            self.policy.validated_addresses(host),
+                        )
+                    parts = urlsplit(current)
+                    origin = f"{parts.scheme}://{parts.netloc}"
+                    if (
+                        ephemeral_cookie_origin is not None
+                        and canonical_origin(current) != ephemeral_cookie_origin
+                    ):
+                        ephemeral_cookies.clear()
+                        ephemeral_cookie_origin = None
+                    robots_fetched = (
+                        context.request.intent == "crawl"
+                        and origin not in robots_checked
+                    )
+                    if robots_fetched:
+                        robots_checked.add(origin)
+                        client.cookies.clear()
+                        auxiliary_bytes += await self._enforce_robots(
+                            client,
+                            current,
+                            context,
+                            maximum_bytes=min(
+                                512_000,
+                                maximum_decompressed_bytes - auxiliary_bytes,
+                            ),
+                            consumed_before=auxiliary_bytes,
+                            usage=usage_tracker,
+                        )
+                        # The policy/DNS reservation governed the robots request.
+                        # The publisher request is a distinct start and receives
+                        # its own host interval without resolving twice.
+                        await policy_stack.aclose()
+                    context.policy_decisions.append(
+                        PolicyDecision(
+                            policy_id="rate_limit_policy",
+                            allowed=True,
+                            reason=(
+                                "per-host request interval and concurrency "
+                                "policy applied"
+                            ),
+                            destination=sanitize_url(current),
+                        )
+                    )
+                    context.record_outcome(
+                        "rate_limit_policy",
+                        CapabilityOutcomeStatus.APPLIED,
+                        "security",
+                        minimum_interval_seconds=self._per_host_min_interval_seconds,
+                        concurrency=self._per_host_concurrency,
+                    )
+                    hop_headers = dict(headers)
+                    credential_applied = (
+                        credential is not None and credential.applies_to(current)
+                    )
+                    if credential_applied and credential is not None:
+                        hop_headers.update(credential.request_headers())
+                        context.policy_decisions.append(
+                            PolicyDecision(
+                                policy_id="credential_origin_scope",
+                                allowed=True,
+                                reason=(
+                                    "credential material matched the exact "
+                                    "request origin"
+                                ),
+                                destination=sanitize_url(current),
+                            )
+                        )
+                        if not credential_outcome_recorded:
+                            context.record_outcome(
+                                credential.capability_id,
+                                CapabilityOutcomeStatus.APPLIED,
+                                "auth",
+                                exact_origin=True,
+                            )
+                            context.record_outcome(
+                                "connector_auth",
+                                CapabilityOutcomeStatus.APPLIED,
+                                "auth",
+                                exact_origin=True,
+                            )
+                            credential_outcome_recorded = True
+                    elif credential is not None:
+                        context.policy_decisions.append(
+                            PolicyDecision(
+                                policy_id="credential_origin_scope",
+                                allowed=True,
+                                reason=(
+                                    "credential material was withheld from a "
+                                    "different redirect origin"
+                                ),
+                                destination=sanitize_url(current),
+                            )
+                        )
+                        context.record_outcome(
+                            "connector_auth",
+                            CapabilityOutcomeStatus.NOT_APPLICABLE,
+                            "auth",
+                            reason=(
+                                "redirect origin did not match credential scope"
+                            ),
+                        )
+                    if (
+                        allow_ephemeral_login_cookies
+                        and ephemeral_cookie_origin == canonical_origin(current)
+                    ):
+                        cookie_header = _render_ephemeral_cookie_header(
+                            ephemeral_cookies,
+                            current,
+                        )
+                        if cookie_header is not None:
+                            hop_headers["Cookie"] = cookie_header
+                            ephemeral_cookie_used = True
+                    client.cookies.clear()
+                    async with AsyncExitStack() as request_stack:
+                        if robots_fetched:
+                            await request_stack.enter_async_context(
+                                self.scheduler.slot(
+                                    host,
+                                    deadline_seconds=_remaining_http_deadline(
+                                        request_started,
+                                        context.request.budget.deadline_seconds,
+                                    ),
+                                )
+                            )
+                        response = await request_stack.enter_async_context(
+                            client.stream(
+                                method,
+                                current,
+                                headers=hop_headers,
+                                content=request_body,
+                            )
+                        )
+                        if response.is_redirect:
+                            redirect_statuses.append(response.status_code)
+                            usage_tracker.observe(
+                                redirects=len(redirect_statuses),
+                            )
+                            location = response.headers.get("location")
+                            if not location:
+                                raise AdapterExecutionError(
+                                    "redirect response omitted Location"
+                                )
+                            redirected = urljoin(current, location)
+                            if (
+                                allow_ephemeral_login_cookies
+                                and response.status_code in {307, 308}
+                            ):
+                                raise _redirect_body_replay_error(redirected)
+                            if response.status_code == 303 or (
+                                response.status_code in {301, 302}
+                                and method == "POST"
+                            ):
+                                method = "GET"
+                                request_body = None
+                                headers.pop("Content-Type", None)
+                            elif request_body is not None:
+                                raise _redirect_body_replay_error(redirected)
+                            if allow_ephemeral_login_cookies:
+                                if _same_exact_origin(current, redirected):
+                                    ephemeral_cookies = (
+                                        _capture_ephemeral_login_cookies(
+                                            response,
+                                            current,
+                                            ephemeral_cookies,
+                                        )
+                                    )
+                                    ephemeral_cookie_origin = (
+                                        canonical_origin(current)
+                                        if ephemeral_cookies
+                                        else None
+                                    )
+                                else:
+                                    ephemeral_cookies.clear()
+                                    ephemeral_cookie_origin = None
+                            previous, current = current, redirected
+                            continue
+                        if response.status_code in {404, 410}:
+                            raise AdapterNotFoundError(
+                                f"target returned HTTP {response.status_code}"
+                            )
+                        if (
+                            response.status_code == 401
+                            and credential_applied
+                            and credential is not None
+                            and credential.capability_id == "bearer_token"
+                            and _reports_expired_credential(response)
+                        ):
+                            if (
+                                context.request.authentication_ref is not None
+                                and not refresh_attempted
+                                and method in {"GET", "HEAD"}
+                            ):
+                                credential = await self._refresh_credential(
+                                    context,
+                                    credential,
+                                    method=method,
+                                    already_attempted=False,
+                                )
+                                context.sensitive_state["credential_material"] = (
+                                    credential
+                                )
+                                credential_outcome_recorded = False
+                                refresh_attempted = True
+                                visited.remove(current)
+                                continue
+                            raise AdapterAuthExpiredError(
+                                "credential material was rejected as expired"
+                            )
+                        if response.status_code in {401, 403}:
+                            raise AdapterAuthRequiredError(
+                                f"target returned HTTP {response.status_code}"
+                            )
+                        response.raise_for_status()
+                        content_length = _content_length(response)
+                        if (
+                            content_length is not None
+                            and content_length + auxiliary_bytes
+                            > maximum_wire_bytes
+                        ):
+                            raise AdapterBudgetExceededError(
+                                "response Content-Length exceeded the "
+                                "remaining wire byte budget"
+                            )
+                        chunks: list[bytes] = []
+                        decompressed_size = 0
+                        async for chunk in response.aiter_bytes():
+                            decompressed_size += len(chunk)
+                            wire_size = max(
+                                response.num_bytes_downloaded,
+                                content_length or 0,
+                            )
+                            usage_tracker.observe(
+                                wire_bytes=wire_size + auxiliary_bytes,
+                                decompressed_bytes=decompressed_size
+                                + auxiliary_bytes,
+                                redirects=len(redirect_statuses),
+                            )
+                            if wire_size + auxiliary_bytes > maximum_wire_bytes:
+                                raise AdapterBudgetExceededError(
+                                    "response exceeded the remaining wire byte "
+                                    "budget"
+                                )
+                            if (
+                                decompressed_size + auxiliary_bytes
+                                > maximum_decompressed_bytes
+                            ):
+                                raise AdapterBudgetExceededError(
+                                    "response exceeded the remaining "
+                                    "decompressed byte budget"
+                                )
+                            chunks.append(chunk)
+                        wire_size = max(
+                            response.num_bytes_downloaded,
+                            content_length or 0,
+                        )
+                        usage_tracker.observe(
+                            wire_bytes=wire_size + auxiliary_bytes,
+                            decompressed_bytes=decompressed_size
+                            + auxiliary_bytes,
+                            redirects=len(redirect_statuses),
+                        )
+                        response.extensions["fetech_redirect_count"] = len(
+                            redirect_statuses
+                        )
+                        response.extensions["fetech_redirect_statuses"] = tuple(
+                            redirect_statuses
+                        )
+                        response.extensions["fetech_auxiliary_bytes"] = (
+                            auxiliary_bytes
+                        )
+                        response.extensions[
+                            "fetech_ephemeral_login_cookie_handoff"
+                        ] = ephemeral_cookie_used
+                        if allow_ephemeral_login_cookies:
+                            _scrub_cookie_state(response)
+                            client.cookies.clear()
+                        return (
+                            response,
+                            b"".join(chunks),
+                            wire_size + auxiliary_bytes,
+                        )
+            raise AdapterExecutionError("redirect budget exhausted")
+
+    async def _request_http3(
+        self,
+        destination: str,
+        context: ExecutionContext,
+        *,
+        request_started: float,
+        usage: _HTTPUsage,
+    ) -> tuple[httpx.Response, bytes, int]:
+        if context.request.intent == "crawl":
+            raise AdapterExecutionError("HTTP/3 crawling is not available before v0.2")
+        current = destination
+        previous: str | None = None
+        visited: set[str] = set()
+        redirect_statuses: list[int] = []
+        transferred = 0
+        maximum_wire_bytes = int(context.remaining_budget("bytes"))
+        maximum_decompressed_bytes = int(
+            context.remaining_budget("decompressed_bytes")
+        )
+        if maximum_wire_bytes <= 0 or maximum_decompressed_bytes <= 0:
+            raise AdapterBudgetExceededError(
+                "HTTP/3 acquisition has no remaining byte budget"
+            )
+        for _ in range(context.request.budget.redirects + 1):
+            raw_host = _scheduler_host(current)
+            async with self.scheduler.slot(
+                raw_host,
+                deadline_seconds=_remaining_http_deadline(
+                    request_started,
+                    context.request.budget.deadline_seconds,
+                ),
+            ):
+                current, decisions = await self.policy.evaluate(
+                    current,
+                    previous_url=previous,
+                )
                 context.policy_decisions.extend(decisions)
                 for decision in decisions:
                     context.record_outcome(
                         decision.policy_id,
-                        (
-                            CapabilityOutcomeStatus.APPLIED
-                            if decision.allowed
-                            else CapabilityOutcomeStatus.BLOCKED
-                        ),
+                        CapabilityOutcomeStatus.APPLIED,
                         "security",
                         reason=decision.reason,
                     )
-                if (
-                    credential_mode == "request"
-                    and context.request.authentication_ref is not None
-                    and credential is None
-                ):
-                    cached_credential = context.sensitive_state.get("credential_material")
-                    credential = (
-                        cached_credential
-                        if isinstance(cached_credential, CredentialMaterial)
-                        else await self._resolve_credential(context.request.authentication_ref)
+                if context.request.authentication_ref is not None:
+                    context.record_outcome(
+                        "connector_auth",
+                        CapabilityOutcomeStatus.DEPENDENCY_MISSING,
+                        "auth",
+                        reason=(
+                            "authenticated HTTP/3 transport is not implemented"
+                        ),
                     )
-                    if not credential.applies_to(current):
-                        reason = "credential scope does not match the initial target origin"
-                        decision = PolicyDecision(
-                            policy_id="credential_origin_scope",
-                            allowed=False,
-                            reason=reason,
-                            destination=sanitize_url(current),
-                        )
-                        context.record_outcome(
-                            "connector_auth",
-                            CapabilityOutcomeStatus.BLOCKED,
-                            "auth",
-                            reason=reason,
-                        )
-                        raise PolicyBlockedError(reason, (decision,))
-                    if credential.expired:
-                        if credential.capability_id != "bearer_token":
-                            raise AdapterAuthExpiredError("credential material is expired")
-                        credential = await self._refresh_credential(
-                            context,
-                            credential,
-                            method=method,
-                            already_attempted=refresh_attempted,
-                        )
-                        refresh_attempted = True
-                        context.sensitive_state["credential_material"] = credential
+                    raise AdapterDependencyError(
+                        "authenticated HTTP/3 transport is unavailable"
+                    )
+                parts = urlsplit(current)
+                if parts.scheme != "https":
+                    raise AdapterExecutionError("HTTP/3 transport requires HTTPS")
                 if current in visited:
                     raise AdapterExecutionError("redirect loop detected")
                 visited.add(current)
-                host = urlsplit(current).hostname or ""
-                if isinstance(transport, PinnedAsyncHTTPTransport):
-                    transport.pin(host, self.policy.validated_addresses(host))
-                host_limit = self._host_limits.setdefault(host, asyncio.Semaphore(self._per_host_concurrency))
-                parts = urlsplit(current)
-                origin = f"{parts.scheme}://{parts.netloc}"
-                if (
-                    ephemeral_cookie_origin is not None
-                    and canonical_origin(current) != ephemeral_cookie_origin
-                ):
-                    ephemeral_cookies.clear()
-                    ephemeral_cookie_origin = None
-                if context.request.intent == "crawl" and origin not in robots_checked:
-                    robots_checked.add(origin)
-                    client.cookies.clear()
-                    auxiliary_bytes += await self._enforce_robots(
-                        client,
-                        current,
-                        context,
-                        host,
-                        host_limit,
-                        maximum_bytes=min(512_000, maximum_decompressed_bytes - auxiliary_bytes),
+                host = parts.hostname or ""
+                addresses = self.policy.validated_addresses(host)
+                if not addresses:
+                    raise AdapterExecutionError(
+                        "HTTP/3 transport has no validated destination address"
                     )
-                await self._apply_rate_limit(host)
                 context.policy_decisions.append(
                     PolicyDecision(
                         policy_id="rate_limit_policy",
                         allowed=True,
-                        reason="per-host request interval and concurrency policy applied",
+                        reason=(
+                            "per-host request interval and concurrency policy "
+                            "applied"
+                        ),
                         destination=sanitize_url(current),
                     )
                 )
@@ -370,231 +853,39 @@ class HTTPAdapter:
                     minimum_interval_seconds=self._per_host_min_interval_seconds,
                     concurrency=self._per_host_concurrency,
                 )
-                hop_headers = dict(headers)
-                credential_applied = credential is not None and credential.applies_to(current)
-                if credential_applied and credential is not None:
-                    hop_headers.update(credential.request_headers())
-                    context.policy_decisions.append(
-                        PolicyDecision(
-                            policy_id="credential_origin_scope",
-                            allowed=True,
-                            reason="credential material matched the exact request origin",
-                            destination=sanitize_url(current),
-                        )
-                    )
-                    if not credential_outcome_recorded:
-                        context.record_outcome(
-                            credential.capability_id,
-                            CapabilityOutcomeStatus.APPLIED,
-                            "auth",
-                            exact_origin=True,
-                        )
-                        context.record_outcome(
-                            "connector_auth",
-                            CapabilityOutcomeStatus.APPLIED,
-                            "auth",
-                            exact_origin=True,
-                        )
-                        credential_outcome_recorded = True
-                elif credential is not None:
-                    context.policy_decisions.append(
-                        PolicyDecision(
-                            policy_id="credential_origin_scope",
-                            allowed=True,
-                            reason="credential material was withheld from a different redirect origin",
-                            destination=sanitize_url(current),
-                        )
-                    )
-                    context.record_outcome(
-                        "connector_auth",
-                        CapabilityOutcomeStatus.NOT_APPLICABLE,
-                        "auth",
-                        reason="redirect origin did not match credential scope",
-                    )
-                if (
-                    allow_ephemeral_login_cookies
-                    and ephemeral_cookie_origin == canonical_origin(current)
-                ):
-                    cookie_header = _render_ephemeral_cookie_header(
-                        ephemeral_cookies,
-                        current,
-                    )
-                    if cookie_header is not None:
-                        hop_headers["Cookie"] = cookie_header
-                        ephemeral_cookie_used = True
-                client.cookies.clear()
-                async with (
-                    self._global_limit,
-                    host_limit,
-                    client.stream(
-                        method,
-                        current,
-                        headers=hop_headers,
-                        content=request_body,
-                    ) as response,
-                ):
-                    if response.is_redirect:
-                        redirect_statuses.append(response.status_code)
-                        location = response.headers.get("location")
-                        if not location:
-                            raise AdapterExecutionError("redirect response omitted Location")
-                        redirected = urljoin(current, location)
-                        if (
-                            allow_ephemeral_login_cookies
-                            and response.status_code in {307, 308}
-                        ):
-                            raise _redirect_body_replay_error(redirected)
-                        if response.status_code == 303 or (
-                            response.status_code in {301, 302} and method == "POST"
-                        ):
-                            method = "GET"
-                            request_body = None
-                            headers.pop("Content-Type", None)
-                        elif request_body is not None:
-                            raise _redirect_body_replay_error(redirected)
-                        if allow_ephemeral_login_cookies:
-                            if _same_exact_origin(current, redirected):
-                                ephemeral_cookies = _capture_ephemeral_login_cookies(
-                                    response,
-                                    current,
-                                    ephemeral_cookies,
-                                )
-                                ephemeral_cookie_origin = (
-                                    canonical_origin(current)
-                                    if ephemeral_cookies
-                                    else None
-                                )
-                            else:
-                                ephemeral_cookies.clear()
-                                ephemeral_cookie_origin = None
-                        previous, current = current, redirected
-                        continue
-                    if response.status_code in {404, 410}:
-                        raise AdapterNotFoundError(f"target returned HTTP {response.status_code}")
-                    if (
-                        response.status_code == 401
-                        and credential_applied
-                        and credential is not None
-                        and credential.capability_id == "bearer_token"
-                        and _reports_expired_credential(response)
-                    ):
-                        if (
-                            context.request.authentication_ref is not None
-                            and not refresh_attempted
-                            and method in {"GET", "HEAD"}
-                        ):
-                            credential = await self._refresh_credential(
-                                context,
-                                credential,
-                                method=method,
-                                already_attempted=False,
-                            )
-                            context.sensitive_state["credential_material"] = credential
-                            credential_outcome_recorded = False
-                            refresh_attempted = True
-                            visited.remove(current)
-                            continue
-                        raise AdapterAuthExpiredError("credential material was rejected as expired")
-                    if response.status_code in {401, 403}:
-                        raise AdapterAuthRequiredError(f"target returned HTTP {response.status_code}")
-                    response.raise_for_status()
-                    content_length = _content_length(response)
-                    if content_length is not None and content_length + auxiliary_bytes > maximum_wire_bytes:
-                        raise AdapterExecutionError("response Content-Length exceeded the wire byte budget")
-                    chunks: list[bytes] = []
-                    decompressed_size = 0
-                    async for chunk in response.aiter_bytes():
-                        decompressed_size += len(chunk)
-                        wire_size = max(response.num_bytes_downloaded, content_length or 0)
-                        if wire_size + auxiliary_bytes > maximum_wire_bytes:
-                            raise AdapterExecutionError("response exceeded the wire byte budget")
-                        if decompressed_size + auxiliary_bytes > maximum_decompressed_bytes:
-                            raise AdapterExecutionError("response exceeded the decompressed byte budget")
-                        chunks.append(chunk)
-                    wire_size = max(response.num_bytes_downloaded, content_length or 0)
-                    response.extensions["fetech_redirect_count"] = len(redirect_statuses)
-                    response.extensions["fetech_redirect_statuses"] = tuple(redirect_statuses)
-                    response.extensions["fetech_auxiliary_bytes"] = auxiliary_bytes
-                    response.extensions["fetech_ephemeral_login_cookie_handoff"] = (
-                        ephemeral_cookie_used
-                    )
-                    if allow_ephemeral_login_cookies:
-                        _scrub_cookie_state(response)
-                        client.cookies.clear()
-                    return response, b"".join(chunks), wire_size + auxiliary_bytes
-            raise AdapterExecutionError("redirect budget exhausted")
-
-    async def _request_http3(
-        self,
-        destination: str,
-        context: ExecutionContext,
-    ) -> tuple[httpx.Response, bytes, int]:
-        if context.request.intent == "crawl":
-            raise AdapterExecutionError("HTTP/3 crawling is not available before v0.2")
-        current = destination
-        previous: str | None = None
-        visited: set[str] = set()
-        redirect_statuses: list[int] = []
-        transferred = 0
-        for _ in range(context.request.budget.redirects + 1):
-            current, decisions = await self.policy.evaluate(current, previous_url=previous)
-            context.policy_decisions.extend(decisions)
-            for decision in decisions:
-                context.record_outcome(
-                    decision.policy_id,
-                    CapabilityOutcomeStatus.APPLIED,
-                    "security",
-                    reason=decision.reason,
+                remaining = min(
+                    maximum_wire_bytes - transferred,
+                    maximum_decompressed_bytes - transferred,
                 )
-            if context.request.authentication_ref is not None:
-                context.record_outcome(
-                    "connector_auth",
-                    CapabilityOutcomeStatus.DEPENDENCY_MISSING,
-                    "auth",
-                    reason="authenticated HTTP/3 transport is not implemented",
-                )
-                raise AdapterDependencyError("authenticated HTTP/3 transport is unavailable")
-            parts = urlsplit(current)
-            if parts.scheme != "https":
-                raise AdapterExecutionError("HTTP/3 transport requires HTTPS")
-            if current in visited:
-                raise AdapterExecutionError("redirect loop detected")
-            visited.add(current)
-            host = parts.hostname or ""
-            addresses = self.policy.validated_addresses(host)
-            if not addresses:
-                raise AdapterExecutionError("HTTP/3 transport has no validated destination address")
-            host_limit = self._host_limits.setdefault(host, asyncio.Semaphore(self._per_host_concurrency))
-            await self._apply_rate_limit(host)
-            context.policy_decisions.append(
-                PolicyDecision(
-                    policy_id="rate_limit_policy",
-                    allowed=True,
-                    reason="per-host request interval and concurrency policy applied",
-                    destination=sanitize_url(current),
-                )
-            )
-            context.record_outcome(
-                "rate_limit_policy",
-                CapabilityOutcomeStatus.APPLIED,
-                "security",
-                minimum_interval_seconds=self._per_host_min_interval_seconds,
-                concurrency=self._per_host_concurrency,
-            )
-            remaining = context.request.budget.bytes - transferred
-            if remaining <= 0:
-                raise AdapterExecutionError("HTTP/3 response exhausted the wire byte budget")
-            async with self._global_limit, host_limit:
+                if remaining <= 0:
+                    raise AdapterBudgetExceededError(
+                        "HTTP/3 response exhausted the shared byte budget"
+                    )
                 result = await self.http3_client.fetch(
                     current,
                     address=addresses[0],
                     user_agent=self.user_agent,
-                    timeout_seconds=context.request.budget.deadline_seconds,
+                    timeout_seconds=_remaining_http_deadline(
+                        request_started,
+                        context.request.budget.deadline_seconds,
+                    ),
                     maximum_bytes=remaining,
                 )
             transferred += len(result.body)
+            usage.observe(
+                wire_bytes=transferred,
+                decompressed_bytes=transferred,
+            )
+            if (
+                transferred > maximum_wire_bytes
+                or transferred > maximum_decompressed_bytes
+            ):
+                raise AdapterBudgetExceededError(
+                    "HTTP/3 response exceeded the remaining shared byte budget"
+                )
             if result.status_code in {301, 302, 303, 307, 308}:
                 redirect_statuses.append(result.status_code)
+                usage.observe(redirects=len(redirect_statuses))
                 if not result.redirect_url:
                     raise AdapterExecutionError("HTTP/3 redirect omitted its destination")
                 previous, current = current, urljoin(current, result.redirect_url)
@@ -643,37 +934,25 @@ class HTTPAdapter:
             raise AdapterDependencyError("credential provider returned invalid material")
         return material
 
-    async def _apply_rate_limit(self, host: str) -> None:
-        lock = self._rate_locks.setdefault(host, asyncio.Lock())
-        async with lock:
-            loop = asyncio.get_running_loop()
-            wait_for = (
-                self._last_request_at.get(host, 0.0)
-                + self._per_host_min_interval_seconds
-                - loop.time()
-            )
-            if wait_for > 0:
-                await asyncio.sleep(wait_for)
-            self._last_request_at[host] = loop.time()
-
     async def _enforce_robots(
         self,
         client: httpx.AsyncClient,
         target: str,
         context: ExecutionContext,
-        host: str,
-        host_limit: asyncio.Semaphore,
         *,
         maximum_bytes: int,
+        consumed_before: int,
+        usage: _HTTPUsage,
     ) -> int:
         if maximum_bytes <= 0:
-            raise AdapterExecutionError("robots policy exhausted the decompressed byte budget")
+            raise AdapterBudgetExceededError(
+                "robots policy exhausted the remaining decompressed byte budget"
+            )
         parts = urlsplit(target)
         robots_url = f"{parts.scheme}://{parts.netloc}/robots.txt"
-        await self._apply_rate_limit(host)
         client.cookies.clear()
         try:
-            async with self._global_limit, host_limit, client.stream("GET", robots_url) as response:
+            async with client.stream("GET", robots_url) as response:
                 if response.status_code != 200:
                     context.policy_decisions.append(
                         PolicyDecision(
@@ -698,6 +977,11 @@ class HTTPAdapter:
                 size = 0
                 async for chunk in response.aiter_bytes():
                     size += len(chunk)
+                    usage.observe(
+                        wire_bytes=consumed_before
+                        + max(response.num_bytes_downloaded, size),
+                        decompressed_bytes=consumed_before + size,
+                    )
                     if size > maximum_bytes:
                         raise AdapterExecutionError("robots.txt exceeded its bounded byte budget")
                     chunks.append(chunk)
@@ -1022,6 +1306,36 @@ class HTTPAdapter:
                     candidate=sanitize_url(candidate) if candidate else None,
                     followed=False,
                 )
+
+
+def _remaining_http_deadline(started: float, maximum_seconds: float) -> float:
+    remaining = maximum_seconds - (time.monotonic() - started)
+    if remaining <= 0:
+        raise NetworkDeadlineExceededError("HTTP deadline budget exhausted")
+    return remaining
+
+
+def _scheduler_host(value: str) -> str:
+    try:
+        host = urlsplit(value).hostname or ""
+    except ValueError as exc:
+        raise AdapterExecutionError("HTTP destination is invalid") from exc
+    if not host:
+        raise AdapterExecutionError("HTTP destination has no hostname")
+    return host
+
+
+def _http_consumed_budget(
+    usage: _HTTPUsage,
+    *,
+    elapsed_seconds: float,
+) -> dict[str, int | float]:
+    return {
+        "bytes": usage.wire_bytes,
+        "decompressed_bytes": usage.decompressed_bytes,
+        "redirects": usage.redirects,
+        "deadline_seconds": max(0.0, elapsed_seconds),
+    }
 
 
 @dataclass(frozen=True, slots=True)

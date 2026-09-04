@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
-from collections.abc import AsyncIterator
+from collections.abc import AsyncIterator, Mapping
 from uuid import UUID
 
+from fetech.adapters.cache import SnapshotConnector
+from fetech.adapters.documents import GitLFSResolver, PDFOCRProvider
+from fetech.adapters.media import MediaAdapter
 from fetech.auth import CredentialProvider
 from fetech.auth_flows import FormSubmissionProvider, SessionProvider
 from fetech.config import Settings
@@ -37,12 +40,20 @@ class FetechClient:
         credential_provider: CredentialProvider | None = None,
         session_provider: SessionProvider | None = None,
         form_submission_provider: FormSubmissionProvider | None = None,
+        git_lfs_resolver: GitLFSResolver | None = None,
+        pdf_ocr_provider: PDFOCRProvider | None = None,
+        media_adapter: MediaAdapter | None = None,
+        snapshot_connectors: Mapping[str, SnapshotConnector] | None = None,
     ) -> None:
         self.gateway = UniversalFetchGateway(
             settings,
             credential_provider=credential_provider,
             session_provider=session_provider,
             form_submission_provider=form_submission_provider,
+            git_lfs_resolver=git_lfs_resolver,
+            pdf_ocr_provider=pdf_ocr_provider,
+            media_adapter=media_adapter,
+            snapshot_connectors=snapshot_connectors,
         )
 
     async def __aenter__(self) -> FetechClient:

@@ -47,6 +47,7 @@ class CurlHTTP3Client:
             result = await run_bounded(
                 (
                     executable,
+                    "--disable",
                     "--http3-only",
                     "--silent",
                     "--show-error",
@@ -100,7 +101,7 @@ class CurlHTTP3Client:
             return executable
         try:
             result = await run_bounded(
-                (executable, "--version"),
+                (executable, "--disable", "--version"),
                 b"",
                 timeout_seconds=2,
                 memory_mb=128,

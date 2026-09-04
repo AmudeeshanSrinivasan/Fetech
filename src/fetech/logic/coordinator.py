@@ -92,7 +92,7 @@ class LogicCoordinator:
         return ReasoningQuery(
             capability_id=entry.id,
             allowed=not denied and allowed_by_list,
-            available=entry.available,
+            available=entry.implementation_available,
             risk_class=entry.risk_class,
             dependencies=entry.dependencies,
         )

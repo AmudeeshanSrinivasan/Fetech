@@ -17,7 +17,8 @@ def test_v02_inventory_is_truthful_and_cardinality_locked() -> None:
     assert report == {
         "release": "v0.2",
         "capability_count": 40,
-        "available_count": 40,
+        "implementation_path_count": 40,
+        "runtime_available_count": 36,
         "closure_ready": True,
         "status_counts": {"native": 36, "optional": 4},
         "gaps": [],

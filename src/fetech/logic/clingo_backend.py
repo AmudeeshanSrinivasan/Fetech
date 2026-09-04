@@ -104,7 +104,7 @@ class ClingoPlannerBackend:
             lines.append(f"node({identifier}).")
             lines.append(f"required({identifier}).")
             entry = registry.get(node.capability_id)
-            if not entry.available:
+            if not entry.implementation_available:
                 lines.append(f"unavailable({identifier}).")
             if entry.id in request.deny_capabilities:
                 lines.append(f"denied({identifier}).")

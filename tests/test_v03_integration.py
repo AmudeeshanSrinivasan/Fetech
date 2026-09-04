@@ -506,12 +506,13 @@ def test_v03_closure_is_119_cumulative_capabilities() -> None:
     assert releases["v0.3"] == {
         "release": "v0.3",
         "capability_count": 23,
-        "available_count": 23,
+        "implementation_path_count": 23,
+        "runtime_available_count": 21,
         "closure_ready": True,
         "status_counts": {"native": 21, "optional": 2},
         "gaps": [],
     }
     assert sum(
-        int(releases[release]["available_count"])
+        int(releases[release]["implementation_path_count"])
         for release in ("v0.1", "v0.2", "v0.3")
     ) == 119

@@ -8,7 +8,11 @@ from uuid import uuid4
 import httpx
 import pytest
 
-from fetech.adapters.base import AdapterExecutionError, ExecutionContext
+from fetech.adapters.base import (
+    AdapterBudgetExceededError,
+    AdapterExecutionError,
+    ExecutionContext,
+)
 from fetech.adapters.http import HTTPAdapter
 from fetech.models import AttemptStatus, FetchRequest, PlanNode, ResourceBudget
 from fetech.security import SafeURLPolicy
@@ -34,6 +38,12 @@ class _ChunkedStream(httpx.AsyncByteStream):
     async def __aiter__(self) -> AsyncIterator[bytes]:
         yield b"x" * 60
         yield b"y" * 60
+
+
+class _FailingStream(httpx.AsyncByteStream):
+    async def __aiter__(self) -> AsyncIterator[bytes]:
+        yield b"x" * 60
+        raise httpx.ReadError("fixture stream failed")
 
 
 @pytest.mark.asyncio
@@ -132,7 +142,7 @@ async def test_content_length_rejects_oversized_wire_body_before_reading(
             budget=ResourceBudget(bytes=100, decompressed_bytes=1_000),
         ),
     )
-    with pytest.raises(AdapterExecutionError, match="Content-Length exceeded"):
+    with pytest.raises(AdapterBudgetExceededError, match="Content-Length exceeded"):
         await adapter._request(context.request.target, context)
 
 
@@ -186,7 +196,46 @@ async def test_transfer_budget_failure_marks_attempt_failed(
             context,
         )
     assert context.attempts[-1].status == AttemptStatus.FAILED
-    assert context.attempts[-1].failure_code == "AdapterExecutionError"
+    assert context.attempts[-1].failure_code == "budget_exhausted"
+
+
+@pytest.mark.asyncio
+async def test_partial_transport_failure_charges_received_bytes(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    async def respond(_: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, stream=_FailingStream())
+
+    adapter = HTTPAdapter(
+        user_agent="Fetech/test",
+        policy=_public_policy(monkeypatch),
+        transport=httpx.MockTransport(respond),
+    )
+    context = _context(
+        tmp_path,
+        FetchRequest(
+            target="https://example.com/partial",
+            budget=ResourceBudget(bytes=100, decompressed_bytes=100),
+        ),
+    )
+
+    with pytest.raises(
+        AdapterExecutionError,
+        match="HTTP transport failed: ReadError",
+    ):
+        await adapter.execute(
+            PlanNode(id="http", capability_id="http_get", adapter="http"),
+            context,
+        )
+
+    attempt = context.attempts[-1]
+    assert attempt.status == AttemptStatus.FAILED
+    assert attempt.bytes_received == 60
+    assert attempt.consumed_budget["bytes"] == 60
+    assert attempt.consumed_budget["decompressed_bytes"] == 60
+    assert context.remaining_budget("bytes") == 40
+    assert context.remaining_budget("decompressed_bytes") == 40
 
 
 @pytest.mark.asyncio

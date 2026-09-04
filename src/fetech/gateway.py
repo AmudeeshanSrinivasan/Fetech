@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import Mapping
 from contextlib import suppress
 from datetime import UTC, datetime
 from uuid import UUID, uuid4
@@ -12,11 +13,17 @@ from fetech.adapters.archive import ArchiveAdapter
 from fetech.adapters.auth import AuthAdapter
 from fetech.adapters.base import Adapter, ExecutionContext
 from fetech.adapters.browser import BrowserAdapter
+from fetech.adapters.cache import CacheAdapter, SnapshotConnector, SnapshotStore
 from fetech.adapters.discovery import DiscoveryAdapter
-from fetech.adapters.documents import DocumentAdapter
+from fetech.adapters.documents import (
+    DocumentAdapter,
+    DocumentParseWorker,
+    GitLFSResolver,
+    PDFOCRProvider,
+)
 from fetech.adapters.http import HTTPAdapter
+from fetech.adapters.media import MediaAdapter
 from fetech.adapters.reader import ReaderAdapter
-from fetech.adapters.structured import OptionalAdapter
 from fetech.adapters.variants import VariantAdapter
 from fetech.auth import CredentialProvider, NullCredentialProvider
 from fetech.auth_flows import (
@@ -25,6 +32,7 @@ from fetech.auth_flows import (
     NullSessionProvider,
     SessionProvider,
 )
+from fetech.browser_reader import BrowserReaderWorker
 from fetech.browser_render import BrowserRenderWorker, RemoteBrowserConnector
 from fetech.config import Settings
 from fetech.executor import ExecutionEngine
@@ -42,12 +50,14 @@ from fetech.models import (
     InspectionResult,
     PlanNode,
     ProvenanceEvent,
+    ResourceBudget,
     ResultStatus,
     RunState,
 )
 from fetech.planning import DeterministicPlanner, classify_target
 from fetech.provenance import build_runtime_graph
 from fetech.registry import CapabilityRegistry
+from fetech.scheduling import NetworkScheduler
 from fetech.search import HTTPSearchProvider
 from fetech.security import (
     PolicyBlockedError,
@@ -56,6 +66,12 @@ from fetech.security import (
     sanitize_output_for_request,
 )
 from fetech.storage import FileSystemCAS
+from fetech.wayback import WaybackSnapshotConnector
+from fetech.worker_isolation import (
+    WorkerIsolationMode,
+    WorkerIsolationRuntime,
+)
+from fetech.yt_dlp import YTDLPMetadataWorker
 
 
 class UniversalFetchGateway:
@@ -66,19 +82,37 @@ class UniversalFetchGateway:
         credential_provider: CredentialProvider | None = None,
         session_provider: SessionProvider | None = None,
         form_submission_provider: FormSubmissionProvider | None = None,
+        git_lfs_resolver: GitLFSResolver | None = None,
+        pdf_ocr_provider: PDFOCRProvider | None = None,
+        media_adapter: MediaAdapter | None = None,
+        snapshot_connectors: Mapping[str, SnapshotConnector] | None = None,
     ) -> None:
         self.settings = settings or Settings.from_environment()
+        try:
+            isolation_mode = WorkerIsolationMode(self.settings.worker_isolation_mode)
+        except ValueError as exc:
+            raise ValueError("worker_isolation_mode must be development or required") from exc
+        self.worker_isolation = WorkerIsolationRuntime(
+            mode=isolation_mode,
+            bubblewrap_executable=self.settings.worker_bwrap_executable,
+            cgroup_root=self.settings.worker_cgroup_root,
+            data_dir=self.settings.data_dir,
+        )
+        self.worker_isolation.validate_required_backend()
         self.credential_provider = credential_provider or NullCredentialProvider()
         self.session_provider = session_provider or NullSessionProvider()
-        self.form_submission_provider = (
-            form_submission_provider or NullFormSubmissionProvider()
-        )
+        self.form_submission_provider = form_submission_provider or NullFormSubmissionProvider()
         self.registry = CapabilityRegistry()
         self.planner = DeterministicPlanner(self.registry)
         self.logic = LogicCoordinator(self.settings, self.registry, self.planner)
         self.policy = SafeURLPolicy()
         self.ledger = EventLedger.sqlite(self.settings.database_path)
         self.cas = FileSystemCAS(self.settings.artifact_dir)
+        self.network_scheduler = NetworkScheduler(
+            global_concurrency=self.settings.global_concurrency,
+            per_host_concurrency=self.settings.per_host_concurrency,
+            per_host_min_interval_seconds=self.settings.per_host_min_interval_seconds,
+        )
         http_adapter = HTTPAdapter(
             user_agent=self.settings.user_agent,
             policy=self.policy,
@@ -86,6 +120,7 @@ class UniversalFetchGateway:
             global_concurrency=self.settings.global_concurrency,
             per_host_concurrency=self.settings.per_host_concurrency,
             per_host_min_interval_seconds=self.settings.per_host_min_interval_seconds,
+            scheduler=self.network_scheduler,
         )
         remote_browsers = {
             engine: RemoteBrowserConnector(endpoint, policy=self.policy)
@@ -104,6 +139,14 @@ class UniversalFetchGateway:
             if self.settings.search_provider_template
             else None
         )
+        cache_connectors: dict[str, SnapshotConnector] = {
+            "internet_archive_snapshot": WaybackSnapshotConnector(
+                policy=self.policy,
+                user_agent=self.settings.user_agent,
+                scheduler=self.network_scheduler,
+            )
+        }
+        cache_connectors.update(snapshot_connectors or {})
         self.adapters: dict[str, Adapter] = {
             "http": http_adapter,
             "discovery": DiscoveryAdapter(http_adapter, search_provider=search_provider),
@@ -111,6 +154,10 @@ class UniversalFetchGateway:
                 remote_reader_template=self.settings.jina_reader_template,
                 policy=self.policy,
                 user_agent=self.settings.user_agent,
+                browser_reader=BrowserReaderWorker(
+                    isolation=self.worker_isolation,
+                    browser_artifacts_path=self.settings.browser_artifacts_path,
+                ),
             ),
             "variants": VariantAdapter(http_adapter),
             "auth": AuthAdapter(
@@ -121,13 +168,37 @@ class UniversalFetchGateway:
             ),
             "api": APIAdapter(),
             "browser": BrowserAdapter(
-                BrowserRenderWorker(),
+                BrowserRenderWorker(
+                    isolation=self.worker_isolation,
+                    browser_artifacts_path=self.settings.browser_artifacts_path,
+                ),
                 remote_renderers=remote_browsers,
                 user_agent=self.settings.user_agent,
             ),
-            "documents": DocumentAdapter(),
-            "media": OptionalAdapter("media parsing", "media"),
-            "cache": ArchiveAdapter(),
+            "documents": DocumentAdapter(
+                parser=DocumentParseWorker(
+                    docling_artifacts_path=self.settings.docling_artifacts_path,
+                    docling_artifacts_sha256=(self.settings.docling_artifacts_sha256),
+                    docling_memory_mb=self.settings.docling_worker_memory_mb,
+                    isolation=self.worker_isolation,
+                ),
+                git_lfs_resolver=git_lfs_resolver,
+                pdf_ocr_provider=pdf_ocr_provider,
+            ),
+            "media": media_adapter
+            or MediaAdapter(
+                isolation=self.worker_isolation,
+                youtube_provider=YTDLPMetadataWorker(
+                    scheduler=self.network_scheduler,
+                    isolation=self.worker_isolation,
+                ),
+            ),
+            "archive": ArchiveAdapter(isolation=self.worker_isolation),
+            "cache": CacheAdapter(
+                SnapshotStore(self.settings.data_dir / "snapshots", self.cas),
+                connectors=cache_connectors,
+                policy=self.policy,
+            ),
             "core": _CoreAdapter(),
         }
         self.executor = ExecutionEngine(adapters=self.adapters, cas=self.cas, ledger=self.ledger)
@@ -138,6 +209,8 @@ class UniversalFetchGateway:
     async def initialize(self) -> None:
         if not self._initialized:
             await self.ledger.initialize()
+            await self._recover_interrupted_runs()
+            self._artifacts = {artifact.artifact_id: artifact for artifact in await self.ledger.artifacts()}
             self._initialized = True
 
     async def close(self) -> None:
@@ -229,6 +302,41 @@ class UniversalFetchGateway:
             return self._artifacts[artifact_id]
         except KeyError as exc:
             raise KeyError(f"unknown artifact: {artifact_id}") from exc
+
+    async def _recover_interrupted_runs(self) -> None:
+        """Finalize durable runs whose in-memory task was lost on restart."""
+
+        for run_id, previous_state, _, request_document in await self.ledger.unfinished_runs():
+            raw_budget = request_document.get("budget", {})
+            try:
+                remaining_budget = ResourceBudget.model_validate(raw_budget)
+            except ValueError:
+                remaining_budget = ResourceBudget()
+            event = ProvenanceEvent(
+                run_id=run_id,
+                event_type="run.recovered_interrupted",
+                actor="gateway",
+                payload={
+                    "code": "run_interrupted",
+                    "previous_state": previous_state.value,
+                },
+            )
+            await self.ledger.append(event)
+            result = FetchResult(
+                run_id=run_id,
+                status=ResultStatus.FAILED,
+                diagnostics=(
+                    Diagnostic(
+                        code="run_interrupted",
+                        message=(
+                            "run was interrupted before completion and was finalized during daemon startup"
+                        ),
+                    ),
+                ),
+                provenance_event_ids=(event.event_id,),
+                remaining_budget=remaining_budget,
+            )
+            await self.ledger.update_run(run_id, RunState.FINISHED, result)
 
     async def _execute_and_project(self, run_id: UUID, plan: FetchPlan) -> FetchResult:
         try:

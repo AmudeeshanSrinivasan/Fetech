@@ -9,6 +9,13 @@ from uuid import UUID, uuid4
 
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, model_validator
 
+_MAX_TARGET_BYTES = 16_384
+_MAX_REQUEST_TEXT_BYTES = 4_096
+_MAX_CAPABILITY_IDS = 256
+_MAX_METADATA_ENTRIES = 128
+_MAX_METADATA_VALUE_BYTES = 65_536
+_MAX_METADATA_TOTAL_BYTES = 1_000_000
+
 
 def utc_now() -> datetime:
     return datetime.now(UTC)
@@ -105,7 +112,9 @@ class CapabilityManifestEntry(ContractModel):
     lifecycle_status: str = "registered"
     implementation_status: ImplementationStatus = ImplementationStatus.PLANNED
     implementation: str
-    available: bool = False
+    implementation_available: bool = False
+    runtime_available: bool = False
+    availability_reason: str = ""
 
 
 class ResourceBudget(ContractModel):
@@ -125,9 +134,12 @@ class ResourceBudget(ContractModel):
 
 class FetchRequest(ContractModel):
     schema_version: str = "1.0"
-    target: str
-    intent: str = "retrieve"
-    output_requirements: tuple[str, ...] = ("clean_text",)
+    target: str = Field(min_length=1, max_length=_MAX_TARGET_BYTES)
+    intent: str = Field(default="retrieve", min_length=1, max_length=256)
+    output_requirements: tuple[str, ...] = Field(
+        default=("clean_text",),
+        max_length=_MAX_CAPABILITY_IDS,
+    )
     authentication_ref: str | None = Field(default=None, min_length=1, max_length=2_048, repr=False)
     privacy_profile: Literal["public", "private"] = Field(
         default="public",
@@ -136,15 +148,18 @@ class FetchRequest(ContractModel):
             "authorized private-workspace execution."
         ),
     )
-    policy_profile: str = "default"
+    policy_profile: str = Field(default="default", min_length=1, max_length=256)
     freshness_seconds: int | None = Field(default=None, ge=0)
-    language: str | None = None
-    region: str | None = None
-    allow_capabilities: frozenset[str] = frozenset()
-    deny_capabilities: frozenset[str] = frozenset()
-    approved_capabilities: frozenset[str] = frozenset()
+    language: str | None = Field(default=None, max_length=128)
+    region: str | None = Field(default=None, max_length=128)
+    allow_capabilities: frozenset[str] = Field(default=frozenset(), max_length=_MAX_CAPABILITY_IDS)
+    deny_capabilities: frozenset[str] = Field(default=frozenset(), max_length=_MAX_CAPABILITY_IDS)
+    approved_capabilities: frozenset[str] = Field(default=frozenset(), max_length=_MAX_CAPABILITY_IDS)
     budget: ResourceBudget = Field(default_factory=ResourceBudget)
-    metadata: dict[str, str] = Field(default_factory=dict)
+    metadata: dict[str, str] = Field(
+        default_factory=dict,
+        max_length=_MAX_METADATA_ENTRIES,
+    )
 
     @model_validator(mode="after")
     def capability_lists_do_not_overlap(self) -> FetchRequest:
@@ -168,7 +183,38 @@ class FetchRequest(ContractModel):
             and len(self.authentication_ref.encode("utf-8")) > 2_048
         ):
             raise ValueError("authentication_ref exceeds the bounded byte limit")
+        _require_bounded_text(self.target, "target", _MAX_TARGET_BYTES)
+        for label, value in (
+            ("intent", self.intent),
+            ("policy_profile", self.policy_profile),
+            ("language", self.language),
+            ("region", self.region),
+        ):
+            if value is not None:
+                _require_bounded_text(value, label, _MAX_REQUEST_TEXT_BYTES)
+        for label, values in (
+            ("output_requirements", self.output_requirements),
+            ("allow_capabilities", self.allow_capabilities),
+            ("deny_capabilities", self.deny_capabilities),
+            ("approved_capabilities", self.approved_capabilities),
+        ):
+            for value in values:
+                _require_bounded_text(value, label, 256)
+        metadata_bytes = 0
+        for key, value in self.metadata.items():
+            _require_bounded_text(key, "metadata key", 256)
+            _require_bounded_text(value, "metadata value", _MAX_METADATA_VALUE_BYTES)
+            metadata_bytes += len(key.encode("utf-8")) + len(value.encode("utf-8"))
+        if metadata_bytes > _MAX_METADATA_TOTAL_BYTES:
+            raise ValueError("metadata exceeds the bounded aggregate byte limit")
         return self
+
+
+def _require_bounded_text(value: str, label: str, maximum_bytes: int) -> None:
+    if len(value) > maximum_bytes or len(value.encode("utf-8")) > maximum_bytes:
+        raise ValueError(f"{label} exceeds the bounded byte limit")
+    if not value.strip():
+        raise ValueError(f"{label} cannot be blank")
 
 
 class RetryRule(ContractModel):

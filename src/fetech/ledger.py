@@ -14,7 +14,7 @@ from sqlalchemy import DateTime, Integer, String, Text, select
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
-from fetech.models import FetchResult, ProvenanceEvent, RunState
+from fetech.models import Artifact, FetchResult, ProvenanceEvent, RunState
 from fetech.security import sanitize_authenticated_text, sanitize_url
 
 
@@ -161,22 +161,83 @@ class EventLedger:
             rows = (await session.scalars(select(EventRow).order_by(EventRow.sequence))).all()
         return tuple(_event_from_row(row) for row in rows)
 
+    async def unfinished_runs(
+        self,
+    ) -> tuple[tuple[UUID, RunState, datetime, dict[str, Any]], ...]:
+        """Return durable non-terminal runs for deterministic startup recovery."""
+
+        async with self.sessions() as session:
+            rows = (
+                await session.scalars(select(RunRow).where(RunRow.state != RunState.FINISHED.value))
+            ).all()
+        recovered: list[tuple[UUID, RunState, datetime, dict[str, Any]]] = []
+        for row in rows:
+            try:
+                request_document = json.loads(row.request_json)
+            except (json.JSONDecodeError, TypeError) as exc:
+                raise ValueError(f"run {row.run_id} has malformed request metadata") from exc
+            if not isinstance(request_document, dict):
+                raise ValueError(f"run {row.run_id} has malformed request metadata")
+            recovered.append(
+                (
+                    UUID(row.run_id),
+                    RunState(row.state),
+                    row.submitted_at,
+                    request_document,
+                )
+            )
+        return tuple(recovered)
+
+    async def artifacts(self) -> tuple[Artifact, ...]:
+        """Rebuild the artifact metadata projection from authoritative results."""
+
+        async with self.sessions() as session:
+            result_documents = (
+                await session.scalars(select(RunRow.result_json).where(RunRow.result_json.is_not(None)))
+            ).all()
+        artifacts: dict[UUID, Artifact] = {}
+        for document in result_documents:
+            if document is None:
+                continue
+            result = FetchResult.model_validate_json(document)
+            for artifact in result.artifacts:
+                previous = artifacts.get(artifact.artifact_id)
+                if previous is not None and previous != artifact:
+                    raise ValueError(f"artifact {artifact.artifact_id} has conflicting ledger metadata")
+                artifacts[artifact.artifact_id] = artifact
+        return tuple(artifacts.values())
+
     async def stream(self, run_id: UUID) -> AsyncIterator[ProvenanceEvent]:
-        for event in await self.events(run_id):
-            yield event
         queue: asyncio.Queue[ProvenanceEvent | None] = asyncio.Queue()
         self._subscribers.setdefault(run_id, set()).add(queue)
         try:
+            seen: set[UUID] = set()
+            for event in await self.events(run_id):
+                seen.add(event.event_id)
+                yield event
             state, _, _ = await self.run_snapshot(run_id)
             if state == RunState.FINISHED:
+                while not queue.empty():
+                    queued_event = queue.get_nowait()
+                    if queued_event is None:
+                        break
+                    if queued_event.event_id not in seen:
+                        seen.add(queued_event.event_id)
+                        yield queued_event
                 return
             while True:
                 queued_event = await queue.get()
                 if queued_event is None:
                     return
-                yield queued_event
+                if queued_event.event_id not in seen:
+                    seen.add(queued_event.event_id)
+                    yield queued_event
         finally:
-            self._subscribers.get(run_id, set()).discard(queue)
+            subscribers = self._subscribers.get(run_id)
+            if subscribers is not None:
+                subscribers.discard(queue)
+                if not subscribers:
+                    self._subscribers.pop(run_id, None)
 
 
 def _event_from_row(row: EventRow) -> ProvenanceEvent:
@@ -224,17 +285,17 @@ def _sanitize_payload(
         normalized_key == "body"
         or auth_component
         or (not safe_token_metric and any(
-            fragment in compact_key
-            for fragment in (
-                "authentication",
-                "authorization",
-                "credential",
-                "apikey",
-                "token",
-                "cookie",
-                "password",
-                "secret",
-            )
+                fragment in compact_key
+                for fragment in (
+                    "authentication",
+                    "authorization",
+                    "credential",
+                    "apikey",
+                    "token",
+                    "cookie",
+                    "password",
+                    "secret",
+                )
         ))
     ):
         return "[REDACTED]"

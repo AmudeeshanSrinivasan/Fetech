@@ -62,8 +62,9 @@ def sanitize_url(url: str, *, redact_query: bool = False) -> str:
 
     parts = urlsplit(url)
     hostname = parts.hostname or ""
+    displayed_hostname = f"[{hostname}]" if ":" in hostname else hostname
     port = f":{parts.port}" if parts.port else ""
-    netloc = f"{hostname}{port}"
+    netloc = f"{displayed_hostname}{port}"
     query = urlencode(
         [
             (
@@ -162,7 +163,8 @@ def normalize_url(target: str) -> str:
     default_port = (parts.scheme.lower() == "http" and port == 80) or (
         parts.scheme.lower() == "https" and port == 443
     )
-    netloc = host if port is None or default_port else f"{host}:{port}"
+    displayed_host = f"[{host}]" if ":" in host else host
+    netloc = displayed_host if port is None or default_port else f"{displayed_host}:{port}"
     path = parts.path or "/"
     return urlunsplit((parts.scheme.lower(), netloc, path, parts.query, ""))
 
