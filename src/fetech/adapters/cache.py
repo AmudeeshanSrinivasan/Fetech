@@ -1052,7 +1052,7 @@ def _reconcile_connector_result_usage(
     usage: SnapshotConnectorUsage,
     maximum_body_bytes: int,
 ) -> None:
-    """Reject dishonest reporting while preserving a conservative usage floor."""
+    """Validate the usage facts inferable from a trusted connector result."""
 
     if not isinstance(result, ArchivedSnapshot) or type(result.body) is not bytes:
         return
@@ -1065,11 +1065,16 @@ def _reconcile_connector_result_usage(
 
     body_bytes = len(result.body)
     accounted_body_bytes = body_bytes + result.auxiliary_bytes
-    underreported = (
-        usage.wire_bytes < accounted_body_bytes
-        or usage.decompressed_bytes < accounted_body_bytes
+    # A compressed transfer can legitimately use fewer wire bytes than the
+    # decoded body. Only a zero-byte transfer for a non-empty result is
+    # provably false at this boundary; the decoded body remains an exact,
+    # independently enforceable floor.
+    underreported_wire = accounted_body_bytes > 0 and usage.wire_bytes == 0
+    underreported_decompressed = (
+        usage.decompressed_bytes < accounted_body_bytes
     )
-    usage.wire_bytes = max(usage.wire_bytes, accounted_body_bytes)
+    if underreported_wire:
+        usage.wire_bytes = accounted_body_bytes
     usage.decompressed_bytes = max(
         usage.decompressed_bytes,
         accounted_body_bytes,
@@ -1078,7 +1083,7 @@ def _reconcile_connector_result_usage(
         raise AdapterBudgetExceededError(
             "snapshot connector body exceeds the remaining byte budget"
         )
-    if underreported:
+    if underreported_wire or underreported_decompressed:
         raise AdapterExecutionError(
             "configured snapshot connector under-reported body usage"
         )

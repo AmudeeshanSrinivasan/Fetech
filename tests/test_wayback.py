@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import gzip
 import json
 from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
@@ -163,6 +164,15 @@ class _SlowStream(httpx.AsyncByteStream):
     async def __aiter__(self):
         await asyncio.sleep(0.05)
         yield b"{}"
+
+
+class _ChunkedStream(httpx.AsyncByteStream):
+    def __init__(self, chunks: list[bytes]) -> None:
+        self.chunks = chunks
+
+    async def __aiter__(self):
+        for chunk in self.chunks:
+            yield chunk
 
 
 def _availability(
@@ -774,6 +784,342 @@ async def test_pinned_wayback_http_client_enforces_identity_and_byte_bounds(
 
 
 @pytest.mark.asyncio
+async def test_pinned_wayback_client_decodes_one_bounded_gzip_member(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    body = b"bounded Wayback gzip fixture " * 100
+    compressed = gzip.compress(body, mtime=0)
+    usage = SnapshotConnectorUsage()
+
+    async def resolve(_host: str, _port: int) -> tuple[str, ...]:
+        return ("93.184.216.34",)
+
+    policy = SafeURLPolicy()
+    monkeypatch.setattr(policy, "_resolve", resolve)
+    monkeypatch.setattr(
+        "fetech.wayback.PinnedAsyncHTTPTransport",
+        lambda: _MockPinnedTransport(
+            httpx.MockTransport(
+                lambda _request: httpx.Response(
+                    200,
+                    headers={
+                        "content-encoding": "gzip",
+                        "content-length": str(len(compressed)),
+                    },
+                    stream=_ChunkedStream(
+                        [
+                            compressed[:1],
+                            compressed[1:9],
+                            compressed[9:-8],
+                            compressed[-8:],
+                        ]
+                    ),
+                )
+            )
+        ),
+    )
+    client = PinnedWaybackHTTPClient(
+        policy=policy,
+        user_agent="Fetech-test/1",
+    )
+
+    response = await client.get(
+        "https://archive.org/wayback/available",
+        allowed_host="archive.org",
+        maximum_bytes=len(body),
+        deadline_seconds=5,
+        usage=usage,
+    )
+
+    assert response.body == body
+    assert usage.wire_bytes == len(compressed)
+    assert usage.decompressed_bytes == len(body)
+
+
+@pytest.mark.asyncio
+async def test_pinned_wayback_client_bounds_gzip_expansion(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    compressed = gzip.compress(b"x" * 10_000, mtime=0)
+    usage = SnapshotConnectorUsage()
+
+    async def resolve(_host: str, _port: int) -> tuple[str, ...]:
+        return ("93.184.216.34",)
+
+    policy = SafeURLPolicy()
+    monkeypatch.setattr(policy, "_resolve", resolve)
+    monkeypatch.setattr(
+        "fetech.wayback.PinnedAsyncHTTPTransport",
+        lambda: _MockPinnedTransport(
+            httpx.MockTransport(
+                lambda _request: httpx.Response(
+                    200,
+                    headers={"content-encoding": "gzip"},
+                    stream=httpx.ByteStream(compressed),
+                )
+            )
+        ),
+    )
+    client = PinnedWaybackHTTPClient(
+        policy=policy,
+        user_agent="Fetech-test/1",
+    )
+
+    with pytest.raises(
+        AdapterBudgetExceededError,
+        match="decompressed byte budget",
+    ):
+        await client.get(
+            "https://archive.org/wayback/available",
+            allowed_host="archive.org",
+            maximum_bytes=1_000,
+            deadline_seconds=5,
+            usage=usage,
+        )
+
+    assert usage.wire_bytes == len(compressed)
+    assert usage.decompressed_bytes == 1_001
+
+
+@pytest.mark.asyncio
+async def test_pinned_wayback_client_bounds_compressed_wire_bytes(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    compressed = gzip.compress(bytes(range(128)), mtime=0)
+    usage = SnapshotConnectorUsage()
+
+    async def resolve(_host: str, _port: int) -> tuple[str, ...]:
+        return ("93.184.216.34",)
+
+    policy = SafeURLPolicy()
+    monkeypatch.setattr(policy, "_resolve", resolve)
+    monkeypatch.setattr(
+        "fetech.wayback.PinnedAsyncHTTPTransport",
+        lambda: _MockPinnedTransport(
+            httpx.MockTransport(
+                lambda _request: httpx.Response(
+                    200,
+                    headers={"content-encoding": "gzip"},
+                    stream=_ChunkedStream(
+                        [compressed[:50], compressed[50:]]
+                    ),
+                )
+            )
+        ),
+    )
+    client = PinnedWaybackHTTPClient(
+        policy=policy,
+        user_agent="Fetech-test/1",
+    )
+
+    with pytest.raises(
+        AdapterBudgetExceededError,
+        match="wire byte budget",
+    ):
+        await client.get(
+            "https://archive.org/wayback/available",
+            allowed_host="archive.org",
+            maximum_bytes=100,
+            deadline_seconds=5,
+            usage=usage,
+        )
+
+    assert usage.wire_bytes == len(compressed)
+    assert usage.decompressed_bytes <= 100
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    ("encoded", "message"),
+    [
+        (b"not-gzip", "malformed"),
+        (gzip.compress(b"body", mtime=0)[:-1], "truncated"),
+        (gzip.compress(b"body", mtime=0) + b"trailing", "trailing data"),
+        (
+            gzip.compress(b"first", mtime=0)
+            + gzip.compress(b"second", mtime=0),
+            "trailing data",
+        ),
+    ],
+    ids=["malformed", "truncated", "trailing", "multiple-members"],
+)
+async def test_pinned_wayback_client_rejects_invalid_gzip_streams(
+    monkeypatch: pytest.MonkeyPatch,
+    encoded: bytes,
+    message: str,
+) -> None:
+    async def resolve(_host: str, _port: int) -> tuple[str, ...]:
+        return ("93.184.216.34",)
+
+    policy = SafeURLPolicy()
+    monkeypatch.setattr(policy, "_resolve", resolve)
+    monkeypatch.setattr(
+        "fetech.wayback.PinnedAsyncHTTPTransport",
+        lambda: _MockPinnedTransport(
+            httpx.MockTransport(
+                lambda _request: httpx.Response(
+                    200,
+                    headers={"content-encoding": "gzip"},
+                    stream=httpx.ByteStream(encoded),
+                )
+            )
+        ),
+    )
+    client = PinnedWaybackHTTPClient(
+        policy=policy,
+        user_agent="Fetech-test/1",
+    )
+
+    with pytest.raises(AdapterExecutionError, match=message):
+        await client.get(
+            "https://archive.org/wayback/available",
+            allowed_host="archive.org",
+            maximum_bytes=1_000,
+            deadline_seconds=5,
+        )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("footer_offset", [-8, -4], ids=["crc", "isize"])
+async def test_pinned_wayback_client_charges_corrupt_gzip_expansion(
+    monkeypatch: pytest.MonkeyPatch,
+    footer_offset: int,
+) -> None:
+    maximum_bytes = 1_000_000
+    encoded = bytearray(gzip.compress(b"x" * maximum_bytes, mtime=0))
+    encoded[footer_offset] ^= 0x01
+    usage = SnapshotConnectorUsage()
+
+    async def resolve(_host: str, _port: int) -> tuple[str, ...]:
+        return ("93.184.216.34",)
+
+    policy = SafeURLPolicy()
+    monkeypatch.setattr(policy, "_resolve", resolve)
+    monkeypatch.setattr(
+        "fetech.wayback.PinnedAsyncHTTPTransport",
+        lambda: _MockPinnedTransport(
+            httpx.MockTransport(
+                lambda _request: httpx.Response(
+                    200,
+                    headers={"content-encoding": "gzip"},
+                    stream=httpx.ByteStream(bytes(encoded)),
+                )
+            )
+        ),
+    )
+    client = PinnedWaybackHTTPClient(
+        policy=policy,
+        user_agent="Fetech-test/1",
+    )
+
+    with pytest.raises(AdapterExecutionError, match="malformed"):
+        await client.get(
+            "https://archive.org/wayback/available",
+            allowed_host="archive.org",
+            maximum_bytes=maximum_bytes,
+            deadline_seconds=5,
+            usage=usage,
+        )
+
+    assert usage.wire_bytes == len(encoded)
+    assert usage.decompressed_bytes == maximum_bytes + 1
+
+
+@pytest.mark.asyncio
+async def test_pinned_wayback_client_rejects_trailing_gzip_chunk(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    encoded = gzip.compress(b"body", mtime=0)
+
+    async def resolve(_host: str, _port: int) -> tuple[str, ...]:
+        return ("93.184.216.34",)
+
+    policy = SafeURLPolicy()
+    monkeypatch.setattr(policy, "_resolve", resolve)
+    monkeypatch.setattr(
+        "fetech.wayback.PinnedAsyncHTTPTransport",
+        lambda: _MockPinnedTransport(
+            httpx.MockTransport(
+                lambda _request: httpx.Response(
+                    200,
+                    headers={"content-encoding": "gzip"},
+                    stream=_ChunkedStream([encoded, b"trailing"]),
+                )
+            )
+        ),
+    )
+    client = PinnedWaybackHTTPClient(
+        policy=policy,
+        user_agent="Fetech-test/1",
+    )
+
+    with pytest.raises(AdapterExecutionError, match="trailing data"):
+        await client.get(
+            "https://archive.org/wayback/available",
+            allowed_host="archive.org",
+            maximum_bytes=1_000,
+            deadline_seconds=5,
+        )
+
+
+@pytest.mark.asyncio
+async def test_wayback_two_request_flow_uses_cumulative_wire_budget() -> None:
+    availability = _availability()
+
+    class CumulativeUsageClient:
+        def __init__(self) -> None:
+            self.maximums: list[int] = []
+
+        async def get(
+            self,
+            url: str,
+            *,
+            allowed_host: str,
+            maximum_bytes: int,
+            maximum_redirects: int,
+            deadline_seconds: float,
+            usage: SnapshotConnectorUsage,
+        ) -> WaybackHTTPResponse:
+            del maximum_redirects, deadline_seconds
+            self.maximums.append(maximum_bytes)
+            if allowed_host == "archive.org":
+                usage.record(
+                    wire_bytes=900,
+                    decompressed_bytes=len(availability),
+                )
+                return WaybackHTTPResponse(
+                    status_code=200,
+                    url=url,
+                    headers={"content-type": "application/json"},
+                    body=availability,
+                )
+            assert allowed_host == "web.archive.org"
+            usage.record(wire_bytes=100, decompressed_bytes=50)
+            return WaybackHTTPResponse(
+                status_code=200,
+                url=_RAW_CAPTURE,
+                headers={"content-type": "text/html"},
+                body=b"x" * 50,
+            )
+
+    client = CumulativeUsageClient()
+    connector = WaybackSnapshotConnector(
+        policy=SafeURLPolicy(),
+        user_agent="Fetech-test/1",
+        client=client,
+    )
+
+    snapshot = await connector.fetch_snapshot(
+        _ORIGINAL,
+        maximum_bytes=1_000,
+        deadline_seconds=5,
+    )
+
+    assert snapshot.body == b"x" * 50
+    assert client.maximums == [1_000, 100]
+
+
+@pytest.mark.asyncio
 async def test_pinned_wayback_http_client_enforces_a_total_stream_deadline(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -812,7 +1158,8 @@ async def test_pinned_wayback_http_client_enforces_a_total_stream_deadline(
 @pytest.mark.parametrize(
     ("headers", "message"),
     [
-        ([("content-encoding", "gzip")], "compression"),
+        ([("content-encoding", "br")], "compression"),
+        ([("content-encoding", "gzip, identity")], "compression"),
         ([("transfer-encoding", "gzip")], "transfer encoding"),
         ([("x-duplicate", str(index)) for index in range(129)], "too many headers"),
     ],

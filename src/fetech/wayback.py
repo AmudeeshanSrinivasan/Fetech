@@ -7,6 +7,7 @@ import json
 import math
 import re
 import time
+import zlib
 from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import UTC, datetime
@@ -241,8 +242,8 @@ class PinnedWaybackHTTPClient:
                         encoding = headers.get(
                             "content-encoding",
                             "identity",
-                        ).casefold()
-                        if encoding not in {"", "identity"}:
+                        ).strip().casefold()
+                        if encoding not in {"", "identity", "gzip"}:
                             raise AdapterExecutionError(
                                 "Wayback response compression is not accepted"
                             )
@@ -275,6 +276,7 @@ class PinnedWaybackHTTPClient:
                         body = await _read_bounded(
                             response,
                             maximum_bytes,
+                            content_encoding=encoding,
                             usage=usage,
                         )
                         try:
@@ -409,7 +411,10 @@ class WaybackSnapshotConnector:
             availability.body,
             original=original,
         )
-        remaining_bytes = maximum_bytes - len(availability.body)
+        remaining_bytes = _remaining_transfer_bytes(
+            maximum_bytes,
+            usage=usage,
+        )
         if remaining_bytes <= 0:
             raise AdapterBudgetExceededError(
                 "Wayback availability lookup exhausted the byte budget"
@@ -428,6 +433,7 @@ class WaybackSnapshotConnector:
             deadline_seconds=remaining,
             usage=usage,
         )
+        _validate_transfer_usage(maximum_bytes, usage=usage)
         if snapshot.status_code != 200:
             if snapshot.status_code in {404, 410}:
                 raise AdapterNotFoundError("Wayback snapshot is unavailable")
@@ -458,8 +464,16 @@ async def _read_bounded(
     response: httpx.Response,
     maximum_bytes: int,
     *,
+    content_encoding: str,
     usage: SnapshotConnectorUsage,
 ) -> bytes:
+    if content_encoding == "gzip":
+        return await _read_bounded_gzip(
+            response,
+            maximum_bytes,
+            usage=usage,
+        )
+
     chunks: list[bytes] = []
     size = 0
     async for chunk in response.aiter_raw():
@@ -472,6 +486,100 @@ async def _read_bounded(
             raise AdapterBudgetExceededError("Wayback response exceeds the byte budget")
         chunks.append(chunk)
     return b"".join(chunks)
+
+
+async def _read_bounded_gzip(
+    response: httpx.Response,
+    maximum_bytes: int,
+    *,
+    usage: SnapshotConnectorUsage,
+) -> bytes:
+    """Decode exactly one gzip member with independent wire/output bounds."""
+
+    decoder = zlib.decompressobj(zlib.MAX_WBITS | 16)
+    chunks: list[bytes] = []
+    wire_size = 0
+    decompressed_size = 0
+
+    async for chunk in response.aiter_raw():
+        if not chunk:
+            continue
+        wire_size += len(chunk)
+        usage.record(wire_bytes=len(chunk))
+        if wire_size > maximum_bytes:
+            raise AdapterBudgetExceededError(
+                "Wayback response exceeds the wire byte budget"
+            )
+        if decoder.eof:
+            raise AdapterExecutionError(
+                "Wayback gzip response contains trailing data"
+            )
+        try:
+            decoded = decoder.decompress(
+                chunk,
+                maximum_bytes - decompressed_size + 1,
+            )
+        except zlib.error as exc:
+            # zlib can inflate a large body and then reject its CRC or ISIZE
+            # without returning the produced bytes. Conservatively exhaust
+            # this request's decompression allowance so malformed streams
+            # cannot regain that budget through a fallback or retry.
+            usage.record(
+                decompressed_bytes=maximum_bytes - decompressed_size + 1
+            )
+            raise AdapterExecutionError(
+                "Wayback gzip response is malformed"
+            ) from exc
+        decompressed_size += len(decoded)
+        usage.record(decompressed_bytes=len(decoded))
+        if decompressed_size > maximum_bytes:
+            raise AdapterBudgetExceededError(
+                "Wayback response exceeds the decompressed byte budget"
+            )
+        chunks.append(decoded)
+        if decoder.unused_data:
+            raise AdapterExecutionError(
+                "Wayback gzip response contains trailing data"
+            )
+        if decoder.unconsumed_tail:
+            raise AdapterBudgetExceededError(
+                "Wayback response exceeds the decompressed byte budget"
+            )
+
+    if not decoder.eof:
+        raise AdapterExecutionError("Wayback gzip response is truncated")
+    return b"".join(chunks)
+
+
+def _remaining_transfer_bytes(
+    maximum_bytes: int,
+    *,
+    usage: SnapshotConnectorUsage,
+) -> int:
+    _validate_transfer_usage(maximum_bytes, usage=usage)
+    return min(
+        maximum_bytes - usage.wire_bytes,
+        maximum_bytes - usage.decompressed_bytes,
+    )
+
+
+def _validate_transfer_usage(
+    maximum_bytes: int,
+    *,
+    usage: SnapshotConnectorUsage,
+) -> None:
+    values = (usage.wire_bytes, usage.decompressed_bytes)
+    if any(
+        isinstance(value, bool) or not isinstance(value, int) or value < 0
+        for value in values
+    ):
+        raise AdapterExecutionError("Wayback client returned invalid byte usage")
+    if usage.wire_bytes > maximum_bytes:
+        raise AdapterBudgetExceededError("Wayback wire byte budget exhausted")
+    if usage.decompressed_bytes > maximum_bytes:
+        raise AdapterBudgetExceededError(
+            "Wayback decompressed byte budget exhausted"
+        )
 
 
 def _bounded_headers(headers: httpx.Headers) -> dict[str, str]:

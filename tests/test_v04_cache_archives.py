@@ -446,8 +446,65 @@ async def test_usage_reporting_connector_cannot_underreport_returned_body(
     connector = _UsageReportingFixtureConnector(
         "https://cache.example/snapshot",
         body,
-        wire_bytes=1,
+        wire_bytes=17,
         decompressed_bytes=1,
+    )
+    adapter = CacheAdapter(
+        SnapshotStore(tmp_path / "snapshots", context.cas),
+        connectors={"web_archive": connector},
+    )
+
+    with pytest.raises(
+        AdapterExecutionError,
+        match="configured snapshot connector failed",
+    ):
+        await adapter.execute(_node("web_archive"), context)
+
+    assert context.attempts[-1].consumed_budget == {
+        "bytes": 17,
+        "decompressed_bytes": len(body),
+    }
+    assert context.resources == []
+    assert context.artifacts == []
+    assert not list((tmp_path / "cas").rglob("*"))
+    assert not list((tmp_path / "snapshots").rglob("*.json"))
+
+
+async def test_usage_reporting_connector_accepts_compressed_wire_accounting(
+    tmp_path: Path,
+) -> None:
+    body = b"Compressed connector body with enough useful deterministic text." * 2
+    context = await _context(tmp_path, with_artifact=False)
+    connector = _UsageReportingFixtureConnector(
+        "https://cache.example/snapshot",
+        body,
+        wire_bytes=23,
+        decompressed_bytes=len(body),
+    )
+    adapter = CacheAdapter(
+        SnapshotStore(tmp_path / "snapshots", context.cas),
+        connectors={"web_archive": connector},
+    )
+
+    await adapter.execute(_node("web_archive"), context)
+
+    assert context.attempts[-1].consumed_budget == {
+        "bytes": 23,
+        "decompressed_bytes": len(body),
+    }
+    assert context.artifacts[-1].size == len(body)
+
+
+async def test_usage_reporting_connector_rejects_zero_wire_for_nonempty_body(
+    tmp_path: Path,
+) -> None:
+    body = b"Non-empty connector body cannot arrive over a zero-byte transfer."
+    context = await _context(tmp_path, with_artifact=False)
+    connector = _UsageReportingFixtureConnector(
+        "https://cache.example/snapshot",
+        body,
+        wire_bytes=0,
+        decompressed_bytes=len(body),
     )
     adapter = CacheAdapter(
         SnapshotStore(tmp_path / "snapshots", context.cas),
@@ -466,8 +523,6 @@ async def test_usage_reporting_connector_cannot_underreport_returned_body(
     }
     assert context.resources == []
     assert context.artifacts == []
-    assert not list((tmp_path / "cas").rglob("*"))
-    assert not list((tmp_path / "snapshots").rglob("*.json"))
 
 
 async def test_usage_reporting_connector_oversize_body_is_charged_before_rejection(

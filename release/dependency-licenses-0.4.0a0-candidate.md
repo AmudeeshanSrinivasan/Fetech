@@ -27,7 +27,7 @@ report does not make legal conclusions.
 
 | Input | SHA-256 |
 |---|---|
-| `scripts/release_v04_candidate.toml` | `fd2824de49e04b22770a7da723bfbff0c1383fde642caecee1a3b8910cf4bb47` |
+| `scripts/release_v04_candidate.toml` | `abdfe8cab774a0a9b17488d27dc853a5f46742769e0db863bbefefefeed61125` |
 | `README.md` | `8950f2a06689abeab96f7c15f6e4edbb9f2ebe6d1fe003356947a5ad1b3e6188` |
 | `SECURITY.md` | `d6a5930c9e4b9b5a303f037328670e39b48c1694b0d19382907bbcc00eaf1f60` |
 | `CONTRIBUTING.md` | `b3e1bff72a1ae1db85243a20435501b111db235442a4db234fbf6d198be52d19` |
@@ -41,14 +41,15 @@ report does not make legal conclusions.
 | `docs/competitor-matrix.md` | `ec7f67f96282bef1c35f8e28173bba2c86987952e53a22f81853e4050abfbf63` |
 | `docs/deployment-containment.md` | `23112d35030920adad8a1ff0887471615bc30b862fe02801aeac09f1a48562df` |
 | `docs/security-threat-model.md` | `84fdd00b0d2b669888c1cdfdaf5a6b03ed02698129797c812e2b6cf85c8320db` |
-| `docs/v0.4-conformance.md` | `be9223482439ffe420c1e1bc184371974bdcf872dbe186231db5668486a41527` |
-| `docs/releases/v0.4.0a0.md` | `ab54dc1f44aff36d98538c609d181d3b2583dfa58a2e146652462fc2da499378` |
+| `docs/v0.4-conformance.md` | `6b050c22c8bbea98fc921dfe478ac5fcacdb93f8dd624cb60483b564783f8f3b` |
+| `docs/releases/v0.4.0a0.md` | `af862e9c0f5c0140abe11829b8301f4a1763eb74572cbb19e047be2b5890b6f3` |
 | `scripts/generate_release_evidence.py` | `13efee887298c94e4ece0cc317fc189bbaa02847b0c7296075b7fa98eb8fb9db` |
-| `scripts/check_v04_release_readiness.py` | `cbd62100d8b1eef053446480274a3b393e50ac2e6e8ae264b81f4742c838b036` |
+| `scripts/check_v04_release_readiness.py` | `c71196529ea75466160bbddb2b4e7d07c54612ff8b99ae5a58ad44d593338c85` |
 | `scripts/verify_v04_release_artifacts.py` | `f9fb9d8925a0e260e72063ec5eca5bca3db65303269f36f13600281be34caaa3` |
+| `scripts/verify_v04_smoke_evidence.py` | `12cca7e0e93c6474a8e76ec86eb57cc0fb2c08ae0a20eab85a490ddf3cf6d79e` |
 | `scripts/release_license_catalog.toml` | `eb2332a9f2fa9d1280f24fdfc3cb80d54f15f7ba54dc0d20ef5c3f66c29de93c` |
 | `scripts/release_published.toml` | `9ec0d58866ac9fdcda7b2c21b8a5957ecf0aef8c5909390f12f7712087e35731` |
-| `scripts/collect_v04_smoke_evidence.py` | `c774fa0252e324ecb65692fa0966424392842183ed551639b589a4e60d2411f6` |
+| `scripts/collect_v04_smoke_evidence.py` | `c430402b0e1df2b8b23ff439b815e987dbd92d5cb5ee1ac5614b601ae1b233ec` |
 | `scripts/provision_docling_artifacts.py` | `256c3b94862c7c27548cef120f1aad863536471d8b4bcfad3cc2a419bbd0bcb0` |
 | `release/fetech-v0.4-docling-development-smoke.json` | `e14bc2b33fcf7c492db7582d61c5733a13530c24d210c126b1921716dfaf930d` |
 | `release/fetech-v0.4-docling-wheel-smoke.json` | `bb873b9bacfd58330f9315b3a7672868937af5e41eabea824797c794eaf5d174` |
@@ -56,7 +57,7 @@ report does not make legal conclusions.
 | `src/fetech/adapters/archive.py` | `79b57c11d928f21b25135d504794c34b1625e912427f3094adbd736788c590bb` |
 | `src/fetech/adapters/base.py` | `23beecf1478e6af71b29a98862db3ca0d5d480f69f8e8375d929c8cf7bd772b8` |
 | `src/fetech/adapters/browser.py` | `d2961e8c44193410a3c8296fd537b176c7616f6df8daa5d74e1690cd160f6c9d` |
-| `src/fetech/adapters/cache.py` | `04fca368b572d496af3a63128452fb0f5593700192c56f6465a49336bc1f58f1` |
+| `src/fetech/adapters/cache.py` | `5824ab232ccf2be882bf0554525381f458faf246052d4cbfdcd7a46cac370b72` |
 | `src/fetech/adapters/documents.py` | `3dd5dc4bd831f80721a70202dfb0e6e8072e210b74af454e809c3ac494dcc239` |
 | `src/fetech/adapters/http.py` | `26ccb390ae217519bedf339dcced0e3d1a7beb1993308a1c739b32557d744cf6` |
 | `src/fetech/adapters/media.py` | `fdaf44b67fa59f3e84a056b9465ca75e1e6e330de705f011d14242027df2faac` |
@@ -84,7 +85,7 @@ report does not make legal conclusions.
 | `src/fetech/scheduling.py` | `f77f7c6e45939fffddfd83f8753086a32418320e06f24415a302387aa573ee1e` |
 | `src/fetech/search.py` | `88ec5655693b9780a23e5bbc306944a212493b1307e486969f36951e80c7683b` |
 | `src/fetech/storage.py` | `77f80698d88fa9104b34af735b95ce942a1af06d563f95a651adb5c4c82df193` |
-| `src/fetech/wayback.py` | `f8f475b236abd73444c56c45dbc0f2f1b282b62180ae2a5d632eed88f2f12650` |
+| `src/fetech/wayback.py` | `442d3b1b1d3d3439507d6cbae2d138cc8a75a6991664c026c6ba186024ee42da` |
 | `src/fetech/worker_isolation.py` | `20cd41906055fd262bec6881ce956f3a0f5ef02bc9edefb1cc5e13209894c8e9` |
 | `src/fetech/worker_isolation_bootstrap.py` | `7317aa1dc4edff4e61df5acdfa72134b1661c6a5f8944ae76544bfb148a2868c` |
 | `src/fetech/worker_audit.py` | `e0cdf47daae5f1291462450aa5c66d96719f7fac161104a1ec50d413473e14ae` |
@@ -96,8 +97,9 @@ report does not make legal conclusions.
 | `tests/test_logic_backends.py` | `9140c1c49e7ba6577e8e79fdf6f1b5180c0e8ae28e4fc78b8a2c381612c6901c` |
 | `tests/test_network_scheduling.py` | `5cb5bc78bd6a0cc216749aadd5b3670b4d99feee1ebeb18d72f808caa0b9c462` |
 | `tests/test_release_evidence.py` | `ba204847aeefe48c0dcc817211f9332c5f21743450b43aec0f8a2f24e63bb6e0` |
-| `tests/test_release_readiness.py` | `ed8f319f58843ec9f2af716ff242b47cbec5030467e1e5075644d33d9bdea65a` |
+| `tests/test_release_readiness.py` | `e8ee5e4213f33392d633f41983bedc9d40dfb18e5c0d787390f2260e0082cfd6` |
 | `tests/test_v04_release_artifacts.py` | `b29b1b7a42d5b73294264b0a787704f8f3d0f6a8a6bcb4c3e95a005f1b9d69f0` |
+| `tests/test_v04_smoke_verifier.py` | `d2e13ff3f29e152537080089163b4b9bf3b44ff4fadbcfa9de518f7403249bf1` |
 | `tests/test_storage_cas.py` | `f11e443948cddace9df0c9efa834f7e8d0837c65a48472ab1ef0075e6da76381` |
 | `tests/test_systemd_unit.py` | `6b0218c69ddb50b00030c704e6e3443a3e37b98639d182aaf9bcdcbb403f4f72` |
 | `tests/test_v01_conformance.py` | `e46f7f357d291c109ea6678d3e794e70bee8f4a5e1d095ddb2239f12a675dd05` |
@@ -107,7 +109,7 @@ report does not make legal conclusions.
 | `tests/test_v03_integration.py` | `683df884a402ccaae797c8f8cf5700eabf6dc2120598728d185366f79cd2922f` |
 | `tests/test_v03_interfaces.py` | `b3d863ac00dacda5f7db25580bc2d24503af73bc67b3db1afc0acd4312cbb3a7` |
 | `tests/test_v04_budget_accounting.py` | `463e909d34128404d58d7f6a572d01ffb09a77ea184b4a0ae3c29c24196aff62` |
-| `tests/test_v04_cache_archives.py` | `a60e3e9d35dafc05f5a3191ba7f85f3772db58e29a8ea0a8ae544934b70853e0` |
+| `tests/test_v04_cache_archives.py` | `73f0327635a8562ab748d10353f4e4df763598e70daf7f1b4ffeec4251d8508c` |
 | `tests/test_v04_cache_expiry_provenance.py` | `96be3e7afbad9ee44c6c224f3d4050996fe090f1621ac390f76f4a84478b93d4` |
 | `tests/test_v04_capability_matrix.py` | `470d584a635f658e3d4476bfa43eeaedf4d750a8dfed73f4d3e6cf75a68ab656` |
 | `tests/test_v04_docling.py` | `248da3752ce6102f6bac4bc8def4c240f1d737c631c0d6970516b5f6a8c5253b` |
@@ -119,7 +121,7 @@ report does not make legal conclusions.
 | `tests/test_v04_planning.py` | `f42935c8bfd85760a53af067b938de52edd06b942ced22577d8268937d9240c2` |
 | `tests/test_v04_smoke_evidence.py` | `8487f56159ddd1f266ef61928fd668b8f9254e36e598d51560368a2707479de1` |
 | `tests/test_v04_ytdlp.py` | `70ae4e2d2228794882becd0063dfa9a644c6fe10d0b75584c9bdf2adfd57bcef` |
-| `tests/test_wayback.py` | `dbedb5aaf13aacb294c7066563c041c9a7e3a5d077ec90a90ebbd4dae459ff83` |
+| `tests/test_wayback.py` | `988c8d23d8109ddd5de9c057c4bab3ac0dd704c52d8866ef9161077aa23078c5` |
 | `tests/test_worker_audit.py` | `3544ff10e69ecea8533ac50338148c82fa84950d5894a9f74f0cb5d041629de0` |
 | `tests/test_worker_isolation.py` | `04fa64ee748056527c276a676154dbd0d3f74c10f6051ab8817f410977ac73db` |
 | `tests/test_worker_isolation_linux.py` | `7d5f9ba5a3a9bc1aeb21c41160fb130a1ed9854086ecac2004fb65202be2270e` |

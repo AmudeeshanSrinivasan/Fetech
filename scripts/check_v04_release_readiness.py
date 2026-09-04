@@ -18,6 +18,7 @@ from typing import Final, Literal
 import yaml
 
 TARGET_VERSION: Final = "0.4.0a0"
+SMOKE_EVIDENCE_FILENAME: Final = f"fetech-v{TARGET_VERSION}-smoke.json"
 REPORT_SCHEMA_VERSION: Final = "1"
 DEFAULT_PROFILE: Final = Path("scripts/release_v04_candidate.toml")
 DEFAULT_OUTPUT: Final = Path("release/fetech-v0.4-readiness.json")
@@ -538,6 +539,49 @@ def _check_release_artifacts(
     )
 
 
+def _check_complete_smoke(
+    project_root: Path,
+    gate: PublicationGate,
+    artifact_dir: Path | None,
+) -> GateResult:
+    if gate.check != "complete_smoke_v2":
+        return _blocked(
+            gate,
+            "The complete-smoke gate lacks its canonical verifier ID.",
+        )
+    if artifact_dir is None:
+        return _blocked(gate)
+    verifier = project_root / "scripts" / "verify_v04_smoke_evidence.py"
+    if verifier.is_symlink() or not verifier.is_file():
+        return _blocked(gate, "The complete-smoke verifier is unavailable.")
+    try:
+        process = subprocess.run(
+            [
+                sys.executable,
+                str(verifier),
+                "--project-root",
+                str(project_root),
+                "--evidence",
+                str(artifact_dir / SMOKE_EVIDENCE_FILENAME),
+                "--wheel",
+                str(artifact_dir / f"fetech-{TARGET_VERSION}-py3-none-any.whl"),
+            ],
+            cwd=project_root,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return _blocked(gate, "Complete artifact-smoke verification did not complete.")
+    if process.returncode != 0:
+        return _blocked(gate, "Complete artifact-smoke verification failed.")
+    return _passed(
+        gate,
+        "Verified complete live smoke evidence against clean source, lock, and wheel.",
+    )
+
+
 def evaluate_gates(
     project_root: Path,
     gates: Sequence[PublicationGate],
@@ -560,6 +604,10 @@ def evaluate_gates(
         elif gate.id == "wheel-sdist-checksums":
             results.append(
                 _check_release_artifacts(root, gate, release_artifacts_dir)
+            )
+        elif gate.id == "complete-artifact-smoke":
+            results.append(
+                _check_complete_smoke(root, gate, release_artifacts_dir)
             )
         else:
             # A profile assertion or an evidence file's mere existence is not a
@@ -660,8 +708,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         "--release-artifacts-dir",
         type=Path,
         help=(
-            "verify the canonical wheel, source distribution, and SHA256SUMS "
-            "from this directory"
+            "verify the canonical wheel, source distribution, SHA256SUMS, and "
+            f"{SMOKE_EVIDENCE_FILENAME} from this directory"
         ),
     )
     mode = parser.add_mutually_exclusive_group()

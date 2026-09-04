@@ -53,6 +53,8 @@ def _gate_profile(*, duplicate: bool = False, omit_last: bool = False) -> str:
             lines.append('check = "candidate_evidence_v1"')
         elif gate_id == "wheel-sdist-checksums":
             lines.append('check = "release_artifacts_v1"')
+        elif gate_id == "complete-artifact-smoke":
+            lines.append('check = "complete_smoke_v2"')
         sections.append(
             "\n".join(lines)
         )
@@ -389,6 +391,42 @@ def test_artifact_gate_passes_only_through_the_dedicated_verifier(
         gate
         for gate in failed["gates"]
         if gate["id"] == "wheel-sdist-checksums"
+    )
+    assert failed_gate["state"] == "blocked"
+
+
+def test_complete_smoke_gate_passes_only_through_the_dedicated_verifier(
+    tmp_path: Path,
+) -> None:
+    profile = _write_project(tmp_path, version="0.4.0a0")
+    verifier = tmp_path / "scripts" / "verify_v04_smoke_evidence.py"
+    verifier.write_text("raise SystemExit(0)\n", encoding="utf-8")
+    artifact_dir = tmp_path / "dist"
+    artifact_dir.mkdir()
+
+    report = build_report(
+        tmp_path,
+        profile,
+        release_artifacts_dir=artifact_dir,
+    )
+    smoke_gate = next(
+        gate
+        for gate in report["gates"]
+        if gate["id"] == "complete-artifact-smoke"
+    )
+    assert smoke_gate["state"] == "passed"
+    assert report["summary"]["passed_count"] == 4
+
+    verifier.write_text("raise SystemExit(1)\n", encoding="utf-8")
+    failed = build_report(
+        tmp_path,
+        profile,
+        release_artifacts_dir=artifact_dir,
+    )
+    failed_gate = next(
+        gate
+        for gate in failed["gates"]
+        if gate["id"] == "complete-artifact-smoke"
     )
     assert failed_gate["state"] == "blocked"
 

@@ -42,7 +42,7 @@ SCHEMA = "fetech.v0.4.smoke-evidence.v2"
 DOCLING_REFERENCE_BUNDLE_SHA256 = (
     "e9aab284777b02541f427ff10ff7e2f1b5656eda04afa3082b9b448d8201bd76"
 )
-YTDLP_SMOKE_TARGET = "https://www.youtube.com/watch?v=BaW_jenozKc"
+YTDLP_SMOKE_TARGET = "https://www.youtube.com/watch?v=jNQXAC9IVRw"
 WAYBACK_SMOKE_TARGET = "https://example.com/"
 REQUIRED_PACKAGE_DISTRIBUTIONS = (
     "fetech",
@@ -736,7 +736,7 @@ async def _yt_dlp_smoke() -> tuple[str | None, str | None]:
         maximum_network_bytes=5_000_000,
         maximum_redirects=4,
     )
-    if result.metadata.get("id") != "BaW_jenozKc":
+    if result.metadata.get("id") != "jNQXAC9IVRw":
         raise ValueError("yt-dlp smoke result did not contain the expected video ID")
     return version("yt-dlp"), "fixed public yt-dlp test video metadata"
 

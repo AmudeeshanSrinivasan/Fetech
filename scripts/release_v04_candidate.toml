@@ -28,6 +28,7 @@ evidence_inputs = [
   "scripts/generate_release_evidence.py",
   "scripts/check_v04_release_readiness.py",
   "scripts/verify_v04_release_artifacts.py",
+  "scripts/verify_v04_smoke_evidence.py",
   "scripts/release_license_catalog.toml",
   "scripts/release_published.toml",
   "scripts/collect_v04_smoke_evidence.py",
@@ -80,6 +81,7 @@ evidence_inputs = [
   "tests/test_release_evidence.py",
   "tests/test_release_readiness.py",
   "tests/test_v04_release_artifacts.py",
+  "tests/test_v04_smoke_verifier.py",
   "tests/test_storage_cas.py",
   "tests/test_systemd_unit.py",
   "tests/test_v01_conformance.py",
@@ -165,6 +167,7 @@ phase = "prepublication"
 evidence_kind = "machine"
 description = "The final installed wheel passes every required artifact-bound smoke check."
 pending_reason = "Retained Docling evidence is intentionally focused and not a complete release smoke."
+check = "complete_smoke_v2"
 
 [[publication_gates]]
 id = "release-commit-ci"
