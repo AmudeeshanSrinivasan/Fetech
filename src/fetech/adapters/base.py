@@ -171,7 +171,9 @@ class AdapterDependencyError(RuntimeError):
 
 
 class AdapterExecutionError(RuntimeError):
-    pass
+    def __init__(self, message: str, *, code: str | None = None) -> None:
+        super().__init__(message)
+        self.code = code
 
 
 class AdapterBudgetExceededError(AdapterExecutionError):

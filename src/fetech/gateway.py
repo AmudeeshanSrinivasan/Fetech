@@ -50,6 +50,7 @@ from fetech.models import (
     InspectionResult,
     PlanNode,
     ProvenanceEvent,
+    ResourceBudget,
     ResultStatus,
     RunState,
 )
@@ -88,13 +89,9 @@ class UniversalFetchGateway:
     ) -> None:
         self.settings = settings or Settings.from_environment()
         try:
-            isolation_mode = WorkerIsolationMode(
-                self.settings.worker_isolation_mode
-            )
+            isolation_mode = WorkerIsolationMode(self.settings.worker_isolation_mode)
         except ValueError as exc:
-            raise ValueError(
-                "worker_isolation_mode must be development or required"
-            ) from exc
+            raise ValueError("worker_isolation_mode must be development or required") from exc
         self.worker_isolation = WorkerIsolationRuntime(
             mode=isolation_mode,
             bubblewrap_executable=self.settings.worker_bwrap_executable,
@@ -104,9 +101,7 @@ class UniversalFetchGateway:
         self.worker_isolation.validate_required_backend()
         self.credential_provider = credential_provider or NullCredentialProvider()
         self.session_provider = session_provider or NullSessionProvider()
-        self.form_submission_provider = (
-            form_submission_provider or NullFormSubmissionProvider()
-        )
+        self.form_submission_provider = form_submission_provider or NullFormSubmissionProvider()
         self.registry = CapabilityRegistry()
         self.planner = DeterministicPlanner(self.registry)
         self.logic = LogicCoordinator(self.settings, self.registry, self.planner)
@@ -183,9 +178,7 @@ class UniversalFetchGateway:
             "documents": DocumentAdapter(
                 parser=DocumentParseWorker(
                     docling_artifacts_path=self.settings.docling_artifacts_path,
-                    docling_artifacts_sha256=(
-                        self.settings.docling_artifacts_sha256
-                    ),
+                    docling_artifacts_sha256=(self.settings.docling_artifacts_sha256),
                     docling_memory_mb=self.settings.docling_worker_memory_mb,
                     isolation=self.worker_isolation,
                 ),
@@ -198,7 +191,7 @@ class UniversalFetchGateway:
                 youtube_provider=YTDLPMetadataWorker(
                     scheduler=self.network_scheduler,
                     isolation=self.worker_isolation,
-                )
+                ),
             ),
             "archive": ArchiveAdapter(isolation=self.worker_isolation),
             "cache": CacheAdapter(
@@ -216,6 +209,8 @@ class UniversalFetchGateway:
     async def initialize(self) -> None:
         if not self._initialized:
             await self.ledger.initialize()
+            await self._recover_interrupted_runs()
+            self._artifacts = {artifact.artifact_id: artifact for artifact in await self.ledger.artifacts()}
             self._initialized = True
 
     async def close(self) -> None:
@@ -307,6 +302,41 @@ class UniversalFetchGateway:
             return self._artifacts[artifact_id]
         except KeyError as exc:
             raise KeyError(f"unknown artifact: {artifact_id}") from exc
+
+    async def _recover_interrupted_runs(self) -> None:
+        """Finalize durable runs whose in-memory task was lost on restart."""
+
+        for run_id, previous_state, _, request_document in await self.ledger.unfinished_runs():
+            raw_budget = request_document.get("budget", {})
+            try:
+                remaining_budget = ResourceBudget.model_validate(raw_budget)
+            except ValueError:
+                remaining_budget = ResourceBudget()
+            event = ProvenanceEvent(
+                run_id=run_id,
+                event_type="run.recovered_interrupted",
+                actor="gateway",
+                payload={
+                    "code": "run_interrupted",
+                    "previous_state": previous_state.value,
+                },
+            )
+            await self.ledger.append(event)
+            result = FetchResult(
+                run_id=run_id,
+                status=ResultStatus.FAILED,
+                diagnostics=(
+                    Diagnostic(
+                        code="run_interrupted",
+                        message=(
+                            "run was interrupted before completion and was finalized during daemon startup"
+                        ),
+                    ),
+                ),
+                provenance_event_ids=(event.event_id,),
+                remaining_budget=remaining_budget,
+            )
+            await self.ledger.update_run(run_id, RunState.FINISHED, result)
 
     async def _execute_and_project(self, run_id: UUID, plan: FetchPlan) -> FetchResult:
         try:

@@ -577,6 +577,12 @@ def _check_complete_smoke(
         return _blocked(gate, "Complete artifact-smoke verification did not complete.")
     if process.returncode != 0:
         return _blocked(gate, "Complete artifact-smoke verification failed.")
+    if gate.id == "optional-runtime-live-evidence":
+        return _passed(
+            gate,
+            "Verified exact-version optional packages and executables plus live "
+            "Wayback and yt-dlp checks against clean source, lock, and wheel.",
+        )
     return _passed(
         gate,
         "Verified complete live smoke evidence against clean source, lock, and wheel.",
@@ -717,7 +723,10 @@ def evaluate_gates(
             results.append(
                 _check_release_artifacts(root, gate, release_artifacts_dir)
             )
-        elif gate.id == "complete-artifact-smoke":
+        elif gate.id in {
+            "complete-artifact-smoke",
+            "optional-runtime-live-evidence",
+        }:
             results.append(
                 _check_complete_smoke(root, gate, release_artifacts_dir)
             )

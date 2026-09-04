@@ -18,6 +18,7 @@ from fetech.context import ContextBroker
 from fetech.gateway import UniversalFetchGateway
 from fetech.logic.models import ReasoningResult
 from fetech.models import ContextBundle, FetchPlan, FetchRequest, FetchRun, InspectionResult
+from fetech.storage import CASIntegrityError, CASReadLimitError
 from fetech.version import __version__
 
 
@@ -135,8 +136,12 @@ def create_app(
             return metadata
         try:
             body = await gateway.cas.get(metadata.cas_uri, maximum_bytes=maximum_bytes)
-        except ValueError as exc:
+        except FileNotFoundError as exc:
+            raise HTTPException(status_code=404, detail="artifact content is unavailable") from exc
+        except CASReadLimitError as exc:
             raise HTTPException(status_code=413, detail=str(exc)) from exc
+        except (CASIntegrityError, ValueError) as exc:
+            raise HTTPException(status_code=409, detail="artifact integrity check failed") from exc
         return Response(body, media_type=metadata.media_type, headers={"ETag": metadata.sha256})
 
     @app.get("/v1/capabilities")
@@ -144,8 +149,14 @@ def create_app(
         return gateway.registry.as_document()
 
     @app.post("/v1/context/search", response_model=ContextBundle)
-    async def context_search(question: str, token_budget: int = 4_000) -> ContextBundle:
-        return await broker.search(question, token_budget=token_budget)
+    async def context_search(
+        question: str = Query(min_length=1, max_length=16_384),
+        token_budget: int = Query(default=4_000, ge=1, le=8_000),
+    ) -> ContextBundle:
+        try:
+            return await broker.search(question, token_budget=token_budget)
+        except ValueError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
 
     return app
 

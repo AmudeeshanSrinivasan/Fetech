@@ -29,6 +29,10 @@ class CASIntegrityError(ValueError):
     """A digest path is occupied by content other than the requested body."""
 
 
+class CASReadLimitError(CASIntegrityError):
+    """A valid CAS artifact exceeds the caller's explicit read bound."""
+
+
 class FileSystemCAS:
     """Immutable SHA-256 content store with atomic writes."""
 
@@ -205,7 +209,7 @@ class FileSystemCAS:
             ):
                 raise CASIntegrityError("CAS digest path changed while it was being opened")
             if maximum_bytes is not None and opened_stat.st_size > maximum_bytes:
-                raise CASIntegrityError("CAS artifact exceeds the requested read bound")
+                raise CASReadLimitError("CAS artifact exceeds the requested read bound")
 
             expected_size = opened_stat.st_size
             while True:
@@ -217,7 +221,7 @@ class FileSystemCAS:
                 if total > expected_size or (
                     maximum_bytes is not None and total > maximum_bytes
                 ):
-                    raise CASIntegrityError("CAS artifact exceeds the requested read bound")
+                    raise CASReadLimitError("CAS artifact exceeds the requested read bound")
                 hasher.update(chunk)
                 chunks.append(chunk)
 
@@ -234,7 +238,7 @@ class FileSystemCAS:
     async def verify(self, uri: str) -> bool:
         try:
             await self.get(uri)
-        except CASIntegrityError:
+        except (CASIntegrityError, FileNotFoundError, OSError, ValueError):
             return False
         return True
 

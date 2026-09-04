@@ -71,7 +71,10 @@ def _gate_profile(*, duplicate: bool = False, omit_last: bool = False) -> str:
             lines.append('check = "github_ci_attestation_v1"')
         elif gate_id == "wheel-sdist-checksums":
             lines.append('check = "release_artifacts_v1"')
-        elif gate_id == "complete-artifact-smoke":
+        elif gate_id in {
+            "complete-artifact-smoke",
+            "optional-runtime-live-evidence",
+        }:
             lines.append('check = "complete_smoke_v2"')
         elif gate_id == "ytdlp-egress-or-narrowed-claim":
             lines.append('check = "ytdlp_narrowed_claim_v1"')
@@ -434,8 +437,15 @@ def test_complete_smoke_gate_passes_only_through_the_dedicated_verifier(
         for gate in report["gates"]
         if gate["id"] == "complete-artifact-smoke"
     )
+    optional_runtime_gate = next(
+        gate
+        for gate in report["gates"]
+        if gate["id"] == "optional-runtime-live-evidence"
+    )
     assert smoke_gate["state"] == "passed"
-    assert report["summary"]["passed_count"] == 4
+    assert optional_runtime_gate["state"] == "passed"
+    assert "exact-version optional packages" in optional_runtime_gate["reason"]
+    assert report["summary"]["passed_count"] == 5
 
     verifier.write_text("raise SystemExit(1)\n", encoding="utf-8")
     failed = build_report(
@@ -448,7 +458,13 @@ def test_complete_smoke_gate_passes_only_through_the_dedicated_verifier(
         for gate in failed["gates"]
         if gate["id"] == "complete-artifact-smoke"
     )
+    failed_optional_runtime_gate = next(
+        gate
+        for gate in failed["gates"]
+        if gate["id"] == "optional-runtime-live-evidence"
+    )
     assert failed_gate["state"] == "blocked"
+    assert failed_optional_runtime_gate["state"] == "blocked"
 
 
 def test_ci_gates_pass_together_only_through_live_verifier(

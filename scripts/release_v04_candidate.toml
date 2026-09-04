@@ -52,12 +52,15 @@ evidence_inputs = [
   "src/fetech/client.py",
   "src/fetech/conformance.py",
   "src/fetech/config.py",
+  "src/fetech/context.py",
   "src/fetech/daemon.py",
   "src/fetech/docling_artifacts.py",
   "src/fetech/document_worker.py",
   "src/fetech/executor.py",
   "src/fetech/gateway.py",
+  "src/fetech/http3.py",
   "src/fetech/image_worker.py",
+  "src/fetech/ledger.py",
   "src/fetech/logic/clingo_backend.py",
   "src/fetech/logic/coordinator.py",
   "src/fetech/logic/process.py",
@@ -68,6 +71,7 @@ evidence_inputs = [
   "src/fetech/registry.py",
   "src/fetech/scheduling.py",
   "src/fetech/search.py",
+  "src/fetech/security.py",
   "src/fetech/storage.py",
   "src/fetech/wayback.py",
   "src/fetech/worker_isolation.py",
@@ -82,6 +86,7 @@ evidence_inputs = [
   "tests/test_network_scheduling.py",
   "tests/test_release_evidence.py",
   "tests/test_release_readiness.py",
+  "tests/test_runtime_bugfixes.py",
   "tests/test_v04_ci_attestation.py",
   "tests/test_v04_release_artifacts.py",
   "tests/test_v04_smoke_verifier.py",
@@ -210,6 +215,7 @@ phase = "prepublication"
 evidence_kind = "attestation"
 description = "Exact-version optional tools and versioned connectors pass live smoke; remote services record date and endpoint."
 pending_reason = "The retained focused evidence has missing, failed, or skipped live checks."
+check = "complete_smoke_v2"
 
 [[publication_gates]]
 id = "git-tag-and-github-release"

@@ -27,7 +27,7 @@ report does not make legal conclusions.
 
 | Input | SHA-256 |
 |---|---|
-| `scripts/release_v04_candidate.toml` | `5b1116b1dbb3afc306d6fdd3d83a6a1197be497560a9b3e6b0bd7b45b37dbe0d` |
+| `scripts/release_v04_candidate.toml` | `a3803dbeaef2217e7a547bac8165475a98af3918c9f9b948b2aeecf7fdb4c6c7` |
 | `README.md` | `ab579d7aa4d068ab058f8d11664bd9a06997d16dc59f2a15db922c6f2a15a3e5` |
 | `SECURITY.md` | `d6a5930c9e4b9b5a303f037328670e39b48c1694b0d19382907bbcc00eaf1f60` |
 | `CONTRIBUTING.md` | `b3e1bff72a1ae1db85243a20435501b111db235442a4db234fbf6d198be52d19` |
@@ -41,10 +41,10 @@ report does not make legal conclusions.
 | `docs/competitor-matrix.md` | `0fb05beae77614406176a50108eafb085b1fb110a8692ac300e696d60d17e651` |
 | `docs/deployment-containment.md` | `927bea0eaca0dd0cd9eb09bc921fc0fb485e9f145159fdd1ecc32e23a092658d` |
 | `docs/security-threat-model.md` | `db32478a000f55aa6174b94f272557c38b658b18358ef99e33ab970924828b8e` |
-| `docs/v0.4-conformance.md` | `ec200400ca0f6a7e5e3ddea1d68a62d4329d6b0b44f85c91e50454af88256a67` |
-| `docs/releases/v0.4.0a0.md` | `ff028a442c0cf5dd56b8e486de1cc81f4076f1cbe9e4551b419cb2d54c6762c9` |
+| `docs/v0.4-conformance.md` | `2aa2ac6871cef746c9f23628bc2964d6fd058caafa180ea9ad5605760a84de8c` |
+| `docs/releases/v0.4.0a0.md` | `dad69a1fbb3454f8e09a50fad5243687d91096d31e8aefe9089cc822e84464c6` |
 | `scripts/generate_release_evidence.py` | `13efee887298c94e4ece0cc317fc189bbaa02847b0c7296075b7fa98eb8fb9db` |
-| `scripts/check_v04_release_readiness.py` | `8a28e3e451c966c70c02bdb895ef899649e27a5ee7bf465133bdfdfc0019336f` |
+| `scripts/check_v04_release_readiness.py` | `04f008ddcd5e651b4fb88a785e2c99a1163ee254815181c446698d4cd85a8df2` |
 | `scripts/verify_v04_ci_attestation.py` | `c93706d4ff8071d5f64fcb6de7b29e2601bdbcb7254c720ec3f22fdcfec67334` |
 | `scripts/verify_v04_release_artifacts.py` | `c37e0cad6119d2d5fcd5cdfa650096a8b5ddc507c2cdccbc64d470841536ca1e` |
 | `scripts/verify_v04_smoke_evidence.py` | `12cca7e0e93c6474a8e76ec86eb57cc0fb2c08ae0a20eab85a490ddf3cf6d79e` |
@@ -57,7 +57,7 @@ report does not make legal conclusions.
 | `release/fetech-v0.4-docling-wheel-smoke.json` | `bb873b9bacfd58330f9315b3a7672868937af5e41eabea824797c794eaf5d174` |
 | `src/fetech/__init__.py` | `a14f54bba2b3352a96c9d090d2252972cb27204c4e3de9703b6f358bf8212e12` |
 | `src/fetech/adapters/archive.py` | `79b57c11d928f21b25135d504794c34b1625e912427f3094adbd736788c590bb` |
-| `src/fetech/adapters/base.py` | `23beecf1478e6af71b29a98862db3ca0d5d480f69f8e8375d929c8cf7bd772b8` |
+| `src/fetech/adapters/base.py` | `7e99bcd47d13637483325ec0d9416cedada902b33c261d1f8dff57fb4cfee7e0` |
 | `src/fetech/adapters/browser.py` | `d2961e8c44193410a3c8296fd537b176c7616f6df8daa5d74e1690cd160f6c9d` |
 | `src/fetech/adapters/cache.py` | `5824ab232ccf2be882bf0554525381f458faf246052d4cbfdcd7a46cac370b72` |
 | `src/fetech/adapters/documents.py` | `3dd5dc4bd831f80721a70202dfb0e6e8072e210b74af454e809c3ac494dcc239` |
@@ -70,23 +70,27 @@ report does not make legal conclusions.
 | `src/fetech/client.py` | `ddf7232510b992a1320cf8c48dd23be59b3f7c1f052781e02086f1a56971264c` |
 | `src/fetech/conformance.py` | `f0b3f8d063939e0cc323c05fd54cb2b9dde36ffc95dbe31d769b4824679e61fa` |
 | `src/fetech/config.py` | `530e7bf3846af6506df1b2ab1c11319a2e140432e277a3146fa6bc7e90cd1710` |
-| `src/fetech/daemon.py` | `acf376d83a62ae7db567893897d62b3962e5346696e109c00668802b1dd12467` |
+| `src/fetech/context.py` | `f0246ecc5b8a2fdb9164e2de9b6e9ffa145562aabb8c75c2cc5682ae4c8f1705` |
+| `src/fetech/daemon.py` | `c1152acba0902ae57b2a6c5395ddcc9b2602fa07963f8e540d226119c56f03f1` |
 | `src/fetech/docling_artifacts.py` | `1708370b8e7fb0f47511c2303e18e274a61fba62742e6f6c20d73833715ac278` |
 | `src/fetech/document_worker.py` | `ae08b37f715d2d2a1d3d4532845c7547eb487ee8a4077f4bb9c6d665faca23a9` |
-| `src/fetech/executor.py` | `d9097dc52e4fc611dd2da78707955e90ab9f3267a57d46634b337f861f808839` |
-| `src/fetech/gateway.py` | `6bee44ed9f5ea535d3c04afccec53ec1483aeb1f82d3b57036f4002b2e86a109` |
+| `src/fetech/executor.py` | `4994cb80a92597b5debefd2ad9965652ffb8c6e6152ecb003486e885c9aa83fd` |
+| `src/fetech/gateway.py` | `e6a60c5910e3fc3e0bf2e94e13d9a7f5a0a88b6633000ee1caa7b246133c2433` |
+| `src/fetech/http3.py` | `37ce6da90653ba8dd6752570211a06ab87b98db80148d113307268ce065ca876` |
 | `src/fetech/image_worker.py` | `393b558ecfe71e0e5aec0e9287566b11f64da4753491b02840528781efeb4163` |
+| `src/fetech/ledger.py` | `a3c21e546456be0c8c9e2287f323cb256a1991cc5ed07fce8d5101fa95e16b56` |
 | `src/fetech/logic/clingo_backend.py` | `602bb047275a3cc6ee44b1d704c3f9840dd4ad45244583b66be60c9d90ac5642` |
 | `src/fetech/logic/coordinator.py` | `ee5e7fcfe5364af3c4223c18e2fbd05d7b23eac3efe1b422559b0530bf5ac48e` |
 | `src/fetech/logic/process.py` | `51ce2da5d0d0f28af96e259d91c2a688ab99be9dae97d6f20aad7be10737a80e` |
 | `src/fetech/logic/process_bootstrap.py` | `7b45a97ebcd615b792de6d1851320b8ef94987569b8330daa24ef86ed09e8b4f` |
 | `src/fetech/mcp_server.py` | `b4b2a410eb49b3eba879dbbd74cd602bf1aaf61e7cc0c5e699a829cf92c1b0ed` |
-| `src/fetech/models.py` | `d0ec9d1a0aa97de6507271048ebcfa536b3a2af193aa2902dabc7d19ac047101` |
+| `src/fetech/models.py` | `6c5238e319c61a2516bd56763e1a31b9528f01ad8012a4528a79cc9f86102318` |
 | `src/fetech/planning.py` | `26a9bf4babf195056a5a04cd6c0dbeaa606eb379c0e839c6528ad3ebc72bc852` |
 | `src/fetech/registry.py` | `fc3a736674b73b2838be537fd2bd3d145454885daf757bd4963aeea8cd5cf7b0` |
 | `src/fetech/scheduling.py` | `f77f7c6e45939fffddfd83f8753086a32418320e06f24415a302387aa573ee1e` |
 | `src/fetech/search.py` | `88ec5655693b9780a23e5bbc306944a212493b1307e486969f36951e80c7683b` |
-| `src/fetech/storage.py` | `77f80698d88fa9104b34af735b95ce942a1af06d563f95a651adb5c4c82df193` |
+| `src/fetech/security.py` | `5150011f8823cc05f045ab72fc1696e04971e77387aa203dbb19d2fa7a9460df` |
+| `src/fetech/storage.py` | `24c8b56c842ce3011d2be461d96f35bc463bc703acbee421382b51f26ef65064` |
 | `src/fetech/wayback.py` | `442d3b1b1d3d3439507d6cbae2d138cc8a75a6991664c026c6ba186024ee42da` |
 | `src/fetech/worker_isolation.py` | `20cd41906055fd262bec6881ce956f3a0f5ef02bc9edefb1cc5e13209894c8e9` |
 | `src/fetech/worker_isolation_bootstrap.py` | `7317aa1dc4edff4e61df5acdfa72134b1661c6a5f8944ae76544bfb148a2868c` |
@@ -99,7 +103,8 @@ report does not make legal conclusions.
 | `tests/test_logic_backends.py` | `9140c1c49e7ba6577e8e79fdf6f1b5180c0e8ae28e4fc78b8a2c381612c6901c` |
 | `tests/test_network_scheduling.py` | `5cb5bc78bd6a0cc216749aadd5b3670b4d99feee1ebeb18d72f808caa0b9c462` |
 | `tests/test_release_evidence.py` | `2017232d7a18bf1257e75dcf918bbaf49bbb9cd6c66a7be0d54bb74f56d94c5b` |
-| `tests/test_release_readiness.py` | `f06424f3d8fbe393b1c8c08c01f6c606e77126cdc1eb3bb402314e2c06d4d551` |
+| `tests/test_release_readiness.py` | `389c4afa5d2b70a03093c9713f7644000f941560c535bbbaafa1f1f03965be26` |
+| `tests/test_runtime_bugfixes.py` | `1359d5549feb6cf5cf525b50a1b7169c0d3219adfd74862b54e126bf1f1fa6ff` |
 | `tests/test_v04_ci_attestation.py` | `f89fd81b63526d7b330bafe9fad5fb02e822522dfb48a9bcc0761aec156f85f1` |
 | `tests/test_v04_release_artifacts.py` | `61fcbc4dc526a59272a0b8e99669fb8317d0efa776c6a2e365a3ec24fe3a1d3d` |
 | `tests/test_v04_smoke_verifier.py` | `d2e13ff3f29e152537080089163b4b9bf3b44ff4fadbcfa9de518f7403249bf1` |
