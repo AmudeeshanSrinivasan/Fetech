@@ -65,7 +65,12 @@ from fetech.security import (
     normalize_url,
     sanitize_output_for_request,
 )
-from fetech.storage import FileSystemCAS
+from fetech.storage import FileSystemCAS, StorageQuota
+from fetech.storage_lifecycle import (
+    LocalStorageLifecycle,
+    StorageLifecyclePolicy,
+    StorageMaintenanceReport,
+)
 from fetech.wayback import WaybackSnapshotConnector
 from fetech.worker_isolation import (
     WorkerIsolationMode,
@@ -106,8 +111,16 @@ class UniversalFetchGateway:
         self.planner = DeterministicPlanner(self.registry)
         self.logic = LogicCoordinator(self.settings, self.registry, self.planner)
         self.policy = SafeURLPolicy()
-        self.ledger = EventLedger.sqlite(self.settings.database_path)
-        self.cas = FileSystemCAS(self.settings.artifact_dir)
+        self.storage_quota = StorageQuota(
+            self.settings.data_dir,
+            self.settings.storage_max_bytes,
+            maximum_entries=self.settings.storage_max_scan_entries,
+        )
+        self.ledger = EventLedger.sqlite(
+            self.settings.database_path,
+            quota=self.storage_quota,
+        )
+        self.cas = FileSystemCAS(self.settings.artifact_dir, quota=self.storage_quota)
         self.network_scheduler = NetworkScheduler(
             global_concurrency=self.settings.global_concurrency,
             per_host_concurrency=self.settings.per_host_concurrency,
@@ -147,6 +160,12 @@ class UniversalFetchGateway:
             )
         }
         cache_connectors.update(snapshot_connectors or {})
+        self.snapshot_store = SnapshotStore(
+            self.settings.data_dir / "snapshots",
+            self.cas,
+            quota=self.storage_quota,
+            maximum_records=self.settings.storage_max_snapshot_records,
+        )
         self.adapters: dict[str, Adapter] = {
             "http": http_adapter,
             "discovery": DiscoveryAdapter(http_adapter, search_provider=search_provider),
@@ -195,7 +214,7 @@ class UniversalFetchGateway:
             ),
             "archive": ArchiveAdapter(isolation=self.worker_isolation),
             "cache": CacheAdapter(
-                SnapshotStore(self.settings.data_dir / "snapshots", self.cas),
+                self.snapshot_store,
                 connectors=cache_connectors,
                 policy=self.policy,
             ),
@@ -206,12 +225,32 @@ class UniversalFetchGateway:
         self._cancellation_reasons: dict[UUID, str] = {}
         self._runtime_graph_lock = asyncio.Lock()
         self._artifacts: dict[UUID, Artifact] = {}
+        self.storage_lifecycle = LocalStorageLifecycle(
+            ledger=self.ledger,
+            cas=self.cas,
+            snapshots=self.snapshot_store,
+            quota=self.storage_quota,
+            policy=StorageLifecyclePolicy(
+                run_retention_seconds=self.settings.storage_run_retention_seconds,
+                snapshot_retention_seconds=(
+                    self.settings.storage_snapshot_retention_seconds
+                ),
+                orphan_grace_seconds=self.settings.storage_orphan_grace_seconds,
+                maximum_snapshot_records=self.settings.storage_max_snapshot_records,
+                maximum_retired_runs_per_startup=(
+                    self.settings.storage_max_retired_runs_per_startup
+                ),
+                maximum_scan_entries=self.settings.storage_max_scan_entries,
+            ),
+        )
+        self.storage_maintenance_report: StorageMaintenanceReport | None = None
         self._initialized = False
 
     async def initialize(self) -> None:
         if not self._initialized:
             await self.ledger.initialize()
             await self._recover_interrupted_runs()
+            self.storage_maintenance_report = await self.storage_lifecycle.maintain()
             self._artifacts = {artifact.artifact_id: artifact for artifact in await self.ledger.artifacts()}
             self._initialized = True
 
@@ -431,7 +470,11 @@ class UniversalFetchGateway:
         """Serialize projections so an older concurrent snapshot cannot replace a newer one."""
 
         async with self._runtime_graph_lock:
-            await build_runtime_graph(self.ledger, self.settings.runtime_graph_path)
+            await build_runtime_graph(
+                self.ledger,
+                self.settings.runtime_graph_path,
+                quota=self.storage_quota,
+            )
 
     async def _record_terminal_failure(
         self,

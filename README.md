@@ -41,8 +41,10 @@ registration.
 > interfaces. The third increment adds deterministic dual-graph context routing, typed provider
 > degradation, hash-based deduplication, and exact-source verification. The first slice of the fourth
 > increment adds one bounded, redacted `PublicError` validation contract across SDK, REST, CLI, and
-> MCP while leaving acquisition failures as canonical `FetchResult` statuses. See the
-> [Beta development guide](docs/beta-development.md).
+> MCP while leaving acquisition failures as canonical `FetchResult` statuses. It also adds
+> deterministic same-host reproducible-build checks and a bounded local storage
+> lifecycle with startup recovery, explicit retention, and reference-aware CAS garbage collection.
+> See the [Beta development guide](docs/beta-development.md).
 
 Fetech permits local yt-dlp only in development mode; required mode refuses it until brokered, allowlisted egress is configured.
 

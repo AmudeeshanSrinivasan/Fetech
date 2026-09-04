@@ -38,6 +38,13 @@ def test_reference_unit_runs_as_dedicated_fetech_service() -> None:
     assert service["ExecStart"] == "/opt/fetech/.venv/bin/fetech-daemon"
     assert service["ReadWritePaths"] == "/var/lib/fetech"
     assert {
+        "FETECH_STORAGE_MAX_BYTES=10737418240",
+        "FETECH_STORAGE_RUN_RETENTION_SECONDS=0",
+        "FETECH_STORAGE_SNAPSHOT_RETENTION_SECONDS=604800",
+        "FETECH_STORAGE_ORPHAN_GRACE_SECONDS=86400",
+        "FETECH_STORAGE_MAX_SNAPSHOT_RECORDS=100000",
+        "FETECH_STORAGE_MAX_RETIRED_RUNS_PER_STARTUP=1000",
+        "FETECH_STORAGE_MAX_SCAN_ENTRIES=200000",
         "FETECH_WORKER_ISOLATION_MODE=required",
         "FETECH_WORKER_CGROUP_ROOT=/sys/fs/cgroup",
         "FETECH_BROWSER_ARTIFACTS_PATH=/opt/fetech/browser-artifacts",

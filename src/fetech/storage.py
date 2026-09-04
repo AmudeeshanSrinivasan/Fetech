@@ -9,6 +9,8 @@ import json
 import os
 import stat
 import tempfile
+from collections.abc import AsyncIterator, Collection
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from dataclasses import field as dataclass_field
 from datetime import UTC, datetime
@@ -33,12 +35,144 @@ class CASReadLimitError(CASIntegrityError):
     """A valid CAS artifact exceeds the caller's explicit read bound."""
 
 
+class StorageQuotaExceeded(OSError):
+    """A local write would exceed the configured data-directory quota."""
+
+
+class StorageLifecycleError(ValueError):
+    """Local storage could not be inventoried or maintained safely."""
+
+
+@dataclass(frozen=True, slots=True)
+class StorageUsage:
+    bytes_used: int
+    regular_files: int
+
+
+@dataclass(frozen=True, slots=True)
+class CASMaintenanceReport:
+    temporary_files_removed: int = 0
+    temporary_bytes_removed: int = 0
+    orphan_files_removed: int = 0
+    orphan_bytes_removed: int = 0
+    retained_files: int = 0
+    retained_bytes: int = 0
+
+
+class StorageQuota:
+    """Serialize local writes against a bounded whole-data-directory inventory."""
+
+    def __init__(
+        self,
+        root: Path,
+        maximum_bytes: int,
+        *,
+        maximum_entries: int = 200_000,
+        ledger_headroom_bytes: int | None = None,
+    ) -> None:
+        if isinstance(maximum_bytes, bool) or maximum_bytes < 1_048_576:
+            raise ValueError("storage quota must be at least one MiB")
+        if isinstance(maximum_entries, bool) or not 1 <= maximum_entries <= 1_000_000:
+            raise ValueError("storage inventory entry bound is invalid")
+        self.root = root.expanduser().resolve()
+        self.root.mkdir(parents=True, exist_ok=True, mode=0o700)
+        self.maximum_bytes = maximum_bytes
+        self.maximum_entries = maximum_entries
+        selected_headroom = (
+            min(1_048_576, maximum_bytes // 4)
+            if ledger_headroom_bytes is None
+            else ledger_headroom_bytes
+        )
+        if (
+            isinstance(selected_headroom, bool)
+            or selected_headroom < 0
+            or selected_headroom > maximum_bytes // 2
+        ):
+            raise ValueError("ledger storage headroom is outside the allowed bound")
+        self.ledger_headroom_bytes = selected_headroom
+        self._lock = asyncio.Lock()
+
+    async def usage(self) -> StorageUsage:
+        async with self._lock:
+            return await asyncio.to_thread(
+                _storage_usage,
+                self.root,
+                self.maximum_entries,
+            )
+
+    async def ensure_available(
+        self,
+        additional_bytes: int = 0,
+        *,
+        use_ledger_headroom: bool = False,
+    ) -> StorageUsage:
+        async with self._lock:
+            return await self._ensure_available(
+                additional_bytes,
+                use_ledger_headroom=use_ledger_headroom,
+            )
+
+    @asynccontextmanager
+    async def reserve(
+        self,
+        additional_bytes: int,
+        *,
+        use_ledger_headroom: bool = False,
+    ) -> AsyncIterator[StorageUsage]:
+        """Hold the single-daemon write boundary and verify the cap after the write."""
+
+        async with self._lock:
+            before = await self._ensure_available(
+                additional_bytes,
+                use_ledger_headroom=use_ledger_headroom,
+            )
+            yield before
+            after = await asyncio.to_thread(
+                _storage_usage,
+                self.root,
+                self.maximum_entries,
+            )
+            if after.bytes_used > self.maximum_bytes:
+                raise StorageQuotaExceeded("data-directory quota was exceeded during a write")
+
+    @asynccontextmanager
+    async def exclusive_maintenance(self) -> AsyncIterator[None]:
+        """Serialize a reducing maintenance operation even when the cap is already exceeded."""
+
+        async with self._lock:
+            yield
+
+    async def _ensure_available(
+        self,
+        additional_bytes: int,
+        *,
+        use_ledger_headroom: bool,
+    ) -> StorageUsage:
+        if isinstance(additional_bytes, bool) or additional_bytes < 0:
+            raise ValueError("storage reservation must be a non-negative byte count")
+        usage = await asyncio.to_thread(
+            _storage_usage,
+            self.root,
+            self.maximum_entries,
+        )
+        limit = self.maximum_bytes - (
+            0 if use_ledger_headroom else self.ledger_headroom_bytes
+        )
+        if usage.bytes_used + additional_bytes > limit:
+            raise StorageQuotaExceeded("data-directory quota does not permit this write")
+        return usage
+
+
 class FileSystemCAS:
     """Immutable SHA-256 content store with atomic writes."""
 
-    def __init__(self, root: Path) -> None:
+    def __init__(self, root: Path, *, quota: StorageQuota | None = None) -> None:
         self.root = root.expanduser().resolve()
+        if quota is not None and self.root != quota.root and quota.root not in self.root.parents:
+            raise ValueError("CAS root must be contained by the quota root")
         self.root.mkdir(parents=True, exist_ok=True)
+        self.quota = quota
+        self._write_locks = tuple(asyncio.Lock() for _ in range(64))
 
     def _path(self, digest: str) -> Path:
         if len(digest) != 64 or any(character not in "0123456789abcdef" for character in digest):
@@ -48,7 +182,22 @@ class FileSystemCAS:
     async def put(self, body: bytes) -> tuple[str, str, int]:
         digest = hashlib.sha256(body).hexdigest()
         target = self._path(digest)
-        await asyncio.to_thread(self._write_atomic, target, body, digest, self.root)
+        write_lock = self._write_locks[int(digest[:2], 16) % len(self._write_locks)]
+        async with write_lock:
+            try:
+                await asyncio.to_thread(self._verify_existing, target, body, digest)
+            except FileNotFoundError:
+                pass
+            else:
+                return f"cas://sha256/{digest}", digest, len(body)
+            async with _storage_reservation(self.quota, len(body)):
+                await asyncio.to_thread(
+                    self._write_atomic,
+                    target,
+                    body,
+                    digest,
+                    self.root,
+                )
         return f"cas://sha256/{digest}", digest, len(body)
 
     @classmethod
@@ -242,6 +391,92 @@ class FileSystemCAS:
             return False
         return True
 
+    async def maintain(
+        self,
+        referenced_uris: Collection[str],
+        *,
+        orphan_grace_seconds: int,
+        now: datetime | None = None,
+        maximum_entries: int = 200_000,
+    ) -> CASMaintenanceReport:
+        """Remove crash staging files and old unreferenced canonical blobs."""
+
+        if not 0 <= orphan_grace_seconds <= 365 * 24 * 60 * 60:
+            raise ValueError("CAS orphan grace period is outside the allowed bound")
+        if not 1 <= maximum_entries <= 1_000_000:
+            raise ValueError("CAS maintenance entry bound is invalid")
+        current = now or datetime.now(UTC)
+        if current.utcoffset() is None:
+            raise ValueError("CAS maintenance time must include a timezone")
+        referenced = {_cas_digest(uri) for uri in referenced_uris}
+        if self.quota is None:
+            return await asyncio.to_thread(
+                self._maintain,
+                referenced,
+                current.timestamp() - orphan_grace_seconds,
+                maximum_entries,
+            )
+        async with self.quota.exclusive_maintenance():
+            return await asyncio.to_thread(
+                self._maintain,
+                referenced,
+                current.timestamp() - orphan_grace_seconds,
+                maximum_entries,
+            )
+
+    def _maintain(
+        self,
+        referenced: set[str],
+        orphan_cutoff: float,
+        maximum_entries: int,
+    ) -> CASMaintenanceReport:
+        temporary_files_removed = 0
+        temporary_bytes_removed = 0
+        orphan_files_removed = 0
+        orphan_bytes_removed = 0
+        retained_files = 0
+        retained_bytes = 0
+        touched: set[Path] = set()
+        for path, state in _walk_storage_files(self.root, maximum_entries):
+            if path.name.startswith(".write-"):
+                if not stat.S_ISREG(state.st_mode):
+                    raise StorageLifecycleError("CAS staging path is not a regular file")
+                path.unlink()
+                temporary_files_removed += 1
+                temporary_bytes_removed += state.st_size
+                touched.add(path.parent)
+                continue
+            digest = path.name
+            canonical = (
+                len(digest) == 64
+                and all(character in "0123456789abcdef" for character in digest)
+                and path == self._path(digest)
+            )
+            if not canonical:
+                retained_files += 1
+                retained_bytes += state.st_size
+                continue
+            if not stat.S_ISREG(state.st_mode):
+                raise StorageLifecycleError("CAS digest path is not a regular file")
+            if digest not in referenced and state.st_mtime <= orphan_cutoff:
+                path.unlink()
+                orphan_files_removed += 1
+                orphan_bytes_removed += state.st_size
+                touched.add(path.parent)
+                continue
+            retained_files += 1
+            retained_bytes += state.st_size
+        for directory in sorted(touched, key=lambda item: len(item.parts), reverse=True):
+            self._fsync_directory(directory)
+        return CASMaintenanceReport(
+            temporary_files_removed=temporary_files_removed,
+            temporary_bytes_removed=temporary_bytes_removed,
+            orphan_files_removed=orphan_files_removed,
+            orphan_bytes_removed=orphan_bytes_removed,
+            retained_files=retained_files,
+            retained_bytes=retained_bytes,
+        )
+
 
 @dataclass(frozen=True)
 class CacheKey:
@@ -334,4 +569,69 @@ def build_artifact(
         extractor_version=extractor,
         locators=locators,
         quality=quality,
+    )
+
+
+@asynccontextmanager
+async def _storage_reservation(
+    quota: StorageQuota | None,
+    additional_bytes: int,
+) -> AsyncIterator[None]:
+    if quota is None:
+        yield
+        return
+    async with quota.reserve(additional_bytes):
+        yield
+
+
+def _cas_digest(uri: str) -> str:
+    prefix = "cas://sha256/"
+    if not uri.startswith(prefix):
+        raise StorageLifecycleError("live artifact reference is not a canonical CAS URI")
+    digest = uri.removeprefix(prefix)
+    if len(digest) != 64 or any(
+        character not in "0123456789abcdef" for character in digest
+    ):
+        raise StorageLifecycleError("live artifact reference has an invalid digest")
+    return digest
+
+
+def _walk_storage_files(
+    root: Path,
+    maximum_entries: int,
+) -> tuple[tuple[Path, os.stat_result], ...]:
+    files: list[tuple[Path, os.stat_result]] = []
+    entries = 0
+    for directory, directory_names, filenames in os.walk(root, followlinks=False):
+        parent = Path(directory)
+        safe_directories: list[str] = []
+        for name in sorted(directory_names):
+            entries += 1
+            if entries > maximum_entries:
+                raise StorageLifecycleError("storage inventory exceeded its entry bound")
+            path = parent / name
+            state = path.lstat()
+            if stat.S_ISLNK(state.st_mode):
+                raise StorageLifecycleError("storage inventory contains a symbolic link")
+            if not stat.S_ISDIR(state.st_mode):
+                raise StorageLifecycleError("storage inventory contains an invalid directory entry")
+            safe_directories.append(name)
+        directory_names[:] = safe_directories
+        for name in sorted(filenames):
+            entries += 1
+            if entries > maximum_entries:
+                raise StorageLifecycleError("storage inventory exceeded its entry bound")
+            path = parent / name
+            state = path.lstat()
+            if not stat.S_ISREG(state.st_mode):
+                raise StorageLifecycleError("storage inventory contains a non-regular file")
+            files.append((path, state))
+    return tuple(files)
+
+
+def _storage_usage(root: Path, maximum_entries: int) -> StorageUsage:
+    files = _walk_storage_files(root, maximum_entries)
+    return StorageUsage(
+        bytes_used=sum(state.st_size for _, state in files),
+        regular_files=len(files),
     )

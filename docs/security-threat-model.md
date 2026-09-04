@@ -151,14 +151,14 @@ which a CSRF value was derived is a raw response artifact and may naturally
 contain that value. The response to the form submission is also stored as raw
 content.
 
-The filesystem CAS is immutable and SHA-256 content-addressed, but the alpha does
-not provide:
+The filesystem CAS is immutable and SHA-256 content-addressed. The Beta storage lifecycle adds a
+whole-data-directory content quota, explicit opt-in run retention, expired-cache retention, and
+live-reference garbage collection, but it does not provide:
 
 - encryption at rest;
 - per-artifact access-control lists;
-- a retention, expiry, or secure-deletion policy;
 - separate physical stores for public and authenticated bytes; or
-- a total data-directory storage quota.
+- cryptographic or guaranteed physical secure deletion.
 
 Cache keys separate public and authenticated scopes using a domain-separated
 digest of the opaque authentication reference. The CAS itself deduplicates
@@ -205,7 +205,7 @@ items to critical.
 | ID | Threat | Current controls | Residual risk |
 |---|---|---|---|
 | I-1 | Credentials leak through logs, plans, graphs, redirects, or cache keys | Opaque references; recursive event sanitization; authenticated query redaction; exact-origin credential injection; anonymous robots checks; cross-origin withholding; no durable shared cookie jar | New extension code or operator logging can bypass conventions; secrets present inside response content remain in artifacts |
-| I-2 | Authenticated raw or derived artifacts are read by another caller or local process | Single-tenant assumption; bounded artifact reads; authenticated cache-key separation; normal temporary-file creation uses restrictive defaults | CAS is unencrypted, globally deduplicated, has no ACL/retention layer, and daemon artifact reads have no built-in authorization |
+| I-2 | Authenticated raw or derived artifacts are read by another caller or local process | Single-tenant assumption; bounded artifact reads; authenticated cache-key separation; configured retention and live-reference collection; normal temporary-file creation uses restrictive defaults | CAS is unencrypted, globally deduplicated, has no per-artifact ACL, and daemon artifact reads have no built-in authorization; unlink is not secure deletion |
 | I-3 | Cookies escape during redirects or browser handoff | Per-hop origin checks; ephemeral, same-origin, `Secure` cookie handoff; handoff state is scrubbed; body-preserving redirects are blocked | A compromised authorized origin can receive the credentials legitimately scoped to it |
 | I-4 | A remote reader, search, browser, or snapshot connector receives sensitive data | Disabled by default; public and unauthenticated targets only; endpoints must be HTTPS and policy-approved; payloads are bounded and sanitized for their connector contract | The remote processor sees submitted public content and may retain it according to its own policy |
 | I-5 | Context search exposes repository or vault content | Default 4,000-token bundle, 8,000-token hard ceiling, top-result limits, no full-vault load | The context API has no multi-user ACL and can disclose selected source or note excerpts to any trusted interface caller |
@@ -219,7 +219,7 @@ items to critical.
 | D-1 | Infinite redirects, oversized bodies, decompression bombs, or crawl explosion | Deadlines, attempts, redirects, cumulative wire/decompressed bytes, pages, depth, archive members/ratio, bounded worker input/output, per-host concurrency, and early stopping | Aggregate disk growth across runs and allocation inside native dependencies before process limits can exhaust the host |
 | D-2 | A subprocess hangs or floods output | Independent POSIX spawn/bootstrap deadline, one total wall budget, CPU limit, bounded stdout/stderr, new process group, and group termination; Linux required mode adds per-worker cgroup CPU, memory, PID, and cleanup controls for covered built-in workers | Development mode, macOS, logic engines, optional curl, local yt-dlp, and injected providers remain outside the required Linux boundary; host-wide resource exhaustion and kernel/container defects remain possible |
 | D-3 | Concurrent requests starve the daemon | Primary HTTP and built-in Wayback use shared global/per-host admission and pacing; the bounded local yt-dlp subprocess consumes a shared operation slot in development; all paths use request budgets | yt-dlp's internal requests to several allowed hosts are not individually coordinated by the parent scheduler; required mode therefore refuses it until egress is brokered. The single-tenant alpha also has no tenant quotas, admission-control identity, or durable distributed scheduler |
-| D-4 | Ledger or CAS fills the disk | Per-artifact and request byte budgets | No total retention or storage quota is implemented |
+| D-4 | Ledger, cache, graph, or CAS fills the disk | Per-artifact/request budgets; shared data-directory content quota; snapshot record cap; ledger headroom; bounded startup retention and live-reference collection | Directory metadata and external writers are outside the application count; physical free space and secure deletion still require host controls |
 
 ### Elevation of privilege
 
@@ -413,7 +413,7 @@ golden-result, invalid-output, timeout, and pure-Python fallback coverage.
 | Public HTTP content can be observed or modified in transit | Medium | Disable public HTTP for integrity- or confidentiality-sensitive work |
 | Optional remote connectors, content-processing providers, and session providers are trusted processors | Medium | Review, pin, scope, monitor, and disable unless required |
 | Third-party parser, browser, curl, Clingo, Prolog, or build-tool supply-chain compromise | Medium | Pin dependencies and the release build toolchain, produce an SBOM/license report, scan, compare reproducible builds, and update deliberately |
-| CAS/SQLite growth can exhaust disk across otherwise bounded runs | Medium | Apply external filesystem quotas, monitoring, retention, and alerting |
+| CAS/SQLite growth or external writers can exhaust disk despite the application content quota | Medium | Preserve the shared quota and ledger headroom; configure retention; apply external filesystem quotas, monitoring, and alerting |
 | Content-address deduplication can confirm equality across auth scopes to a storage-level observer | Low–Medium | Restrict metadata/storage access; add scoped physical storage where needed |
 | SQLite ledger is append-only by application convention, not cryptographically tamper-evident | Low–Medium | Restrict filesystem access and use external audit/backup controls when required |
 
@@ -456,8 +456,6 @@ still requires:
   already covers all 167 third-party identities in the current universal lock and regenerates the
   v0.4.0a0 candidate SPDX and dependency-license evidence. The published v0.3 artifacts remain
   immutable and are checked against their historical release profile;
-- total storage quotas, retention, garbage collection, and crash-recovery
-  exercises beyond immutable per-record writes;
 - a passing mandatory `containment-linux` job on the release commit and
   verification of the delegated reference systemd unit on its target Linux
   distribution;

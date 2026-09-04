@@ -85,7 +85,10 @@ format-aware expansion are recorded in [`fuzzing.md`](fuzzing.md). A same-host r
 gate now compares independent clean-source wheel and source-distribution builds, validates their
 archive metadata, and clean-installs both artifacts; its evidence boundary is documented in
 [`reproducible-builds.md`](reproducible-builds.md). The remaining fourth-increment work covers
-format-aware fuzz expansion, storage lifecycle, and the complete failure catalogue.
+format-aware fuzz expansion and the complete failure catalogue. Local persistence now shares one
+bounded data-directory quota, reserves terminal-ledger headroom, and performs startup-only run/cache
+retention and live-reference CAS collection; see
+[`storage-lifecycle.md`](storage-lifecycle.md).
 
 ## Runtime flow
 

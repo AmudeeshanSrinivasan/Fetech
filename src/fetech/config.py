@@ -39,6 +39,13 @@ class Settings:
     worker_bwrap_executable: Path = Path("/usr/bin/bwrap")
     worker_cgroup_root: Path | None = None
     browser_artifacts_path: Path | None = None
+    storage_max_bytes: int = 10 * 1024 * 1024 * 1024
+    storage_run_retention_seconds: int = 0
+    storage_snapshot_retention_seconds: int = 7 * 24 * 60 * 60
+    storage_orphan_grace_seconds: int = 24 * 60 * 60
+    storage_max_snapshot_records: int = 100_000
+    storage_max_retired_runs_per_startup: int = 1_000
+    storage_max_scan_entries: int = 200_000
 
     @classmethod
     def from_environment(cls) -> Settings:
@@ -123,4 +130,63 @@ class Settings:
                 if raw_browser_artifacts_path
                 else None
             ),
+            storage_max_bytes=_bounded_environment_integer(
+                "FETECH_STORAGE_MAX_BYTES",
+                10 * 1024 * 1024 * 1024,
+                minimum=1024 * 1024,
+                maximum=10 * 1024 * 1024 * 1024 * 1024,
+            ),
+            storage_run_retention_seconds=_bounded_environment_integer(
+                "FETECH_STORAGE_RUN_RETENTION_SECONDS",
+                0,
+                minimum=0,
+                maximum=10 * 365 * 24 * 60 * 60,
+            ),
+            storage_snapshot_retention_seconds=_bounded_environment_integer(
+                "FETECH_STORAGE_SNAPSHOT_RETENTION_SECONDS",
+                7 * 24 * 60 * 60,
+                minimum=0,
+                maximum=10 * 365 * 24 * 60 * 60,
+            ),
+            storage_orphan_grace_seconds=_bounded_environment_integer(
+                "FETECH_STORAGE_ORPHAN_GRACE_SECONDS",
+                24 * 60 * 60,
+                minimum=0,
+                maximum=10 * 365 * 24 * 60 * 60,
+            ),
+            storage_max_snapshot_records=_bounded_environment_integer(
+                "FETECH_STORAGE_MAX_SNAPSHOT_RECORDS",
+                100_000,
+                minimum=1,
+                maximum=1_000_000,
+            ),
+            storage_max_retired_runs_per_startup=_bounded_environment_integer(
+                "FETECH_STORAGE_MAX_RETIRED_RUNS_PER_STARTUP",
+                1_000,
+                minimum=1,
+                maximum=10_000,
+            ),
+            storage_max_scan_entries=_bounded_environment_integer(
+                "FETECH_STORAGE_MAX_SCAN_ENTRIES",
+                200_000,
+                minimum=1,
+                maximum=1_000_000,
+            ),
         )
+
+
+def _bounded_environment_integer(
+    name: str,
+    default: int,
+    *,
+    minimum: int,
+    maximum: int,
+) -> int:
+    raw = os.environ.get(name, str(default))
+    try:
+        value = int(raw)
+    except ValueError as exc:
+        raise ValueError(f"{name} must be an integer") from exc
+    if not minimum <= value <= maximum:
+        raise ValueError(f"{name} is outside the allowed bound")
+    return value

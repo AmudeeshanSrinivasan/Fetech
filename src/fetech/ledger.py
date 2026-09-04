@@ -3,20 +3,26 @@
 from __future__ import annotations
 
 import asyncio
+import hashlib
 import json
 from collections.abc import AsyncIterator
-from datetime import datetime
+from contextlib import asynccontextmanager
+from dataclasses import dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, cast
 from uuid import UUID
 
-from sqlalchemy import DateTime, Integer, String, Text, select, update
+from sqlalchemy import DateTime, Integer, String, Text, delete, func, select, update
 from sqlalchemy.engine import CursorResult
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 from fetech.models import Artifact, FetchResult, ProvenanceEvent, RunState
 from fetech.security import sanitize_authenticated_text, sanitize_url
+from fetech.storage import StorageQuota
+
+_LEDGER_WRITE_OVERHEAD = 64 * 1024
 
 
 class Base(DeclarativeBase):
@@ -46,22 +52,47 @@ class RunRow(Base):
     result_json: Mapped[str | None] = mapped_column(Text)
 
 
+class RetiredRunRow(Base):
+    __tablename__ = "retired_fetch_runs"
+
+    run_id: Mapped[str] = mapped_column(String(36), primary_key=True)
+    submitted_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    retired_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    result_sha256: Mapped[str] = mapped_column(String(64), nullable=False)
+    event_count: Mapped[int] = mapped_column(Integer, nullable=False)
+    artifact_count: Mapped[int] = mapped_column(Integer, nullable=False)
+
+
+@dataclass(frozen=True, slots=True)
+class LedgerRetentionReport:
+    runs_retired: int = 0
+    events_retired: int = 0
+    artifact_references_retired: int = 0
+
+
 class EventLedger:
-    def __init__(self, database_url: str) -> None:
+    def __init__(self, database_url: str, *, quota: StorageQuota | None = None) -> None:
         self.engine: AsyncEngine = create_async_engine(database_url)
         self.sessions = async_sessionmaker(self.engine, expire_on_commit=False)
+        self.quota = quota
         self._subscribers: dict[UUID, set[asyncio.Queue[ProvenanceEvent | None]]] = {}
         self._authenticated_runs: set[UUID] = set()
 
     @classmethod
-    def sqlite(cls, path: Path) -> EventLedger:
+    def sqlite(cls, path: Path, *, quota: StorageQuota | None = None) -> EventLedger:
         path = path.expanduser().resolve()
+        if quota is not None and path != quota.root and quota.root not in path.parents:
+            raise ValueError("ledger path must be contained by the quota root")
         path.parent.mkdir(parents=True, exist_ok=True)
-        return cls(f"sqlite+aiosqlite:///{path}")
+        return cls(f"sqlite+aiosqlite:///{path}", quota=quota)
 
     async def initialize(self) -> None:
-        async with self.engine.begin() as connection:
-            await connection.run_sync(Base.metadata.create_all)
+        if self.quota is None:
+            async with self.engine.begin() as connection:
+                await connection.run_sync(Base.metadata.create_all)
+        else:
+            async with self.quota.exclusive_maintenance(), self.engine.begin() as connection:
+                await connection.run_sync(Base.metadata.create_all)
         async with self.sessions() as session:
             rows = (await session.scalars(select(RunRow))).all()
         for row in rows:
@@ -84,13 +115,16 @@ class EventLedger:
             request_document,
             authenticated=authenticated,
         )
-        async with self.sessions() as session:
+        request_json = json.dumps(sanitized_request, sort_keys=True, default=str)
+        async with _ledger_reservation(self.quota, len(request_json)), self.sessions() as session:
+            if await session.get(RetiredRunRow, str(run_id)) is not None:
+                raise ValueError("retired run identifiers cannot be reused")
             session.add(
                 RunRow(
                     run_id=str(run_id),
                     state=RunState.QUEUED.value,
                     submitted_at=submitted_at,
-                    request_json=json.dumps(sanitized_request, sort_keys=True, default=str),
+                    request_json=request_json,
                 )
             )
             await session.commit()
@@ -98,20 +132,30 @@ class EventLedger:
             self._authenticated_runs.add(run_id)
 
     async def update_run(self, run_id: UUID, state: RunState, result: FetchResult | None = None) -> None:
-        async with self.sessions() as session:
+        result_json = (
+            json.dumps(
+                _sanitize_payload(
+                    result.model_dump(mode="json"),
+                    authenticated=run_id in self._authenticated_runs,
+                )
+                if result is not None
+                else None,
+                sort_keys=True,
+                default=str,
+            )
+            if result is not None
+            else None
+        )
+        async with _ledger_reservation(
+            self.quota,
+            len(result_json or ""),
+        ), self.sessions() as session:
             row = await session.get(RunRow, str(run_id))
             if row is None:
                 raise KeyError(f"unknown run: {run_id}")
             row.state = state.value
-            if result is not None:
-                row.result_json = json.dumps(
-                    _sanitize_payload(
-                        result.model_dump(mode="json"),
-                        authenticated=run_id in self._authenticated_runs,
-                    ),
-                    sort_keys=True,
-                    default=str,
-                )
+            if result_json is not None:
+                row.result_json = result_json
             await session.commit()
         if state == RunState.FINISHED:
             for queue in self._subscribers.get(run_id, set()):
@@ -138,7 +182,10 @@ class EventLedger:
             sort_keys=True,
             default=str,
         )
-        async with self.sessions() as session:
+        event_json = json.dumps(payload, sort_keys=True, default=str)
+        parent_json = json.dumps([str(identifier) for identifier in event.parent_event_ids])
+        reservation = len(result_json) + len(event_json) + len(parent_json)
+        async with _ledger_reservation(self.quota, reservation), self.sessions() as session:
             outcome = cast(
                 CursorResult[Any],
                 await session.execute(
@@ -165,10 +212,8 @@ class EventLedger:
                     event_type=event.event_type,
                     timestamp=event.timestamp,
                     actor=event.actor,
-                    payload_json=json.dumps(payload, sort_keys=True, default=str),
-                    parent_event_ids_json=json.dumps(
-                        [str(identifier) for identifier in event.parent_event_ids]
-                    ),
+                    payload_json=event_json,
+                    parent_event_ids_json=parent_json,
                 )
             )
             await session.commit()
@@ -205,7 +250,12 @@ class EventLedger:
             event.payload,
             authenticated=event.run_id in self._authenticated_runs,
         )
-        async with self.sessions() as session:
+        event_json = json.dumps(payload, sort_keys=True, default=str)
+        parent_json = json.dumps([str(identifier) for identifier in event.parent_event_ids])
+        async with _ledger_reservation(
+            self.quota,
+            len(event_json) + len(parent_json),
+        ), self.sessions() as session:
             session.add(
                 EventRow(
                     event_id=str(event.event_id),
@@ -213,10 +263,8 @@ class EventLedger:
                     event_type=event.event_type,
                     timestamp=event.timestamp,
                     actor=event.actor,
-                    payload_json=json.dumps(payload, sort_keys=True, default=str),
-                    parent_event_ids_json=json.dumps(
-                        [str(identifier) for identifier in event.parent_event_ids]
-                    ),
+                    payload_json=event_json,
+                    parent_event_ids_json=parent_json,
                 )
             )
             await session.commit()
@@ -283,6 +331,89 @@ class EventLedger:
                 artifacts[artifact.artifact_id] = artifact
         return tuple(artifacts.values())
 
+    async def retire_finished_runs(
+        self,
+        *,
+        before: datetime,
+        maximum_runs: int,
+        retired_at: datetime | None = None,
+    ) -> LedgerRetentionReport:
+        """Apply explicit retention and leave immutable bounded tombstones."""
+
+        if before.utcoffset() is None:
+            raise ValueError("ledger retention cutoff must include a timezone")
+        if not 1 <= maximum_runs <= 10_000:
+            raise ValueError("ledger retention run bound is invalid")
+        retired = retired_at or datetime.now(UTC)
+        if retired.utcoffset() is None:
+            raise ValueError("ledger retirement time must include a timezone")
+        maintenance = (
+            self.quota.exclusive_maintenance()
+            if self.quota is not None
+            else _ledger_reservation(None, 0)
+        )
+        async with maintenance, self.sessions() as session:
+            rows = (
+                await session.scalars(
+                    select(RunRow)
+                    .where(
+                        RunRow.state == RunState.FINISHED.value,
+                        RunRow.submitted_at <= before,
+                    )
+                    .order_by(RunRow.submitted_at, RunRow.run_id)
+                    .limit(maximum_runs)
+                )
+            ).all()
+            event_total = 0
+            artifact_total = 0
+            for row in rows:
+                if await session.get(RetiredRunRow, row.run_id) is not None:
+                    raise ValueError("ledger contains a live run with a retired identity")
+                result_document = row.result_json or ""
+                artifact_count = 0
+                if result_document:
+                    artifact_count = len(
+                        FetchResult.model_validate_json(result_document).artifacts
+                    )
+                event_count = int(
+                    await session.scalar(
+                        select(func.count())
+                        .select_from(EventRow)
+                        .where(EventRow.run_id == row.run_id)
+                    )
+                    or 0
+                )
+                session.add(
+                    RetiredRunRow(
+                        run_id=row.run_id,
+                        submitted_at=row.submitted_at,
+                        retired_at=retired.astimezone(UTC),
+                        result_sha256=hashlib.sha256(
+                            result_document.encode("utf-8")
+                        ).hexdigest(),
+                        event_count=event_count,
+                        artifact_count=artifact_count,
+                    )
+                )
+                await session.execute(
+                    delete(EventRow).where(EventRow.run_id == row.run_id)
+                )
+                await session.delete(row)
+                event_total += event_count
+                artifact_total += artifact_count
+            await session.commit()
+        for row in rows:
+            self._authenticated_runs.discard(UUID(row.run_id))
+        return LedgerRetentionReport(
+            runs_retired=len(rows),
+            events_retired=event_total,
+            artifact_references_retired=artifact_total,
+        )
+
+    async def retired_run_exists(self, run_id: UUID) -> bool:
+        async with self.sessions() as session:
+            return await session.get(RetiredRunRow, str(run_id)) is not None
+
     async def stream(self, run_id: UUID) -> AsyncIterator[ProvenanceEvent]:
         queue: asyncio.Queue[ProvenanceEvent | None] = asyncio.Queue()
         self._subscribers.setdefault(run_id, set()).add(queue)
@@ -326,6 +457,21 @@ def _event_from_row(row: EventRow) -> ProvenanceEvent:
         payload=json.loads(row.payload_json),
         parent_event_ids=tuple(UUID(value) for value in json.loads(row.parent_event_ids_json)),
     )
+
+
+@asynccontextmanager
+async def _ledger_reservation(
+    quota: StorageQuota | None,
+    payload_bytes: int,
+) -> AsyncIterator[None]:
+    if quota is None:
+        yield
+        return
+    async with quota.reserve(
+        payload_bytes + _LEDGER_WRITE_OVERHEAD,
+        use_ledger_headroom=True,
+    ):
+        yield
 
 
 def _sanitize_payload(

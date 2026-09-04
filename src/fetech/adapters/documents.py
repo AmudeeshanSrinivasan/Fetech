@@ -54,7 +54,7 @@ from fetech.models import (
 )
 from fetech.quality import assess_text
 from fetech.security import sanitize_url_for_request
-from fetech.storage import build_artifact
+from fetech.storage import StorageQuotaExceeded, build_artifact
 from fetech.worker_isolation import (
     WorkerIsolationProfile,
     WorkerIsolationRuntime,
@@ -729,6 +729,23 @@ class DocumentAdapter:
             if isinstance(exc, AdapterDependencyError):
                 raise
             raise AdapterDependencyError(str(exc)) from exc
+        except (AdapterBudgetExceededError, StorageQuotaExceeded) as exc:
+            context.record_outcome(
+                node.capability_id,
+                CapabilityOutcomeStatus.FAILED,
+                "documents",
+                reason=str(exc),
+            )
+            current_attempt = context.attempts[attempt_index]
+            context.attempts[attempt_index] = current_attempt.model_copy(
+                update={
+                    "status": AttemptStatus.FAILED,
+                    "finished_at": datetime.now(UTC),
+                    "failure_code": "budget_exhausted",
+                    "warnings": (str(exc),),
+                }
+            )
+            raise
         except (OSError, ValueError, KeyError, ElementTree.ParseError) as exc:
             context.record_outcome(
                 node.capability_id,

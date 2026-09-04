@@ -11,6 +11,15 @@ Group=fetech
 WorkingDirectory=/var/lib/fetech
 Environment=HOME=/var/lib/fetech
 Environment=FETECH_DATA_DIR=/var/lib/fetech
+Environment=FETECH_STORAGE_MAX_BYTES=10737418240
+# Detailed ledger retention is opt-in. Export required evidence before setting
+# this to a non-zero number of seconds.
+Environment=FETECH_STORAGE_RUN_RETENTION_SECONDS=0
+Environment=FETECH_STORAGE_SNAPSHOT_RETENTION_SECONDS=604800
+Environment=FETECH_STORAGE_ORPHAN_GRACE_SECONDS=86400
+Environment=FETECH_STORAGE_MAX_SNAPSHOT_RECORDS=100000
+Environment=FETECH_STORAGE_MAX_RETIRED_RUNS_PER_STARTUP=1000
+Environment=FETECH_STORAGE_MAX_SCAN_ENTRIES=200000
 Environment=FETECH_WORKER_ISOLATION_MODE=required
 Environment=FETECH_WORKER_BWRAP_EXECUTABLE=/usr/bin/bwrap
 Environment=FETECH_WORKER_CGROUP_ROOT=/sys/fs/cgroup

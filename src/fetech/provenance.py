@@ -3,14 +3,21 @@
 from __future__ import annotations
 
 import json
+import os
+import tempfile
 from pathlib import Path
 from typing import Any
-from uuid import uuid4
 
 from fetech.ledger import EventLedger
+from fetech.storage import StorageLifecycleError, StorageQuota
 
 
-async def build_runtime_graph(ledger: EventLedger, output: Path) -> dict[str, Any]:
+async def build_runtime_graph(
+    ledger: EventLedger,
+    output: Path,
+    *,
+    quota: StorageQuota | None = None,
+) -> dict[str, Any]:
     events = await ledger.all_events()
     nodes: list[dict[str, Any]] = []
     links: list[dict[str, Any]] = []
@@ -99,11 +106,52 @@ async def build_runtime_graph(ledger: EventLedger, output: Path) -> dict[str, An
         "nodes": nodes,
         "links": links,
     }
-    output.parent.mkdir(parents=True, exist_ok=True)
-    temporary = output.with_name(f".{output.name}.{uuid4().hex}.tmp")
+    encoded = (json.dumps(graph, indent=2, sort_keys=True) + "\n").encode("utf-8")
+    existing_size = _existing_regular_size(output)
+    additional_bytes = max(0, len(encoded) - existing_size)
+    if quota is None:
+        _write_runtime_graph(output, encoded)
+    else:
+        resolved_output = output.expanduser().resolve()
+        if resolved_output != quota.root and quota.root not in resolved_output.parents:
+            raise ValueError("runtime graph must be contained by the storage quota root")
+        async with quota.reserve(additional_bytes):
+            _write_runtime_graph(resolved_output, encoded)
+    return graph
+
+
+def _existing_regular_size(path: Path) -> int:
     try:
-        temporary.write_text(json.dumps(graph, indent=2, sort_keys=True), encoding="utf-8")
-        temporary.replace(output)
+        state = path.lstat()
+    except FileNotFoundError:
+        return 0
+    if path.is_symlink() or not path.is_file():
+        raise StorageLifecycleError("runtime graph path is not a regular file")
+    return state.st_size
+
+
+def _write_runtime_graph(output: Path, encoded: bytes) -> None:
+    output.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    descriptor, temporary_name = tempfile.mkstemp(
+        prefix=f".{output.name}.",
+        suffix=".tmp",
+        dir=output.parent,
+    )
+    temporary = Path(temporary_name)
+    try:
+        with os.fdopen(descriptor, "wb") as stream:
+            stream.write(encoded)
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(temporary, output)
+        if os.name != "nt":
+            directory = os.open(
+                output.parent,
+                os.O_RDONLY | getattr(os, "O_DIRECTORY", 0),
+            )
+            try:
+                os.fsync(directory)
+            finally:
+                os.close(directory)
     finally:
         temporary.unlink(missing_ok=True)
-    return graph

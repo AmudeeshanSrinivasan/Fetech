@@ -44,7 +44,7 @@ from fetech.security import (
     sanitize_url,
     sanitize_url_for_request,
 )
-from fetech.storage import FileSystemCAS
+from fetech.storage import FileSystemCAS, StorageQuotaExceeded
 
 
 @dataclass(frozen=True, slots=True)
@@ -365,7 +365,11 @@ class ExecutionEngine:
                 raise BudgetExhaustedError("run deadline budget exhausted")
             async with asyncio.timeout(remaining_deadline):
                 await self._with_retries(adapter.execute, node, context, node.retry)
-        except (AdapterBudgetExceededError, BudgetExhaustedError) as exc:
+        except (
+            AdapterBudgetExceededError,
+            BudgetExhaustedError,
+            StorageQuotaExceeded,
+        ) as exc:
             self._mark_running_attempt_failed(context, "budget_exhausted")
             context.diagnostics.append(Diagnostic(code="budget_exhausted", message=str(exc)))
             self._ensure_outcome(

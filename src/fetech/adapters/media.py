@@ -43,7 +43,7 @@ from fetech.models import (
 )
 from fetech.quality import assess_text
 from fetech.security import sanitize_url_for_request
-from fetech.storage import build_artifact
+from fetech.storage import StorageQuotaExceeded, build_artifact
 from fetech.worker_isolation import (
     WorkerIsolationProfile,
     WorkerIsolationRuntime,
@@ -627,7 +627,7 @@ class MediaAdapter:
                 }
             )
             raise
-        except AdapterBudgetExceededError as exc:
+        except (AdapterBudgetExceededError, StorageQuotaExceeded) as exc:
             _record_provider_failure_usage(context, attempt_index, exc)
             context.record_outcome(
                 node.capability_id,

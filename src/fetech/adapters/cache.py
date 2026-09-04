@@ -53,6 +53,9 @@ from fetech.storage import (
     CacheKey,
     CASIntegrityError,
     FileSystemCAS,
+    StorageLifecycleError,
+    StorageQuota,
+    StorageQuotaExceeded,
     build_artifact,
 )
 
@@ -238,13 +241,42 @@ class CacheLookup:
     requires_revalidation: bool = False
 
 
+@dataclass(frozen=True, slots=True)
+class SnapshotMaintenanceReport:
+    temporary_files_removed: int = 0
+    temporary_bytes_removed: int = 0
+    records_removed: int = 0
+    record_bytes_removed: int = 0
+    retained_records: int = 0
+    retained_bytes: int = 0
+    live_cas_uris: tuple[str, ...] = ()
+
+
 class SnapshotStore:
     """Filesystem metadata index backed by an immutable content-addressed store."""
 
-    def __init__(self, root: Path, cas: FileSystemCAS) -> None:
+    def __init__(
+        self,
+        root: Path,
+        cas: FileSystemCAS,
+        *,
+        quota: StorageQuota | None = None,
+        maximum_records: int = 100_000,
+    ) -> None:
+        if not 1 <= maximum_records <= 1_000_000:
+            raise ValueError("snapshot record limit is outside the allowed bound")
         self.root = root.expanduser().resolve()
+        if (
+            quota is not None
+            and self.root != quota.root
+            and quota.root not in self.root.parents
+        ):
+            raise ValueError("snapshot root must be contained by the quota root")
         self.root.mkdir(parents=True, exist_ok=True, mode=0o700)
         self.cas = cas
+        self.quota = quota
+        self.maximum_records = maximum_records
+        self._write_lock = asyncio.Lock()
 
     async def store(
         self,
@@ -328,8 +360,62 @@ class SnapshotStore:
         if len(encoded) > _MAX_METADATA_BYTES:
             raise SnapshotIntegrityError("snapshot metadata exceeds the storage bound")
         path = self._record_path(key.digest, snapshot_id)
-        await asyncio.to_thread(_write_immutable, path, encoded)
+        async with self._write_lock:
+            if path.exists():
+                existing = await asyncio.to_thread(_read_existing_immutable, path)
+                if existing != encoded:
+                    raise SnapshotIntegrityError(
+                        "immutable snapshot metadata collision"
+                    )
+                return record
+            record_count = await asyncio.to_thread(
+                _snapshot_record_count,
+                self.root,
+                self.maximum_records + 1,
+            )
+            if not path.exists() and record_count >= self.maximum_records:
+                raise StorageQuotaExceeded("snapshot record quota does not permit this write")
+            if self.quota is None:
+                await asyncio.to_thread(_write_immutable, path, encoded)
+            else:
+                async with self.quota.reserve(len(encoded)):
+                    await asyncio.to_thread(_write_immutable, path, encoded)
         return record
+
+    async def maintain(
+        self,
+        *,
+        retention_seconds: int,
+        now: datetime | None = None,
+        maximum_entries: int = 200_000,
+    ) -> SnapshotMaintenanceReport:
+        """Recover abandoned writes and prune bounded expired cache metadata."""
+
+        if not 0 <= retention_seconds <= 10 * 365 * 24 * 60 * 60:
+            raise ValueError("snapshot retention period is outside the allowed bound")
+        if not 1 <= maximum_entries <= 1_000_000:
+            raise ValueError("snapshot maintenance entry bound is invalid")
+        current = now or datetime.now(UTC)
+        _require_aware(current, "snapshot maintenance time")
+        async with self._write_lock:
+            if self.quota is None:
+                return await asyncio.to_thread(
+                    _maintain_snapshot_store,
+                    self.root,
+                    current.astimezone(UTC),
+                    retention_seconds,
+                    self.maximum_records,
+                    maximum_entries,
+                )
+            async with self.quota.exclusive_maintenance():
+                return await asyncio.to_thread(
+                    _maintain_snapshot_store,
+                    self.root,
+                    current.astimezone(UTC),
+                    retention_seconds,
+                    self.maximum_records,
+                    maximum_entries,
+                )
 
     async def latest_successful(self, key: CacheKey) -> SnapshotRecord | None:
         records = await self._records(key)
@@ -415,7 +501,6 @@ class SnapshotStore:
         _require_digest(key_digest, "cache key")
         _require_digest(snapshot_id, "snapshot")
         directory = self.root / key_digest[:2] / key_digest
-        directory.mkdir(parents=True, exist_ok=True, mode=0o700)
         return directory / f"{snapshot_id}.json"
 
     async def _records(self, key: CacheKey) -> tuple[SnapshotRecord, ...]:
@@ -1336,6 +1421,115 @@ def _read_bounded(path: Path, maximum_bytes: int) -> bytes:
     if len(body) > maximum_bytes:
         raise SnapshotIntegrityError("snapshot metadata exceeds the read bound")
     return body
+
+
+def _snapshot_inventory(
+    root: Path,
+    maximum_entries: int,
+) -> tuple[tuple[Path, os.stat_result], ...]:
+    files: list[tuple[Path, os.stat_result]] = []
+    entries = 0
+    for directory, directory_names, filenames in os.walk(root, followlinks=False):
+        parent = Path(directory)
+        safe_directories: list[str] = []
+        for name in sorted(directory_names):
+            entries += 1
+            if entries > maximum_entries:
+                raise StorageLifecycleError("snapshot inventory exceeded its entry bound")
+            path = parent / name
+            state = path.lstat()
+            if stat.S_ISLNK(state.st_mode) or not stat.S_ISDIR(state.st_mode):
+                raise StorageLifecycleError("snapshot inventory contains an unsafe directory")
+            safe_directories.append(name)
+        directory_names[:] = safe_directories
+        for name in sorted(filenames):
+            entries += 1
+            if entries > maximum_entries:
+                raise StorageLifecycleError("snapshot inventory exceeded its entry bound")
+            path = parent / name
+            state = path.lstat()
+            if not stat.S_ISREG(state.st_mode):
+                raise StorageLifecycleError("snapshot inventory contains a non-regular file")
+            files.append((path, state))
+    return tuple(files)
+
+
+def _snapshot_record_count(root: Path, maximum_entries: int) -> int:
+    count = 0
+    inventory_bound = min(1_000_000, maximum_entries * 4 + 100)
+    for path, _ in _snapshot_inventory(root, inventory_bound):
+        if path.name.endswith(".json"):
+            count += 1
+            if count >= maximum_entries:
+                return count
+    return count
+
+
+def _maintain_snapshot_store(
+    root: Path,
+    now: datetime,
+    retention_seconds: int,
+    maximum_records: int,
+    maximum_entries: int,
+) -> SnapshotMaintenanceReport:
+    temporary_files_removed = 0
+    temporary_bytes_removed = 0
+    records: list[tuple[Path, os.stat_result, SnapshotRecord]] = []
+    touched: set[Path] = set()
+    for path, state in _snapshot_inventory(root, maximum_entries):
+        if path.name.startswith(".") and path.name.endswith(".tmp"):
+            path.unlink()
+            temporary_files_removed += 1
+            temporary_bytes_removed += state.st_size
+            touched.add(path.parent)
+            continue
+        if path.suffix != ".json":
+            raise StorageLifecycleError("snapshot inventory contains an unknown file")
+        record = _parse_record(_read_bounded(path, _MAX_METADATA_BYTES))
+        expected = root / record.key_digest[:2] / record.key_digest / f"{record.snapshot_id}.json"
+        if path != expected:
+            raise StorageLifecycleError("snapshot metadata path does not match its identity")
+        records.append((path, state, record))
+
+    expiry_cutoff = timedelta(seconds=retention_seconds)
+    removable = {
+        path
+        for path, _, record in records
+        if record.expires_at is not None and record.expires_at + expiry_cutoff <= now
+    }
+    retained = [item for item in records if item[0] not in removable]
+    excess = max(0, len(retained) - maximum_records)
+    if excess:
+        oldest = sorted(
+            retained,
+            key=lambda item: (item[2].stored_at, item[2].snapshot_id),
+        )[:excess]
+        removable.update(path for path, _, _ in oldest)
+
+    records_removed = 0
+    record_bytes_removed = 0
+    retained_records: list[tuple[Path, os.stat_result, SnapshotRecord]] = []
+    for path, state, record in records:
+        if path in removable:
+            path.unlink()
+            records_removed += 1
+            record_bytes_removed += state.st_size
+            touched.add(path.parent)
+        else:
+            retained_records.append((path, state, record))
+    for directory in sorted(touched, key=lambda item: len(item.parts), reverse=True):
+        _fsync_directory(directory)
+    return SnapshotMaintenanceReport(
+        temporary_files_removed=temporary_files_removed,
+        temporary_bytes_removed=temporary_bytes_removed,
+        records_removed=records_removed,
+        record_bytes_removed=record_bytes_removed,
+        retained_records=len(retained_records),
+        retained_bytes=sum(state.st_size for _, state, _ in retained_records),
+        live_cas_uris=tuple(
+            sorted({record.artifact.cas_uri for _, _, record in retained_records})
+        ),
+    )
 
 
 def _require_digest(value: str, label: str) -> None:
