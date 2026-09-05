@@ -24,6 +24,7 @@ from fetech.errors import (
     validate_uuid,
     validation_exception,
 )
+from fetech.failures import failure_catalogue
 from fetech.provenance import build_runtime_graph
 from fetech.registry import CapabilityRegistry
 
@@ -113,6 +114,13 @@ def contracts() -> None:
     """Show public contract versions and deterministic JSON Schema hashes."""
 
     _json(contract_manifest())
+
+
+@app.command()
+def failures() -> None:
+    """Show terminal statuses and stable machine-readable failure codes."""
+
+    _json(failure_catalogue())
 
 
 @app.command()

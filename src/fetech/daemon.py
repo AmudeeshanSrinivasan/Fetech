@@ -22,11 +22,13 @@ from fetech.errors import (
     validate_context_request,
     validation_exception,
 )
+from fetech.failures import failure_catalogue
 from fetech.gateway import UniversalFetchGateway
 from fetech.logic.models import ReasoningResult
 from fetech.models import (
     ContextBundle,
     ContractManifest,
+    FailureCatalogue,
     FetchPlan,
     FetchRequest,
     FetchRun,
@@ -209,6 +211,10 @@ def create_app(
     @app.get("/v1/contracts", response_model=ContractManifest)
     async def contracts() -> ContractManifest:
         return contract_manifest()
+
+    @app.get("/v1/failures", response_model=FailureCatalogue)
+    async def failures() -> FailureCatalogue:
+        return failure_catalogue()
 
     @app.post(
         "/v1/context/search",

@@ -35,8 +35,8 @@ Beta work proceeds in bounded increments:
 3. complete dual-graph and bounded-context behavior with source verification (implemented);
 4. normalize public validation errors, then extend fuzzing, reproducible-build, storage-lifecycle,
    and failure-documentation evidence (validation normalization, native and format-aware fuzz
-   slices, same-host reproducible-build evidence, and the local storage lifecycle are implemented;
-   the Linux-isolated format campaign and failure catalogue remain in progress);
+   slices, same-host reproducible-build evidence, the local storage lifecycle, and the public
+   failure catalogue are implemented; the Linux-isolated format campaign remains in progress);
 5. freeze release-candidate APIs only after compatibility and migration tests pass.
 
 No Beta distribution version has been assigned. Package metadata remains `0.4.0a0` until a separate
@@ -141,6 +141,14 @@ This does not change acquisition failures. Policy blocks, authentication require
 dependencies, budget exhaustion, low quality, not-found resources, partial output, and execution
 failures remain canonical `FetchResult.status` values with diagnostics and provenance.
 
+`FailureCatalogue` makes those terminal semantics discoverable without relying on exception or
+message text. It inventories all nine result statuses, stable built-in attempt/crawl/diagnostic
+codes, artifact expectations, and the separate `INVALID_REQUEST` delivery contract. The SDK, CLI,
+REST, and MCP expose an identical document through `FetechClient.failures()`, `fetech failures`,
+`GET /v1/failures`, and `get_failures`. Public attempt and crawl fallbacks now use stable generic
+codes rather than dependency exception class names. See
+[`failure-semantics.md`](failure-semantics.md).
+
 The deterministic fuzz suite covers request/URL handling, JSON/XML, native document formats,
 archives, media headers/metadata, and logic-engine validation. Its format-aware slice adds generated
 RSS/Atom/sitemap/OpenAPI YAML, including duplicate OpenAPI mutation, plus HTML
@@ -165,8 +173,8 @@ accepting work. The evidence and secure-deletion limits are documented in
 [`storage-lifecycle.md`](storage-lifecycle.md).
 
 The remaining Increment 4 work is the required-Linux OOXML/PDF and broader container-mutation fuzz
-campaign plus a complete public failure catalogue. Focused validation coverage lives in
-`tests/test_beta_validation_errors.py`.
+campaign. Focused validation and failure-catalogue coverage lives in
+`tests/test_beta_validation_errors.py` and `tests/test_beta_failure_catalogue.py`.
 
 ## Verification
 
@@ -175,6 +183,7 @@ uv run pytest tests/test_beta_contracts.py tests/test_v04_interfaces.py tests/te
 uv run pytest tests/test_beta_lifecycle.py
 uv run pytest tests/test_beta_context.py
 uv run pytest tests/test_beta_validation_errors.py
+uv run pytest tests/test_beta_failure_catalogue.py
 uv run pytest tests/test_beta_parser_fuzz.py tests/test_beta_format_fuzz.py
 uv run pytest tests/test_beta_reproducible_builds.py
 uv run pytest tests/test_beta_storage_lifecycle.py

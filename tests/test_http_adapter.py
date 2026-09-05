@@ -231,6 +231,7 @@ async def test_partial_transport_failure_charges_received_bytes(
 
     attempt = context.attempts[-1]
     assert attempt.status == AttemptStatus.FAILED
+    assert attempt.failure_code == "transport_error"
     assert attempt.bytes_received == 60
     assert attempt.consumed_budget["bytes"] == 60
     assert attempt.consumed_budget["decompressed_bytes"] == 60

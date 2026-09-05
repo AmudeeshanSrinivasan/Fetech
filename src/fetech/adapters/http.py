@@ -267,7 +267,7 @@ class HTTPAdapter:
             elif isinstance(exc, AdapterBudgetExceededError):
                 failure_code = "budget_exhausted"
             else:
-                failure_code = type(exc).__name__
+                failure_code = "transport_error"
             context.attempts[attempt_index] = attempt.model_copy(
                 update={
                     "status": AttemptStatus.FAILED,
@@ -305,7 +305,7 @@ class HTTPAdapter:
                 update={
                     "status": AttemptStatus.FAILED,
                     "finished_at": datetime.now(UTC),
-                    "failure_code": type(exc).__name__,
+                    "failure_code": "transport_error",
                     "warnings": (message,),
                     "bytes_received": usage.wire_bytes,
                     "consumed_budget": _http_consumed_budget(

@@ -44,7 +44,8 @@ registration.
 > MCP while leaving acquisition failures as canonical `FetchResult` statuses. It also adds
 > deterministic same-host reproducible-build checks and a bounded local storage
 > lifecycle with startup recovery, explicit retention, and reference-aware CAS garbage collection,
-> plus format-aware feed/OpenAPI, HTML, worker-envelope, and archive fuzz regressions.
+> format-aware feed/OpenAPI, HTML, worker-envelope, and archive fuzz regressions, and a versioned
+> failure catalogue shared by all four interfaces.
 > See the [Beta development guide](docs/beta-development.md).
 
 Fetech permits local yt-dlp only in development mode; required mode refuses it until brokered, allowlisted egress is configured.
@@ -78,6 +79,7 @@ wire-byte, and decompressed-byte budgets are decremented cumulatively in `remain
 uv sync --extra dev --extra web --extra server --extra mcp
 uv run fetech capabilities --summary
 uv run fetech contracts
+uv run fetech failures
 uv run fetech plan https://example.com
 uv run fetech fetch https://example.com
 uv run fetech crawl https://example.com --max-pages 20 --max-depth 2

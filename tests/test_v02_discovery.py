@@ -161,6 +161,10 @@ async def test_crawl_page_budget_counts_failed_fetches(
     assert result.crawl_report is not None
     assert result.crawl_report.pages_fetched == 1
     assert result.crawl_report.pages_failed == 1
+    failed_target = next(
+        target for target in result.crawl_report.targets if target.failure_code is not None
+    )
+    assert failed_target.failure_code == "fetch_failed"
     checked = [path for path in requested_paths if path not in {"/robots.txt", "/"}]
     assert len(checked) == 1
 

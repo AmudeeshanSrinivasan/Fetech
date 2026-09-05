@@ -9,6 +9,7 @@ from uuid import UUID
 
 from pydantic import ValidationError
 
+from fetech.failures import PUBLIC_VALIDATION_ISSUE_CODES
 from fetech.models import (
     FetchRequest,
     PublicError,
@@ -59,47 +60,6 @@ _PUBLIC_LOCATION_NAMES = frozenset(
     }
 )
 _SAFE_CODE = re.compile(r"[^a-z0-9_.-]+")
-_PUBLIC_ERROR_CODES = frozenset(
-    {
-        "bool_parsing",
-        "bool_type",
-        "bytes_too_long",
-        "bytes_too_short",
-        "bytes_type",
-        "decimal_parsing",
-        "decimal_type",
-        "extra_forbidden",
-        "finite_number",
-        "float_parsing",
-        "float_type",
-        "greater_than",
-        "greater_than_equal",
-        "int_from_float",
-        "int_parsing",
-        "int_type",
-        "less_than",
-        "less_than_equal",
-        "list_type",
-        "literal_error",
-        "mapping_type",
-        "missing",
-        "model_type",
-        "multiple_of",
-        "set_type",
-        "string_pattern_mismatch",
-        "string_too_long",
-        "string_too_short",
-        "string_type",
-        "tuple_type",
-        "url_parsing",
-        "url_scheme",
-        "uuid_parsing",
-        "uuid_type",
-        "value_error",
-    }
-)
-
-
 class FetechValidationError(ValueError):
     """Typed validation exception whose text is the sanitized public contract."""
 
@@ -226,7 +186,7 @@ def _validation_errors(exc: Exception) -> list[Mapping[str, Any]]:
 
 def _safe_code(value: object) -> str:
     normalized = _SAFE_CODE.sub("_", str(value).lower())[:128].strip("_.-")
-    return normalized if normalized in _PUBLIC_ERROR_CODES else "invalid_value"
+    return normalized if normalized in PUBLIC_VALIDATION_ISSUE_CODES else "invalid_value"
 
 
 def _safe_location(

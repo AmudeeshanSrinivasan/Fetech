@@ -504,17 +504,29 @@ class ExecutionEngine:
             )
             return _NodeExecution(budget_exhausted=True, stop=True)
         except asyncio.CancelledError:
-            cancellation_reason = context.sensitive_state.pop(
-                "_parallel_cancellation_reason",
-                "execution_cancelled",
+            raw_cancellation_reason = str(
+                context.sensitive_state.pop(
+                    "_parallel_cancellation_reason",
+                    "execution_cancelled",
+                )
             )
-            self._mark_running_attempt_cancelled(context, str(cancellation_reason))
+            cancellation_reason = (
+                raw_cancellation_reason
+                if raw_cancellation_reason
+                in {
+                    "early_stop",
+                    "execution_cancelled",
+                    "parallel_sibling_stopped_execution",
+                }
+                else "execution_cancelled"
+            )
+            self._mark_running_attempt_cancelled(context, cancellation_reason)
             self._ensure_outcome(
                 context,
                 node,
                 outcome_count,
                 CapabilityOutcomeStatus.NOT_APPLICABLE,
-                reason=str(cancellation_reason),
+                reason=cancellation_reason,
             )
             await asyncio.shield(
                 self._emit(
@@ -527,7 +539,7 @@ class ExecutionEngine:
             )
             raise
         except (AdapterExecutionError, ValueError, json.JSONDecodeError) as exc:
-            self._mark_running_attempt_failed(context, type(exc).__name__)
+            self._mark_running_attempt_failed(context, "adapter_failed")
             context.diagnostics.append(Diagnostic(code="adapter_failed", message=str(exc), retryable=False))
             self._ensure_outcome(
                 context,
@@ -540,7 +552,7 @@ class ExecutionEngine:
                 run_id,
                 "attempt.failed",
                 node.adapter,
-                {"capability_id": node.capability_id, "code": type(exc).__name__},
+                {"capability_id": node.capability_id, "code": "adapter_failed"},
                 (event.event_id,),
             )
             return _NodeExecution(failed=True)

@@ -40,6 +40,7 @@ from fetech.errors import (
     validate_fetch_request,
     validate_uuid,
 )
+from fetech.failures import failure_catalogue
 from fetech.logic.models import ReasoningQuery, ReasoningResult
 from fetech.models import (
     Artifact,
@@ -55,13 +56,17 @@ from fetech.models import (
     ContractManifest,
     CrawlReport,
     DiscoveredTarget,
+    FailureCatalogue,
+    FailureCodeDescriptor,
     FetchPlan,
     FetchRequest,
     FetchResult,
     PublicError,
     PublicErrorCode,
+    PublicErrorDescriptor,
     ResourceBudget,
     ResultStatus,
+    ResultStatusDescriptor,
     ValidationIssue,
 )
 from fetech.version import __version__
@@ -89,6 +94,8 @@ __all__ = [
     "CredentialProviderError",
     "CredentialProviderUnavailableError",
     "DiscoveredTarget",
+    "FailureCatalogue",
+    "FailureCodeDescriptor",
     "FetchPlan",
     "FetchRequest",
     "FetchResult",
@@ -111,11 +118,13 @@ __all__ = [
     "PrivateWorkspaceTarget",
     "PublicError",
     "PublicErrorCode",
+    "PublicErrorDescriptor",
     "ReasoningQuery",
     "ReasoningResult",
     "RefreshableCredentialProvider",
     "ResourceBudget",
     "ResultStatus",
+    "ResultStatusDescriptor",
     "SessionProvider",
     "SnapshotConnector",
     "TranscriptProvider",
@@ -126,6 +135,7 @@ __all__ = [
     "classify_context_needs",
     "contract_manifest",
     "extract_csrf_token",
+    "failure_catalogue",
     "public_validation_error",
     "validate_context_request",
     "validate_fetch_request",

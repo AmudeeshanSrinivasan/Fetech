@@ -85,8 +85,11 @@ worker envelopes, archives, media, and logic validation boundaries; their scope 
 Linux-isolated expansion are recorded in [`fuzzing.md`](fuzzing.md). A same-host reproducible-build
 gate now compares independent clean-source wheel and source-distribution builds, validates their
 archive metadata, and clean-installs both artifacts; its evidence boundary is documented in
-[`reproducible-builds.md`](reproducible-builds.md). The remaining fourth-increment work covers the
-Linux-isolated OOXML/PDF and broader container fuzz campaign plus the complete failure catalogue.
+[`reproducible-builds.md`](reproducible-builds.md). Terminal result semantics and stable built-in
+attempt, crawl, diagnostic, and validation codes are now discoverable as one versioned catalogue
+through the SDK, CLI, REST, and MCP; see [`failure-semantics.md`](failure-semantics.md). The
+remaining fourth-increment work covers the Linux-isolated OOXML/PDF and broader container fuzz
+campaign.
 Local persistence now shares one
 bounded data-directory quota, reserves terminal-ledger headroom, and performs startup-only run/cache
 retention and live-reference CAS collection; see

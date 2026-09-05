@@ -21,11 +21,13 @@ from fetech.errors import (
     validate_uuid,
     validation_exception,
 )
+from fetech.failures import failure_catalogue
 from fetech.gateway import UniversalFetchGateway
 from fetech.logic.models import ReasoningResult
 from fetech.models import (
     ContextBundle,
     ContractManifest,
+    FailureCatalogue,
     FetchPlan,
     FetchRequest,
     FetchResult,
@@ -101,6 +103,11 @@ class FetechClient:
         """Return the deterministic public-contract inventory."""
 
         return contract_manifest()
+
+    def failures(self) -> FailureCatalogue:
+        """Return stable terminal and machine-readable failure semantics."""
+
+        return failure_catalogue()
 
     async def context(self, question: str, *, token_budget: int = 4_000) -> ContextBundle:
         """Retrieve bounded code, runtime, decision, and exact-source evidence."""

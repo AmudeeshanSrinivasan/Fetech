@@ -332,7 +332,12 @@ class FetchAttempt(ContractModel):
     bytes_received: int = 0
     parser: str | None = None
     artifact_ids: tuple[UUID, ...] = ()
-    failure_code: str | None = None
+    failure_code: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=128,
+        pattern=r"^[A-Za-z][A-Za-z0-9_.-]*$",
+    )
     warnings: tuple[str, ...] = ()
     consumed_budget: dict[str, int | float] = Field(default_factory=dict)
 
@@ -391,7 +396,11 @@ class CapabilityOutcome(ContractModel):
 
 
 class Diagnostic(ContractModel):
-    code: str
+    code: str = Field(
+        min_length=1,
+        max_length=128,
+        pattern=r"^[A-Za-z][A-Za-z0-9_.-]*$",
+    )
     message: str
     retryable: bool = False
     details: dict[str, str | int | float | bool | None] = Field(default_factory=dict)
@@ -417,6 +426,63 @@ class PublicError(ContractModel):
     omitted_issues: int = Field(default=0, ge=0, le=1_000_000)
 
 
+class ResultStatusDescriptor(ContractModel):
+    """Stable terminal semantics for one canonical fetch result status."""
+
+    status: ResultStatus
+    summary: str = Field(min_length=1, max_length=256)
+    successful: bool
+    artifact_disposition: Literal[
+        "accepted_required",
+        "artifacts_required",
+        "optional",
+    ]
+    retryable: bool = False
+    common_diagnostic_codes: tuple[str, ...] = ()
+    sdk_delivery: Literal["FetchResult"] = "FetchResult"
+    rest_submission_status: Literal[202] = 202
+    rest_result_status: Literal[200] = 200
+    cli_exit_code: Literal[0] = 0
+    mcp_delivery: Literal["FetchResult JSON"] = "FetchResult JSON"
+
+
+class FailureCodeDescriptor(ContractModel):
+    """Sanitized meaning and scope for one built-in failure code."""
+
+    code: str = Field(
+        min_length=1,
+        max_length=128,
+        pattern=r"^[A-Za-z][A-Za-z0-9_.-]*$",
+    )
+    scopes: tuple[Literal["attempt", "crawl", "diagnostic"], ...]
+    summary: str = Field(min_length=1, max_length=256)
+    retryable: bool = False
+
+
+class PublicErrorDescriptor(ContractModel):
+    """Cross-interface delivery contract for one pre-execution error."""
+
+    code: PublicErrorCode
+    summary: str = Field(min_length=1, max_length=256)
+    retryable: bool = False
+    issue_codes: tuple[str, ...]
+    sdk_delivery: Literal["FetechValidationError"] = "FetechValidationError"
+    rest_status: int = Field(ge=400, le=599)
+    cli_exit_code: int = Field(ge=1, le=255)
+    mcp_delivery: Literal["tool error"] = "tool error"
+
+
+class FailureCatalogue(ContractModel):
+    """Versioned failure semantics shared by SDK, REST, CLI, and MCP."""
+
+    schema_version: Literal["1.0"] = "1.0"
+    api_version: Literal["v1"] = "v1"
+    package_version: str
+    result_statuses: tuple[ResultStatusDescriptor, ...]
+    codes: tuple[FailureCodeDescriptor, ...]
+    public_errors: tuple[PublicErrorDescriptor, ...]
+
+
 class DiscoveredTarget(ContractModel):
     url: str
     depth: int = Field(ge=0)
@@ -424,7 +490,12 @@ class DiscoveredTarget(ContractModel):
     relation: str
     fetched: bool = False
     accepted: bool = False
-    failure_code: str | None = None
+    failure_code: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=128,
+        pattern=r"^[A-Za-z][A-Za-z0-9_.-]*$",
+    )
 
 
 class CrawlReport(ContractModel):

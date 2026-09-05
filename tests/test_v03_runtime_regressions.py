@@ -549,10 +549,14 @@ async def test_failed_node_blocks_dependents_but_not_independent_fallbacks(
 
     try:
         result = await engine.execute(run_id, plan)
+        events = await ledger.events(run_id)
     finally:
         await ledger.close()
 
     assert calls == ["independent", "fallback"]
+    failed_event = next(event for event in events if event.event_type == "attempt.failed")
+    assert failed_event.payload["code"] == "adapter_failed"
+    assert any(diagnostic.code == "adapter_failed" for diagnostic in result.diagnostics)
     dependent = next(
         outcome
         for outcome in result.capability_outcomes

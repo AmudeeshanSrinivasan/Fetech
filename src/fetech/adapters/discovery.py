@@ -187,7 +187,7 @@ class DiscoveryAdapter:
                                 else None
                             ),
                             relation=item.relation,
-                            failure_code=type(error).__name__ if error else "empty_response",
+                            failure_code="fetch_failed" if error else "empty_response",
                         )
                     )
                     continue

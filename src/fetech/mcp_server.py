@@ -22,6 +22,7 @@ from fetech.errors import (
     validate_uuid,
     validation_exception,
 )
+from fetech.failures import failure_catalogue
 from fetech.gateway import UniversalFetchGateway
 from fetech.models import FetchRequest
 
@@ -198,6 +199,12 @@ def build_server(
         """Return public contract versions and deterministic JSON Schema hashes."""
 
         return contract_manifest().model_dump_json()
+
+    @server.tool()
+    async def get_failures() -> str:
+        """Return terminal statuses and stable machine-readable failure codes."""
+
+        return failure_catalogue().model_dump_json()
 
     @server.tool()
     async def explain_capability(capability_id: str, allowed: bool = True) -> str:
