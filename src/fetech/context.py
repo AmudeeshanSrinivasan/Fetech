@@ -6,11 +6,13 @@ import asyncio
 import hashlib
 import json
 import re
+import unicodedata
 from contextlib import suppress
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
+from urllib.parse import unquote, urlsplit
 
 from fetech.models import (
     ContextBundle,
@@ -25,6 +27,9 @@ _MAX_QUESTION_BYTES = 16_384
 _MAX_QMD_NOTES = 100
 _MAX_GRAPH_NODES = 24
 _MAX_GRAPH_PATHS = 16
+_MAX_GRAPH_FILE_BYTES = 20_000_000
+_MAX_GRAPH_ITEMS = 100_000
+_MAX_GRAPH_MATCHES = 12
 _MAX_SOURCE_LOCATIONS = 12
 _MAX_SOURCE_MATCHES = 8
 _MAX_SOURCE_FILE_BYTES = 5_000_000
@@ -80,15 +85,23 @@ _GENERIC_VERIFICATION_TERMS = (
     | _RUNTIME_SIGNALS
     | _DECISION_SIGNALS
     | {
+        "and",
+        "define",
+        "defined",
+        "defines",
         "explain",
         "find",
+        "for",
         "handle",
         "handles",
+        "handler",
         "implement",
         "implemented",
         "implements",
+        "path",
         "project",
         "show",
+        "tool",
         "trace",
     }
 )
@@ -101,6 +114,87 @@ _GRAPH_NODE_RE = re.compile(
 )
 _GRAPH_EDGE_RE = re.compile(r"^EDGE (?P<edge>.+? --.+?--> .+)$")
 _SOURCE_LOCATION_RE = re.compile(r"^(?P<path>.+):L(?P<line>\d+)(?:-L(?P<end>\d+))?$")
+
+_QMD_QUERY_IGNORED = frozenset(
+    {
+        "all",
+        "and",
+        "about",
+        "blocker",
+        "boundary",
+        "canonical",
+        "code",
+        "commands",
+        "current",
+        "define",
+        "defined",
+        "defines",
+        "decision",
+        "dual",
+        "from",
+        "graphs",
+        "have",
+        "history",
+        "into",
+        "milestone",
+        "note",
+        "previous",
+        "project",
+        "records",
+        "roadmap",
+        "separate",
+        "scope",
+        "that",
+        "the",
+        "this",
+        "two",
+        "unresolved",
+        "what",
+        "when",
+        "where",
+        "which",
+        "with",
+    }
+)
+_QMD_QUERY_ALIASES = {
+    "design": "architecture",
+    "record": "ledger",
+    "risk": "blocker",
+    "risks": "blockers",
+    "thirteen": "13",
+}
+_GRAPH_NODE_FIELDS = (
+    "id",
+    "label",
+    "type",
+    "event_type",
+    "actor",
+    "source",
+    "source_file",
+    "source_location",
+)
+_GRAPH_PAYLOAD_FIELDS = (
+    "adapter",
+    "adapter_version",
+    "artifact_id",
+    "backend",
+    "capability_id",
+    "classifier",
+    "code",
+    "media_type",
+    "page_state",
+    "representation",
+    "resource_id",
+    "status",
+)
+_GRAPH_LINK_FIELDS = (
+    "source",
+    "target",
+    "type",
+    "relation",
+    "confidence",
+    "confidence_score",
+)
 
 ProviderName = Literal["code_graph", "runtime_graph", "qmd", "exact_source"]
 
@@ -280,29 +374,62 @@ class ContextBroker:
             for source in outcomes["code_graph"].sources
             for location in source.source_locations
         )
-        if code_requested and source_limit > 0 and code_locations:
-            outcomes["exact_source"] = await self._retrieve_source_locations(
-                code_locations,
-                source_limit,
-                verification_terms=_verification_terms(
-                    question,
-                    tuple(
-                        node
-                        for source in outcomes["code_graph"].sources
-                        for node in source.graph_nodes
-                    ),
-                ),
-                require_term_match=True,
+        if code_requested and source_limit > 0:
+            location_outcome = _skipped(
+                "exact_source",
+                "the code graph returned no source locations",
             )
-            if not outcomes["exact_source"].sources:
-                outcomes["exact_source"] = await self._retrieve_exact_source(
-                    question,
+            if code_locations:
+                location_outcome = await self._retrieve_source_locations(
+                    code_locations,
                     source_limit,
+                    verification_terms=_verification_terms(
+                        question,
+                        tuple(
+                            node
+                            for source in outcomes["code_graph"].sources
+                            for node in source.graph_nodes
+                        ),
+                    ),
+                    require_term_match=True,
                 )
-                fallback_reason = fallback_reason or "exact source search after stale graph locations"
-        elif code_requested and source_limit > 0:
-            outcomes["exact_source"] = await self._retrieve_exact_source(question, source_limit)
-            if not outcomes["code_graph"].sources:
+            targeted_outcome = _skipped(
+                "exact_source",
+                "the question contained no specific source terms",
+            )
+            if _source_query_terms(question):
+                targeted_outcome = await self._retrieve_exact_source(question, source_limit)
+
+            exact_sources = _deduplicate(
+                [*targeted_outcome.sources, *location_outcome.sources]
+            )
+            while exact_sources and sum(
+                _estimate_tokens(source.excerpt) for source in exact_sources
+            ) > source_limit:
+                exact_sources.pop()
+            if exact_sources:
+                outcomes["exact_source"] = _outcome(
+                    "exact_source",
+                    ContextProviderStatus.SUCCEEDED,
+                    attempts=max(
+                        targeted_outcome.report.attempts,
+                        location_outcome.report.attempts,
+                    ),
+                    sources=tuple(exact_sources),
+                )
+            elif targeted_outcome.report.status not in {
+                ContextProviderStatus.SKIPPED,
+                ContextProviderStatus.EMPTY,
+            }:
+                outcomes["exact_source"] = targeted_outcome
+            else:
+                outcomes["exact_source"] = location_outcome
+
+            if code_locations and not location_outcome.sources and targeted_outcome.sources:
+                fallback_reason = (
+                    fallback_reason or "exact source search after stale graph locations"
+                )
+            elif not outcomes["code_graph"].sources and targeted_outcome.sources:
                 fallback_reason = fallback_reason or "exact source search after code graph miss"
         elif not primary_sources:
             fallback_limit = min(self.budget.source_tokens, limit)
@@ -390,7 +517,16 @@ class ContextBroker:
         failure = _process_failure(provider, result, attempts=attempts)
         if failure is not None:
             return failure
-        excerpt = _truncate(result.stdout.strip(), token_limit)
+        projection_excerpt = await asyncio.to_thread(
+            _query_graph_projection,
+            graph,
+            question,
+            token_limit,
+        )
+        excerpt = _truncate(
+            "\n".join(part for part in (projection_excerpt, result.stdout.strip()) if part),
+            token_limit,
+        )
         if not excerpt:
             return _outcome(provider, ContextProviderStatus.EMPTY, attempts=attempts)
         nodes, paths, locations = _graph_selections(excerpt)
@@ -399,6 +535,9 @@ class ContextBroker:
             if provider == "code_graph"
             else "Runtime provenance graph"
         )
+        provenance = ["graphify query", f"{provider} projection"]
+        if projection_excerpt:
+            provenance.append("bounded projection attribute search")
         source = _source(
             source_type=provider,
             title=title,
@@ -406,7 +545,7 @@ class ContextBroker:
             excerpt=excerpt,
             score=1.0 if provider == "code_graph" else 0.95,
             freshness=_freshness(graph),
-            provenance=("graphify query", f"{provider} projection"),
+            provenance=tuple(provenance),
             source_locations=locations,
             graph_nodes=nodes,
             graph_paths=paths,
@@ -434,10 +573,11 @@ class ContextBroker:
             return _skipped("qmd", "no token budget was allocated")
         if self.vault is None or not self.vault.is_dir():
             return _outcome("qmd", ContextProviderStatus.UNAVAILABLE, detail="vault is not configured")
+        query = _qmd_query(question, repository_name=self.repository.name)
         result = await _run(
             "qmd",
             "search",
-            question,
+            query,
             "--index",
             self.qmd_index,
             "--format",
@@ -474,11 +614,8 @@ class ContextBroker:
             raw_locator = document.get("file")
             if not isinstance(raw_locator, str):
                 continue
-            locator_path = Path(raw_locator).expanduser()
-            if not locator_path.is_absolute():
-                locator_path = self.vault / locator_path
-            locator_path = locator_path.resolve()
-            if not locator_path.is_relative_to(self.vault):
+            locator_path = _resolve_qmd_locator(raw_locator, self.vault)
+            if locator_path is None:
                 continue
             excerpt = _truncate(str(document.get("snippet", "")), per_note_limit)
             if not excerpt:
@@ -512,7 +649,7 @@ class ContextBroker:
         question: str,
         token_limit: int,
     ) -> _RetrievalOutcome:
-        terms = _terms(question)
+        terms = list(_source_query_terms(question)) or _terms(question)
         if token_limit <= 0:
             return _skipped("exact_source", "no token budget was allocated")
         if not terms:
@@ -544,6 +681,10 @@ class ContextBroker:
         failure = _process_failure("exact_source", result, attempts=1)
         if failure is not None:
             return failure
+        definition_intent = bool(
+            {term.casefold() for term in _terms(question)}
+            & {"define", "defined", "defines", "implementation", "implements"}
+        )
         matches: dict[str, tuple[float, int]] = {}
         order = 0
         for line in result.stdout.splitlines():
@@ -566,6 +707,18 @@ class ContextBroker:
                 str(line_data.get("text", "")) if isinstance(line_data, dict) else ""
             )
             score = _term_relevance(matched_text, terms)
+            if path_data["text"].startswith("src/fetech/"):
+                score += 2.0
+            if definition_intent and any(
+                re.search(
+                    rf"\b(?:async\s+def|def|class)\s+{re.escape(term)}\b",
+                    matched_text,
+                    flags=re.IGNORECASE,
+                )
+                for term in terms
+                if "." not in term
+            ):
+                score += 20.0
             previous = matches.get(location)
             if previous is None or score > previous[0]:
                 matches[location] = (score, order)
@@ -760,6 +913,225 @@ def _terms(question: str) -> list[str]:
         for word in re.findall(r"[A-Za-z_][A-Za-z0-9_-]{2,}", question)
         if word.lower() not in ignored
     ]
+
+
+def _source_query_terms(question: str) -> tuple[str, ...]:
+    selected = re.findall(
+        r"\b[A-Za-z_][A-Za-z0-9_-]*(?:\.[A-Za-z0-9_-]+)+\b",
+        question,
+    )
+    selected.extend(_verification_terms(question, ()))
+    lowered = {term.casefold() for term in _terms(question)}
+    if "graphify" in lowered:
+        selected.extend(("code_graph", "runtime_graph"))
+    if lowered.intersection({"success", "successful"}):
+        selected.append("SUCCEEDED")
+    if "planning" in lowered:
+        selected.append("planner")
+    if "reasoning" in lowered:
+        selected.append("reasoner")
+    return tuple(dict.fromkeys(selected))
+
+
+def _qmd_query(question: str, *, repository_name: str) -> str:
+    """Return a bounded lexical query without routing-language noise."""
+
+    project_name = repository_name.casefold()
+    selected: list[str] = []
+    seen: set[str] = set()
+    for term in re.findall(r"[A-Za-z0-9_][A-Za-z0-9_-]{1,}", question):
+        normalized = term.casefold()
+        if normalized == project_name or normalized in _QMD_QUERY_IGNORED:
+            continue
+        replacement = _QMD_QUERY_ALIASES.get(normalized, term)
+        token_id = replacement.casefold()
+        if token_id in seen:
+            continue
+        seen.add(token_id)
+        selected.append(replacement)
+        if len(selected) == 6:
+            break
+    return " ".join(selected) or question
+
+
+def _resolve_qmd_locator(raw_locator: str, vault: Path) -> Path | None:
+    """Resolve an absolute, relative, or QMD locator inside the configured vault."""
+
+    candidate = Path(raw_locator).expanduser()
+    if candidate.is_absolute():
+        return _bounded_qmd_path(candidate, vault)
+
+    parsed = urlsplit(raw_locator)
+    if parsed.scheme:
+        if parsed.scheme != "qmd" or not parsed.netloc:
+            return None
+        relative_text = unquote(parsed.path.lstrip("/"))
+        if not relative_text:
+            return None
+        relative = Path(relative_text)
+    else:
+        relative = candidate
+    if relative.is_absolute() or ".." in relative.parts or len(relative.parts) > 16:
+        return None
+
+    direct = _bounded_qmd_file(vault / relative, vault)
+    if direct is not None:
+        return direct
+
+    if not parsed.scheme:
+        return _bounded_qmd_path(vault / relative, vault)
+
+    current = vault
+    for part in relative.parts:
+        if not current.is_dir():
+            return None
+        target = _qmd_path_slug(part)
+        matches = [
+            child
+            for child in current.iterdir()
+            if _qmd_path_slug(child.name) == target
+        ]
+        if len(matches) != 1:
+            return None
+        current = matches[0]
+    return _bounded_qmd_file(current, vault)
+
+
+def _bounded_qmd_file(candidate: Path, vault: Path) -> Path | None:
+    resolved = _bounded_qmd_path(candidate, vault)
+    if resolved is None or not resolved.is_file():
+        return None
+    return resolved
+
+
+def _bounded_qmd_path(candidate: Path, vault: Path) -> Path | None:
+    """Resolve a QMD-reported path without permitting a vault escape."""
+
+    resolved = candidate.resolve()
+    if not resolved.is_relative_to(vault):
+        return None
+    return resolved
+
+
+def _qmd_path_slug(value: str) -> str:
+    normalized = unicodedata.normalize("NFKD", value).casefold()
+    ascii_value = "".join(
+        character
+        for character in normalized
+        if not unicodedata.combining(character)
+    )
+    return re.sub(r"[^a-z0-9]+", "-", ascii_value).strip("-")
+
+
+def _query_graph_projection(graph: Path, question: str, token_limit: int) -> str:
+    """Search bounded, allowlisted Graphify attributes omitted by CLI label search."""
+
+    try:
+        state = graph.lstat()
+        if graph.is_symlink() or not graph.is_file() or state.st_size > _MAX_GRAPH_FILE_BYTES:
+            return ""
+        document = json.loads(graph.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError):
+        return ""
+    if not isinstance(document, dict):
+        return ""
+    nodes = document.get("nodes", [])
+    links = document.get("links", [])
+    if not isinstance(nodes, list) or not isinstance(links, list):
+        return ""
+    if len(nodes) + len(links) > _MAX_GRAPH_ITEMS:
+        return ""
+    terms = list(_source_query_terms(question)) or _terms(question)
+    if not terms:
+        return ""
+
+    matches: list[tuple[float, int, str]] = []
+    order = 0
+    for node in nodes:
+        if not isinstance(node, dict):
+            continue
+        selected: dict[str, object] = {
+            field_name: _bounded_graph_value(node.get(field_name))
+            for field_name in _GRAPH_NODE_FIELDS
+            if _bounded_graph_value(node.get(field_name)) is not None
+        }
+        payload = node.get("payload")
+        if isinstance(payload, dict):
+            selected_payload = {
+                field_name: _bounded_graph_value(payload.get(field_name))
+                for field_name in _GRAPH_PAYLOAD_FIELDS
+                if _bounded_graph_value(payload.get(field_name)) is not None
+            }
+            if selected_payload:
+                selected["payload"] = selected_payload
+        searchable = json.dumps(selected, ensure_ascii=True, sort_keys=True)
+        score = _term_relevance(searchable, terms)
+        if score > 0:
+            label = _single_line(str(selected.get("label") or selected.get("id") or "node"))
+            source = _single_line(
+                str(selected.get("source_file") or selected.get("source") or "")
+            )
+            location = _single_line(str(selected.get("source_location") or ""))
+            details = _single_line(searchable)
+            matches.append(
+                (
+                    score,
+                    order,
+                    f"NODE {label} {details} "
+                    f"[src={source} loc={location} community=projection]",
+                )
+            )
+        order += 1
+
+    for link in links:
+        if not isinstance(link, dict):
+            continue
+        selected_link: dict[str, object] = {
+            field_name: _bounded_graph_value(link.get(field_name))
+            for field_name in _GRAPH_LINK_FIELDS
+            if _bounded_graph_value(link.get(field_name)) is not None
+        }
+        searchable = json.dumps(selected_link, ensure_ascii=True, sort_keys=True)
+        score = _term_relevance(searchable, terms)
+        if score > 0:
+            source = _single_line(str(selected_link.get("source") or "node"))
+            target = _single_line(str(selected_link.get("target") or "node"))
+            relation = _single_line(
+                str(
+                    selected_link.get("relation")
+                    or selected_link.get("type")
+                    or "related"
+                )
+            )
+            matches.append((score, order, f"EDGE {source} --{relation}--> {target}"))
+        order += 1
+
+    maximum_characters = max(0, token_limit * 4)
+    lines: list[str] = []
+    used = 0
+    for _, _, line in sorted(matches, key=lambda item: (-item[0], item[1]))[
+        :_MAX_GRAPH_MATCHES
+    ]:
+        remaining = maximum_characters - used
+        if remaining <= 0:
+            break
+        bounded = line[:remaining]
+        if bounded:
+            lines.append(bounded)
+            used += len(bounded) + 1
+    return "\n".join(lines)
+
+
+def _bounded_graph_value(value: object) -> str | int | float | bool | None:
+    if isinstance(value, str):
+        return _single_line(value)[:256]
+    if isinstance(value, bool | int | float):
+        return value
+    return None
+
+
+def _single_line(value: str) -> str:
+    return " ".join(value.replace("\x00", "").split())[:512]
 
 
 def _truncate(text: str, token_limit: int) -> str:

@@ -85,7 +85,7 @@ report does not make legal conclusions.
 | `src/fetech/compatibility.py` | `22de6643415c02624bfecf38de810c0054d475348446b2a0f778bf2cdba1eeca` |
 | `src/fetech/config.py` | `4d3bec5ccdd8c842f1e6200df91ab66d619eae66ad0b2dd6d8bc0b90b40a434a` |
 | `src/fetech/conformance.py` | `f0b3f8d063939e0cc323c05fd54cb2b9dde36ffc95dbe31d769b4824679e61fa` |
-| `src/fetech/context.py` | `55d6f38af5b24eec443c2027cd58e1229c695ce3af865d22a9a84109a86e5740` |
+| `src/fetech/context.py` | `6d521ed91bb0c3516b2ffb9c5edee4a300381270db166cb2eb857c262d9803f6` |
 | `src/fetech/context_benchmark.py` | `5d5f608bb8564608fd958a6059dbe227779c0dfec513a8734292496a118ccf34` |
 | `src/fetech/contracts.py` | `0c679893740cd2fb70384cfa2746a5dccc70b9b63e51b0e991e6510c2842761d` |
 | `src/fetech/daemon.py` | `127ac576c2e4336e1d3ada62ff8ae09e459394b07d30be1ad3c4c017b5ea6fd4` |
@@ -131,7 +131,7 @@ report does not make legal conclusions.
 | `src/fetech/yt_dlp_worker.py` | `0c0defe1fcdd76dd525bc3346d10289548801c3e5e13ae57bdd46b357911352f` |
 | `tests/conftest.py` | `fb4a3165aa507a9f792ae87f60da6f0e1acb1e7a6a0b7d5d534cf936703e27da` |
 | `tests/test_beta_compatibility.py` | `85bffc7675636b44639c64272412390d875c8d9ce2facbe7741bb2edf4b0e8e6` |
-| `tests/test_beta_context.py` | `c9db3a137cb0e749190433252c1f676d5e1f1b6d2f9328bee5511a7abbf44934` |
+| `tests/test_beta_context.py` | `75fad8fc24881bac5d8400b9d4a9f7bbd9bf38ae14bd0f4e738d4feb8977623f` |
 | `tests/test_beta_contracts.py` | `7c7d820c8b0484c73378ed719d058e56329ab33b0e2a2b0c8a276c6666b8119b` |
 | `tests/test_beta_failure_catalogue.py` | `91cde39f8b08f14fa7a51e838f7781b1cbbc229224c4a263107d01fba471c4fb` |
 | `tests/test_beta_format_fuzz.py` | `2968bf9f20e551aa40664d45988a7bdbb5728c7aa0229635b4bc4a2d2bb440c6` |

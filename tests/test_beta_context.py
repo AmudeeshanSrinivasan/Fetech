@@ -17,7 +17,13 @@ from typer.testing import CliRunner
 from fetech.cli import app as cli_app
 from fetech.client import FetechClient
 from fetech.config import Settings
-from fetech.context import ContextBroker, _ProcessResult, classify_context_needs
+from fetech.context import (
+    ContextBroker,
+    _ProcessResult,
+    _qmd_query,
+    _query_graph_projection,
+    classify_context_needs,
+)
 from fetech.context import _run as run_context_process
 from fetech.ledger import EventLedger
 from fetech.models import (
@@ -57,6 +63,20 @@ def test_context_need_classification_is_deterministic_and_composable() -> None:
         ContextNeed.CODE_ARCHITECTURE,
         ContextNeed.RUNTIME_HISTORY,
     )
+
+
+@pytest.mark.parametrize(
+    ("question", "expected"),
+    [
+        ("Which decision note records the canonical Fetech design?", "architecture"),
+        ("Which decision note records the authoritative storage record?", "authoritative storage ledger"),
+        ("Which code and decision note define the context token budget?", "context token budget"),
+        ("Which code and decision note define the dual Graphify boundary?", "Graphify"),
+        ("Which blocker note records unresolved project risks?", "blockers"),
+    ],
+)
+def test_qmd_query_removes_routing_scaffolding(question: str, expected: str) -> None:
+    assert _qmd_query(question, repository_name="Fetech") == expected
 
 
 @pytest.mark.asyncio
@@ -232,6 +252,50 @@ async def test_stale_graph_location_is_not_mislabeled_as_source_verified(
 
 
 @pytest.mark.asyncio
+async def test_exact_source_search_supplements_a_valid_but_incomplete_graph_result(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repository = tmp_path / "repository"
+    cli_source = repository / "src" / "cli.py"
+    daemon_source = repository / "src" / "daemon.py"
+    cli_source.parent.mkdir(parents=True)
+    cli_source.write_text("def context_search(): pass\n", encoding="utf-8")
+    daemon_source.write_text("async def context_search(): pass\n", encoding="utf-8")
+    graph = repository / "graphify-out" / "graph.json"
+    graph.parent.mkdir(parents=True)
+    graph.write_text("{}", encoding="utf-8")
+
+    async def run(*arguments: str, **_: Any) -> _ProcessResult:
+        if arguments[0] == "graphify":
+            return _ProcessResult(
+                0,
+                "NODE context_search() [src=src/cli.py loc=L1 community=1]",
+                "",
+            )
+        assert arguments[0] == "rg"
+        record = {
+            "type": "match",
+            "data": {
+                "path": {"text": "src/daemon.py"},
+                "lines": {"text": "async def context_search(): pass\n"},
+                "line_number": 1,
+            },
+        }
+        return _ProcessResult(0, json.dumps(record), "")
+
+    monkeypatch.setattr("fetech.context._run", run)
+    result = await ContextBroker(repository).search(
+        "Which code module defines the context_search REST handler?"
+    )
+
+    exact_locations = {
+        source.locator for source in result.sources if source.source_type == "exact_source"
+    }
+    assert "src/daemon.py:L1" in exact_locations
+
+
+@pytest.mark.asyncio
 async def test_decision_question_uses_only_scoped_qmd_and_deduplicates_by_hash(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
@@ -287,6 +351,76 @@ async def test_decision_question_uses_only_scoped_qmd_and_deduplicates_by_hash(
         "qmd": ContextProviderStatus.SUCCEEDED,
         "exact_source": ContextProviderStatus.SKIPPED,
     }
+
+
+@pytest.mark.asyncio
+async def test_qmd_uri_is_resolved_and_generic_query_language_is_removed(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repository = tmp_path / "Fetech"
+    vault = tmp_path / "vault"
+    note = vault / "brain" / "Fetech Architecture.md"
+    repository.mkdir()
+    note.parent.mkdir(parents=True)
+    note.write_text("canonical architecture", encoding="utf-8")
+    calls: list[tuple[str, ...]] = []
+
+    async def run(*arguments: str, **_: Any) -> _ProcessResult:
+        calls.append(arguments)
+        assert arguments[:3] == ("qmd", "search", "architecture")
+        documents = [
+            {
+                "title": "Fetech Architecture",
+                "file": "qmd://obsidian-mind/brain/Fetech-Architecture.md?index=obsidian-mind",
+                "snippet": "canonical architecture",
+                "score": 1,
+            }
+        ]
+        return _ProcessResult(0, json.dumps(documents), "")
+
+    monkeypatch.setattr("fetech.context._run", run)
+    result = await ContextBroker(repository, vault=vault).search(
+        "Which decision note records the canonical Fetech design?"
+    )
+
+    assert len(calls) == 1
+    assert result.sources[0].locator == str(note)
+    assert result.sources[0].provenance == ("QMD lexical search",)
+
+
+@pytest.mark.asyncio
+async def test_qmd_uri_cannot_escape_the_configured_vault(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    repository = tmp_path / "repository"
+    vault = tmp_path / "vault"
+    repository.mkdir()
+    vault.mkdir()
+    escaped = tmp_path / "escaped.md"
+    escaped.write_text("accepted ADR", encoding="utf-8")
+
+    async def run(*arguments: str, **_: Any) -> _ProcessResult:
+        if arguments[0] == "qmd":
+            documents = [
+                {
+                    "title": "Escaped",
+                    "file": "qmd://obsidian-mind/../escaped.md?index=obsidian-mind",
+                    "snippet": "accepted ADR",
+                    "score": 1,
+                }
+            ]
+            return _ProcessResult(0, json.dumps(documents), "")
+        assert arguments[0] == "rg"
+        return _ProcessResult(1, "", "")
+
+    monkeypatch.setattr("fetech.context._run", run)
+    result = await ContextBroker(repository, vault=vault).search("Show accepted ADR history")
+
+    assert result.sources == ()
+    reports = {report.provider: report.status for report in result.provider_reports}
+    assert reports["qmd"] == ContextProviderStatus.EMPTY
 
 
 @pytest.mark.asyncio
@@ -358,6 +492,39 @@ async def test_context_hard_ceiling_caps_large_runtime_graph_output(
     assert result.token_budget == 8_000
     assert result.estimated_tokens == result.token_usage.total <= 1_200
     assert len(result.sources[0].excerpt) <= 1_200 * 4
+
+
+def test_projection_attribute_search_is_bounded_and_allowlisted(tmp_path: Path) -> None:
+    graph = tmp_path / "runtime-graph.json"
+    graph.write_text(
+        json.dumps(
+            {
+                "nodes": [
+                    {
+                        "id": "event-1",
+                        "label": "planning.completed",
+                        "type": "ProvenanceEvent",
+                        "source_file": "event-ledger",
+                        "source_location": "ledger://runs/run-1/events/event-1",
+                        "payload": {
+                            "classifier": "python-rules-v1",
+                            "status": "SUCCEEDED",
+                            "unexpected": "must-not-appear",
+                        },
+                    }
+                ],
+                "links": [],
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    result = _query_graph_projection(graph, "python-rules-v1", 100)
+
+    assert "python-rules-v1" in result
+    assert "ledger://runs/run-1/events/event-1" in result
+    assert "must-not-appear" not in result
+    assert len(result) <= 400
 
 
 @pytest.mark.asyncio
