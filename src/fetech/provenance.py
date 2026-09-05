@@ -5,10 +5,12 @@ from __future__ import annotations
 import json
 import os
 import tempfile
+from collections.abc import Sequence
 from pathlib import Path
 from typing import Any
 
 from fetech.ledger import EventLedger
+from fetech.models import ProvenanceEvent
 from fetech.storage import StorageLifecycleError, StorageQuota
 
 
@@ -19,6 +21,24 @@ async def build_runtime_graph(
     quota: StorageQuota | None = None,
 ) -> dict[str, Any]:
     events = await ledger.all_events()
+    graph = runtime_graph_from_events(events)
+    encoded = (json.dumps(graph, indent=2, sort_keys=True) + "\n").encode("utf-8")
+    existing_size = _existing_regular_size(output)
+    additional_bytes = max(0, len(encoded) - existing_size)
+    if quota is None:
+        _write_runtime_graph(output, encoded)
+    else:
+        resolved_output = output.expanduser().resolve()
+        if resolved_output != quota.root and quota.root not in resolved_output.parents:
+            raise ValueError("runtime graph must be contained by the storage quota root")
+        async with quota.reserve(additional_bytes):
+            _write_runtime_graph(resolved_output, encoded)
+    return graph
+
+
+def runtime_graph_from_events(events: Sequence[ProvenanceEvent]) -> dict[str, Any]:
+    """Build the deterministic projection without filesystem or database writes."""
+
     nodes: list[dict[str, Any]] = []
     links: list[dict[str, Any]] = []
     known: set[str] = set()
@@ -94,7 +114,7 @@ async def build_runtime_graph(
                     "confidence_score": 1.0,
                 }
             )
-    graph = {
+    return {
         "directed": True,
         "multigraph": True,
         "graph": {
@@ -106,18 +126,6 @@ async def build_runtime_graph(
         "nodes": nodes,
         "links": links,
     }
-    encoded = (json.dumps(graph, indent=2, sort_keys=True) + "\n").encode("utf-8")
-    existing_size = _existing_regular_size(output)
-    additional_bytes = max(0, len(encoded) - existing_size)
-    if quota is None:
-        _write_runtime_graph(output, encoded)
-    else:
-        resolved_output = output.expanduser().resolve()
-        if resolved_output != quota.root and quota.root not in resolved_output.parents:
-            raise ValueError("runtime graph must be contained by the storage quota root")
-        async with quota.reserve(additional_bytes):
-            _write_runtime_graph(resolved_output, encoded)
-    return graph
 
 
 def _existing_regular_size(path: Path) -> int:

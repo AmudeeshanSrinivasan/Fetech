@@ -14,6 +14,7 @@ from fetech.context_benchmark import (
     ContextBenchmarkError,
     ContextBenchmarkSuite,
     benchmark_source_identity,
+    build_task_baseline_contexts,
     load_benchmark_suite,
     render_benchmark_json,
     run_context_benchmark,
@@ -285,3 +286,44 @@ def test_ci_validates_the_suite_without_requiring_private_providers() -> None:
     assert "scripts/run_context_benchmark.py --validate-only" in workflow
     assert "pytest tests/test_context_benchmark.py -q" in workflow
     assert "pytest tests/test_context_evaluation.py -q" in workflow
+
+
+def test_curated_baselines_keep_complete_documents_and_fit_the_budget() -> None:
+    suite = _suite()
+    contexts = build_task_baseline_contexts(ROOT, suite)
+    summary = validate_benchmark_environment(ROOT, suite)
+    assert len(contexts) == 100
+    assert summary["maximum_task_baseline_tokens"] <= suite.maximum_baseline_tokens
+    assert summary["repository_word_count"] > 5_000
+    first = suite.tasks[0]
+    for relative in first.baseline_files:
+        assert (ROOT / relative).read_text(encoding="utf-8") in contexts[first.id]
+    assert "tests/test_v04_documents.py" not in contexts[first.id]
+
+
+@pytest.mark.parametrize("path", ["../outside.py", "/tmp/private.py", "src/*.py", "src/./file.py"])
+def test_baseline_paths_cannot_escape_or_expand(path: str) -> None:
+    from fetech.context_benchmark import ContextBenchmarkTask
+
+    task = _suite().tasks[0].model_dump()
+    task["baseline_files"] = [path]
+    with pytest.raises(ValueError, match="canonical repository-relative"):
+        ContextBenchmarkTask.model_validate(task)
+
+
+def test_baseline_rejects_oversize_instead_of_truncating() -> None:
+    suite = _suite().model_copy(update={"maximum_baseline_tokens": 1})
+    with pytest.raises(ContextBenchmarkError, match="exceeds the full-document"):
+        build_task_baseline_contexts(ROOT, suite)
+
+
+def test_baseline_rejects_missing_or_untracked_document(monkeypatch: pytest.MonkeyPatch) -> None:
+    from fetech import context_benchmark
+
+    tracked = context_benchmark._tracked_paths(ROOT)
+    missing = _suite().tasks[0].baseline_files[0]
+    monkeypatch.setattr(context_benchmark, "_tracked_paths", lambda _: tuple(
+        path for path in tracked if path != missing
+    ))
+    with pytest.raises(ContextBenchmarkError, match="baseline document is unavailable"):
+        build_task_baseline_contexts(ROOT, _suite())

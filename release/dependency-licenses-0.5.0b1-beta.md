@@ -27,7 +27,7 @@ report does not make legal conclusions.
 
 | Input | SHA-256 |
 |---|---|
-| `scripts/release_v05_beta.toml` | `054003e6b490d528da27ceffe8faafd0ab5870218914dbb9b88189bd8805b58e` |
+| `scripts/release_v05_beta.toml` | `a2bf32aeb6efedf8e0f6f14ec374a595ee92e01df61af5f1ac2b9472e1f3426b` |
 | `README.md` | `9d003bdb372a846aeb157848ab7eab700f78e69573956c69980d787cb7f16b00` |
 | `LICENSE` | `29f6bf2bd90a2e8ab6f01c805e4b28d47760597cea2f7474782221f3c283e594` |
 | `SECURITY.md` | `d6a5930c9e4b9b5a303f037328670e39b48c1694b0d19382907bbcc00eaf1f60` |
@@ -38,15 +38,15 @@ report does not make legal conclusions.
 | `compatibility/beta-v1.json` | `04df1bc150cb88f5f88f4822593f7c92697bf7c7c78080f843b7fd56bd7ef7ff` |
 | `compatibility/fixtures/v0.4.0a0-contracts.json` | `df9c7beabdcc0cc99a7f4ee2124e77faccb51ac9458cec5d1d1fe8da3b67d6c8` |
 | `.github/workflows/ci.yml` | `f5d668c9ee0a222bb40ed025c4b1b9bf9cdd44084db2ca5c6c5d8da1328fc290` |
-| `benchmarks/context-answer-protocol.md` | `c9a8f2915248c10091f273c4e3c7c78e3e0d0383484ad3190b90abb71ae87dfc` |
-| `benchmarks/context-tasks.yaml` | `8e81787876e599c443579c2313c17f5f76a2ba60e081a4d802914b6da26f3305` |
+| `benchmarks/context-answer-protocol.md` | `7833b42dd38f073814abf41b8894c059a278b09340038c6aef144000ee796c01` |
+| `benchmarks/context-tasks.yaml` | `972a071efada2efec88ad198a8c20fd383c937c259165c44015389978bc9d931` |
 | `docs/adr/0001-polyglot-logic-backends.md` | `f5c217f5ac68eeae5745f667d7b3fcde7452d80fe6b5e7c3f49003e65838fbe3` |
 | `docs/api-compatibility.md` | `cc3d56b6687b7b8854ea6e3cf601d878a240df1356735c168625644ae0f0ecba` |
 | `docs/architecture.md` | `852c532f9dd2b07593a7a0ec14712c57f2bd80da8713f15ce8a9bfd7f248a3d7` |
 | `docs/beta-development.md` | `612c6a501c2d9356bdad56cd77e84b0377d00668617dd8913bd0928b4279a742` |
 | `docs/capability-catalog.md` | `90ee03e51598c54ac848915d94576331f712fc7acff327b3f7f751821995ac65` |
-| `docs/context-broker.md` | `2ea4f3a63710d4f5dce8635a33b1a5f2f3d9abab9ca693d876bb7abf643da78c` |
-| `docs/context-answer-evaluation.md` | `2fcc3b790e807e24e69800811d7057e41bf4945d1d577cf0f197942d5876d89b` |
+| `docs/context-broker.md` | `f8fb148f441c5754c963ae56514a66204307275a25470a93cffac233ce2ffd30` |
+| `docs/context-answer-evaluation.md` | `28740816e36cf44f31b779eb3813f06d1bc9a2704996bd54dd50e87f95e6f7d0` |
 | `docs/extraction-provenance.md` | `c75c33e2e5dfc2558eaec526565c0f333cd43443c4e913637f01c0c7429dabd5` |
 | `docs/failure-semantics.md` | `23c036607e5290b0c94f695c3ade9556bcf089ba60fa2619d658087c117148af` |
 | `docs/fuzzing.md` | `b193e2a8f4ec09bff3080179328dfed677c0cde35ce2452147c8bb974f4b9673` |
@@ -57,6 +57,7 @@ report does not make legal conclusions.
 | `release/fetech-v0.4.0a0-freeze.toml` | `234704314b9aaae1d3acdbe6b92c69ae250bb1db194f0c4971b34e16d3f143e6` |
 | `scripts/check_beta_compatibility.py` | `791ce2343645712199d00cf3b47277f5a8f4297d79fae0bc3c1e6f771df0648f` |
 | `scripts/generate_release_evidence.py` | `13efee887298c94e4ece0cc317fc189bbaa02847b0c7296075b7fa98eb8fb9db` |
+| `scripts/freeze_context_evidence.py` | `a1678dde710f896ee175d75d256db0b161b9f48bc50162c1156707344c6dfed9` |
 | `scripts/run_context_answer_evaluation.py` | `a06a5d1878349bf02e8136ca0fe711280f9fab1d7f5e4f461c71f7e149e4cf3c` |
 | `scripts/run_context_benchmark.py` | `f1015e730f102c431b74abc59cdc61692fcb2e273f69f4ac4775dc453c3951cb` |
 | `scripts/release_license_catalog.toml` | `a5beffe5706530e99915a21b03835d7bdf2db186f68d2e1c18f127f63cc3d956` |
@@ -89,8 +90,9 @@ report does not make legal conclusions.
 | `src/fetech/config.py` | `4d3bec5ccdd8c842f1e6200df91ab66d619eae66ad0b2dd6d8bc0b90b40a434a` |
 | `src/fetech/conformance.py` | `f0b3f8d063939e0cc323c05fd54cb2b9dde36ffc95dbe31d769b4824679e61fa` |
 | `src/fetech/context.py` | `6d521ed91bb0c3516b2ffb9c5edee4a300381270db166cb2eb857c262d9803f6` |
-| `src/fetech/context_benchmark.py` | `4339f9acef7c3cf37002f1b18d345e892d0ac94e9c93dfabd28caaf02b43ed11` |
+| `src/fetech/context_benchmark.py` | `6271b706060bdae05a23c3eadaf69d428a2be9af22dd0ce3f5890d3e6f865db3` |
 | `src/fetech/context_evaluation.py` | `e574fd4678adf88bb7ac03ddf910a1c1201d855ef1e217d89675ba99d4cb1452` |
+| `src/fetech/context_snapshot.py` | `ebdaf44378486c7302a1deadfbd3356aeaed6358216a8336fd1b7eee8ae0e855` |
 | `src/fetech/contracts.py` | `0c679893740cd2fb70384cfa2746a5dccc70b9b63e51b0e991e6510c2842761d` |
 | `src/fetech/daemon.py` | `127ac576c2e4336e1d3ada62ff8ae09e459394b07d30be1ad3c4c017b5ea6fd4` |
 | `src/fetech/docling_artifacts.py` | `1708370b8e7fb0f47511c2303e18e274a61fba62742e6f6c20d73833715ac278` |
@@ -116,7 +118,7 @@ report does not make legal conclusions.
 | `src/fetech/mcp_server.py` | `eb43fee5df323cde4b362ea7950e2c3cc3ba5f3cd7706925b2aa5870b5ee0585` |
 | `src/fetech/models.py` | `25881a1ec792862fb46b16fbf6fdc8ea86844239fcccd6ad39ca34c80d2dd3fc` |
 | `src/fetech/planning.py` | `26a9bf4babf195056a5a04cd6c0dbeaa606eb379c0e839c6528ad3ebc72bc852` |
-| `src/fetech/provenance.py` | `32a9d3aae3d7ffc75ef5500be3f1a92951b3084acbdfda814b150ea378bddd97` |
+| `src/fetech/provenance.py` | `1d06b039651f3fac6fb4fb6c57bbc42f1667e447c2dce13f9080072af1d35457` |
 | `src/fetech/quality.py` | `c998156f9d16bfad2ffa11ff85c86893720cf48d5c5714121b9287b6dd13fd29` |
 | `src/fetech/registry.py` | `fc3a736674b73b2838be537fd2bd3d145454885daf757bd4963aeea8cd5cf7b0` |
 | `src/fetech/scheduling.py` | `f77f7c6e45939fffddfd83f8753086a32418320e06f24415a302387aa573ee1e` |
@@ -145,8 +147,9 @@ report does not make legal conclusions.
 | `tests/test_beta_reproducible_builds.py` | `5af5223b4cd9f2aa0d1ff3c9be3a9dbba64b7e4d5675da5773c4ea4878cf8dda` |
 | `tests/test_beta_storage_lifecycle.py` | `8aa8efbef8fb8dc479ba44ccfdede66bc4eb4a1e7cc5143280195dca5363c941` |
 | `tests/test_beta_validation_errors.py` | `e99b0f1c9624404ebda6b8118991bc5ee8ae332e9bdb71a2d11c06afae6813c2` |
-| `tests/test_context_benchmark.py` | `f6570073aa4867c39f53ee692adadef70e71626ba2b00af4b08726acca6ffe8d` |
+| `tests/test_context_benchmark.py` | `ec7cfde353aa67a1e2dca7966343c91c637f03ebf812ba6986537010f3a7dac1` |
 | `tests/test_context_evaluation.py` | `41ad56c0b6a25b43b8cb8c3d46bfef0d178eed0051052a25f23be95705fe5fcd` |
+| `tests/test_context_snapshot.py` | `3f543427e7bf31196ed7f90f4da3f1f2c2431f5117615deb4a9cd588eb5dd5e6` |
 | `tests/test_beta_version.py` | `1ee8c0031ab9535b6383eb103234637ac1e2de658b4209c9fa117f4da67b357c` |
 | `tests/test_docling_artifacts.py` | `0afa8f95feaab5372231c70125fb136e63a5666425b44e2973fe425d54896983` |
 | `tests/test_enma_invariants.py` | `44af8dce736609ce18519aa2efa13bdb5c2d0464faf75de3ef50da661417e8f8` |

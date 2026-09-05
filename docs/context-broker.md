@@ -79,6 +79,16 @@ writes to Obsidian.
 5,000 words. Suite loading verifies cardinality, unique questions, deterministic routing, evidence
 expectations, and the full-document baseline before any provider is invoked.
 
+The `fetech-beta-context-curated-v2` suite fixes an explicit `baseline_files` list per task. It
+compares complete relevant documents with broker excerpts, rather than giving every code question
+all source and test files. File selection is frozen in YAML and never depends on broker output.
+The harness rejects unavailable files, unsafe paths, and tasks above 100,000 estimated tokens;
+it records file lists and full-text hashes. Provider tokenizer checks remain necessary.
+
+This is a changed baseline, so earlier reduction measurements are not directly comparable. The
+questions and expected evidence remain unchanged. Runtime and decision baselines currently use
+repository-document proxies; final answer comparisons require matching frozen event/note snapshots.
+
 Run the provider-independent structural gate with:
 
 ```bash
@@ -108,3 +118,8 @@ when every gate must pass. The complete operator/reviewer handoff is documented 
 
 The full-vault-load observation covers material returned to `ContextBundle` and the three-note
 ceiling. It does not claim visibility into a provider's private indexing implementation.
+
+`scripts/freeze_context_evidence.py` now prepares a private, hash-checked snapshot of the six
+Fetech notes, selected repository files, and bounded ledger events with a matching runtime graph.
+It does not change the live retrieval benchmark: frozen-provider replay and snapshot binding in
+the answer-review workflow remain required. See the input-freeze section of the evaluation guide.
