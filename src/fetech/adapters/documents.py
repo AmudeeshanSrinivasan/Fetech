@@ -1004,7 +1004,12 @@ def _validate_pdf_ocr_pages(
                 "configured PDF OCR provider returned invalid page locators"
             )
         seen_pages.add(page)
-        text_bytes += len(item.text.encode("utf-8"))
+        try:
+            text_bytes += len(item.text.encode("utf-8"))
+        except UnicodeError as exc:
+            raise AdapterExecutionError(
+                "configured PDF OCR provider returned invalid output"
+            ) from exc
         if text_bytes > maximum_output_bytes:
             raise AdapterExecutionError(
                 "configured PDF OCR provider exceeded its output byte budget"
@@ -1207,7 +1212,7 @@ def _validate_worker_result(
             separators=(",", ":"),
             allow_nan=False,
         ).encode("utf-8")
-    except (TypeError, ValueError) as exc:
+    except (TypeError, UnicodeError, ValueError) as exc:
         raise AdapterExecutionError(
             "document worker returned a non-serializable document"
         ) from exc
@@ -1546,7 +1551,8 @@ def _parse_xml(
             block["text"] = text
         if element.attrib:
             block["attributes"] = {
-                key: element.attrib[key] for key in sorted(element.attrib)
+                attribute_name: element.attrib[attribute_name]
+                for attribute_name in sorted(element.attrib)
             }
         blocks.append(block)
         counts: dict[str, int] = {}

@@ -34,9 +34,9 @@ Beta work proceeds in bounded increments:
    (implemented);
 3. complete dual-graph and bounded-context behavior with source verification (implemented);
 4. normalize public validation errors, then extend fuzzing, reproducible-build, storage-lifecycle,
-   and failure-documentation evidence (validation normalization, the first native-parser fuzz
-   slice, same-host reproducible-build evidence, and the local storage lifecycle are implemented;
-   remaining work is in progress);
+   and failure-documentation evidence (validation normalization, native and format-aware fuzz
+   slices, same-host reproducible-build evidence, and the local storage lifecycle are implemented;
+   the Linux-isolated format campaign and failure catalogue remain in progress);
 5. freeze release-candidate APIs only after compatibility and migration tests pass.
 
 No Beta distribution version has been assigned. Package metadata remains `0.4.0a0` until a separate
@@ -141,10 +141,14 @@ This does not change acquisition failures. Policy blocks, authentication require
 dependencies, budget exhaustion, low quality, not-found resources, partial output, and execution
 failures remain canonical `FetchResult.status` values with diagnostics and provenance.
 
-The first deterministic fuzz slice covers request/URL handling, JSON/XML, native document formats,
-archives, media headers/metadata, and logic-engine validation. It found and fixed raw CSV-error
-escape, missing document serialized-output enforcement, and untyped malformed Clingo output. See
-[`fuzzing.md`](fuzzing.md) and `tests/test_beta_parser_fuzz.py` for the exact evidence boundary.
+The deterministic fuzz suite covers request/URL handling, JSON/XML, native document formats,
+archives, media headers/metadata, and logic-engine validation. Its format-aware slice adds generated
+RSS/Atom/sitemap/OpenAPI YAML, including duplicate OpenAPI mutation, plus HTML
+reader/discovery/navigation, browser and document worker envelopes, and structured ZIP cases. The
+two slices found and fixed untyped parser errors, missing
+serialized-output enforcement, invalid-Unicode and malformed-worker-JSON escapes, and non-finite
+browser observations. See [`fuzzing.md`](fuzzing.md), `tests/test_beta_parser_fuzz.py`, and
+`tests/test_beta_format_fuzz.py` for the exact evidence boundary.
 
 The reproducible-build gate creates two independent tracked-source copies, fixes
 `SOURCE_DATE_EPOCH` to the source commit, requires identical wheel and source-distribution bytes,
@@ -160,8 +164,9 @@ live set. Startup also recovers interrupted runs and abandoned CAS/snapshot stag
 accepting work. The evidence and secure-deletion limits are documented in
 [`storage-lifecycle.md`](storage-lifecycle.md).
 
-The remaining Increment 4 work is format-aware fuzz expansion and a complete public failure
-catalogue. Focused validation coverage lives in `tests/test_beta_validation_errors.py`.
+The remaining Increment 4 work is the required-Linux OOXML/PDF and broader container-mutation fuzz
+campaign plus a complete public failure catalogue. Focused validation coverage lives in
+`tests/test_beta_validation_errors.py`.
 
 ## Verification
 
@@ -170,7 +175,7 @@ uv run pytest tests/test_beta_contracts.py tests/test_v04_interfaces.py tests/te
 uv run pytest tests/test_beta_lifecycle.py
 uv run pytest tests/test_beta_context.py
 uv run pytest tests/test_beta_validation_errors.py
-uv run pytest tests/test_beta_parser_fuzz.py
+uv run pytest tests/test_beta_parser_fuzz.py tests/test_beta_format_fuzz.py
 uv run pytest tests/test_beta_reproducible_builds.py
 uv run pytest tests/test_beta_storage_lifecycle.py
 uv run pytest

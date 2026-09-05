@@ -394,7 +394,7 @@ controls, not proofs against unknown vulnerabilities.
 | Kernel-enforced read-only mounts, hidden host state, parser network denial, discriminating seccomp denial, cgroup CPU/PID/memory controls, bounded scratch, real required-profile Chromium launch, and cleanup | `tests/test_worker_isolation_linux.py`, mandatory `containment-linux` CI job |
 | Cache fallback ordering, quality admission, exact representations, CAS hashing, authenticated/region isolation, snapshot integrity, revalidation/SWR, Wayback destination/budget policy, and crash-safe immutable writes | `tests/test_v04_cache_archives.py`, `tests/test_wayback.py`, `tests/test_v04_planning.py`, storage and ledger tests |
 | Bounded JSON, XML, feed, OpenAPI, and GraphQL normalization | `tests/test_v03_api.py`, structured-API regression tests |
-| Deterministic malformed-input properties for request/URL, structured-data, document, archive, media, Clingo, and Prolog boundaries | `tests/test_beta_parser_fuzz.py`, `docs/fuzzing.md` |
+| Deterministic malformed-input and format-aware properties for request/URL, structured API/feed, HTML reader/discovery/navigation, browser/document IPC, native document, archive, media, Clingo, and Prolog boundaries | `tests/test_beta_parser_fuzz.py`, `tests/test_beta_format_fuzz.py`, `docs/fuzzing.md` |
 | Same-host deterministic wheel/sdist bytes, bounded archive metadata, wheel `RECORD`, and clean artifact installs | `tests/test_beta_reproducible_builds.py`, `scripts/verify_reproducible_builds.py`, mandatory Beta CI evidence |
 | SDK, REST, CLI, and MCP behavioral parity | `tests/test_v03_interfaces.py`, runtime conformance tests |
 
@@ -447,8 +447,8 @@ still requires:
   version, plus dated Wayback endpoint/service smoke evidence;
 - brokered, allowlisted egress for yt-dlp in required mode, or release wording
   that explicitly limits local yt-dlp to development mode;
-- format-aware fuzz expansion for HTML/discovery, feed/OpenAPI, worker IPC, OOXML/PDF, and
-  structured archive mutation beyond the first deterministic native-parser slice;
+- required-Linux fuzz expansion for OOXML/PDF parser workers, broader TAR/container mutation, and
+  sustained external campaigns beyond the deterministic native and format-aware property slices;
 - exact version/license capture for optional binaries and versioned connectors, plus dated
   endpoint/service metadata for unversioned remote services, in the release evidence;
 - artifact-level notice and redistribution legal review for dependencies recorded under explicit

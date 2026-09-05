@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 import binascii
 import json
+import math
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -73,7 +74,13 @@ class BrowserRenderWorker:
         if timeout_seconds <= 0:
             raise AdapterExecutionError("browser rendering has no browser-time budget")
         worker_byte_limit = min(maximum_bytes, 50_000_000)
-        if len(document.encode()) > worker_byte_limit:
+        try:
+            document_size = len(document.encode("utf-8"))
+        except UnicodeError as exc:
+            raise AdapterExecutionError(
+                "browser input is not valid Unicode text"
+            ) from exc
+        if document_size > worker_byte_limit:
             raise AdapterExecutionError("browser input exceeded the worker byte limit")
         payload = json.dumps(
             {
@@ -125,7 +132,7 @@ class BrowserRenderWorker:
             raise AdapterExecutionError("browser renderer exited without output")
         try:
             response = json.loads(process.stdout)
-        except json.JSONDecodeError as exc:
+        except (UnicodeError, ValueError) as exc:
             if process.returncode != 0:
                 raise AdapterExecutionError("offline browser rendering failed") from exc
             raise AdapterExecutionError("browser renderer returned malformed output") from exc
@@ -227,7 +234,7 @@ class RemoteBrowserConnector:
             raise AdapterExecutionError("remote browser connector request failed") from exc
         try:
             response_document = json.loads(b"".join(chunks))
-        except json.JSONDecodeError as exc:
+        except (UnicodeError, ValueError) as exc:
             raise AdapterExecutionError("remote browser connector returned malformed JSON") from exc
         return _parse_result(response_document, maximum_bytes=maximum_bytes)
 
@@ -242,9 +249,10 @@ def _parse_result(document: object, *, maximum_bytes: int) -> BrowserRenderResul
     if not isinstance(html, str) or not isinstance(visible_text, str):
         raise AdapterExecutionError("browser renderer omitted text outputs")
     if not isinstance(observations, dict) or not all(
-        isinstance(key, str)
+        isinstance(field_name, str)
         and (value is None or isinstance(value, (str, int, float, bool)))
-        for key, value in observations.items()
+        and (not isinstance(value, float) or math.isfinite(value))
+        for field_name, value in observations.items()
     ):
         raise AdapterExecutionError("browser renderer observations are invalid")
     screenshot: bytes | None = None
@@ -255,7 +263,13 @@ def _parse_result(document: object, *, maximum_bytes: int) -> BrowserRenderResul
             screenshot = base64.b64decode(encoded_screenshot, validate=True)
         except (binascii.Error, ValueError) as exc:
             raise AdapterExecutionError("browser screenshot is not valid base64") from exc
-    if len(html.encode()) + len(visible_text.encode()) + len(screenshot or b"") > maximum_bytes:
+    try:
+        text_size = len(html.encode("utf-8")) + len(visible_text.encode("utf-8"))
+    except UnicodeError as exc:
+        raise AdapterExecutionError(
+            "browser renderer returned invalid Unicode text"
+        ) from exc
+    if text_size + len(screenshot or b"") > maximum_bytes:
         raise AdapterExecutionError("browser renderer exceeded the byte budget")
     return BrowserRenderResult(
         html=html,

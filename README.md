@@ -43,7 +43,8 @@ registration.
 > increment adds one bounded, redacted `PublicError` validation contract across SDK, REST, CLI, and
 > MCP while leaving acquisition failures as canonical `FetchResult` statuses. It also adds
 > deterministic same-host reproducible-build checks and a bounded local storage
-> lifecycle with startup recovery, explicit retention, and reference-aware CAS garbage collection.
+> lifecycle with startup recovery, explicit retention, and reference-aware CAS garbage collection,
+> plus format-aware feed/OpenAPI, HTML, worker-envelope, and archive fuzz regressions.
 > See the [Beta development guide](docs/beta-development.md).
 
 Fetech permits local yt-dlp only in development mode; required mode refuses it until brokered, allowlisted egress is configured.

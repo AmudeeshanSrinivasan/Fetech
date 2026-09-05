@@ -79,13 +79,15 @@ single bounded error envelope for SDK exceptions, REST 422 responses, CLI valida
 MCP tool errors. Only allowlisted field locations, stable codes, generic messages, and omission
 counts cross the boundary; rejected values, validator context, exception text, and user-controlled
 field names do not. Ordinary acquisition outcomes remain `FetchResult` values rather than
-exceptions. A deterministic first parser-fuzzing slice now covers request/URL, structured-data,
-native document, archive, media, and logic validation boundaries; its scope and remaining
-format-aware expansion are recorded in [`fuzzing.md`](fuzzing.md). A same-host reproducible-build
+exceptions. Deterministic native and format-aware parser-fuzzing slices now cover request/URL,
+structured data and feeds, HTML extraction/discovery/navigation, native documents, browser/document
+worker envelopes, archives, media, and logic validation boundaries; their scope and remaining
+Linux-isolated expansion are recorded in [`fuzzing.md`](fuzzing.md). A same-host reproducible-build
 gate now compares independent clean-source wheel and source-distribution builds, validates their
 archive metadata, and clean-installs both artifacts; its evidence boundary is documented in
-[`reproducible-builds.md`](reproducible-builds.md). The remaining fourth-increment work covers
-format-aware fuzz expansion and the complete failure catalogue. Local persistence now shares one
+[`reproducible-builds.md`](reproducible-builds.md). The remaining fourth-increment work covers the
+Linux-isolated OOXML/PDF and broader container fuzz campaign plus the complete failure catalogue.
+Local persistence now shares one
 bounded data-directory quota, reserves terminal-ledger headroom, and performs startup-only run/cache
 retention and live-reference CAS collection; see
 [`storage-lifecycle.md`](storage-lifecycle.md).

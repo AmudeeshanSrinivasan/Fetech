@@ -39,7 +39,13 @@ class BrowserReaderWorker:
         if timeout_seconds <= 0:
             raise AdapterExecutionError("browser reader has no browser-time budget")
         worker_byte_limit = min(maximum_bytes, 50_000_000)
-        if len(document.encode()) > worker_byte_limit:
+        try:
+            document_size = len(document.encode("utf-8"))
+        except UnicodeError as exc:
+            raise AdapterExecutionError(
+                "browser reader input is not valid Unicode text"
+            ) from exc
+        if document_size > worker_byte_limit:
             raise AdapterExecutionError("browser reader input exceeded the worker byte limit")
         payload = json.dumps(
             {
@@ -87,7 +93,7 @@ class BrowserReaderWorker:
             raise AdapterExecutionError("browser reader exited without output")
         try:
             response = json.loads(result.stdout)
-        except json.JSONDecodeError as exc:
+        except (UnicodeError, ValueError) as exc:
             if result.returncode != 0:
                 raise AdapterExecutionError("offline browser reader failed") from exc
             raise AdapterExecutionError("browser reader returned malformed output") from exc
@@ -104,6 +110,12 @@ class BrowserReaderWorker:
         text = response.get("text")
         if not isinstance(text, str):
             raise AdapterExecutionError("browser reader omitted extracted text")
-        if len(text.encode()) > worker_byte_limit:
+        try:
+            text_size = len(text.encode("utf-8"))
+        except UnicodeError as exc:
+            raise AdapterExecutionError(
+                "browser reader returned invalid Unicode text"
+            ) from exc
+        if text_size > worker_byte_limit:
             raise AdapterExecutionError("browser reader output exceeded the byte budget")
         return text

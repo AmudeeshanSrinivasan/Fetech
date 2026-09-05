@@ -283,7 +283,7 @@ def _normalized_document_text(body: bytes, *, maximum_bytes: int) -> str:
             parts.append(value)
     except AdapterBudgetExceededError:
         raise
-    except (TypeError, ValueError, json.JSONDecodeError) as exc:
+    except (TypeError, UnicodeError, ValueError, json.JSONDecodeError) as exc:
         raise AdapterExecutionError(
             "reader received an invalid normalized document artifact"
         ) from exc
