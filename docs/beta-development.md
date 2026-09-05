@@ -32,7 +32,9 @@ Beta work proceeds in bounded increments:
    (implemented);
 2. expand cross-interface conformance for lifecycle operations, cancellation, and event streaming
    (implemented);
-3. complete dual-graph and bounded-context behavior with source verification (implemented);
+3. complete dual-graph and bounded-context behavior with source verification (implemented), then
+   add the checked-in 100-task token-efficiency acceptance harness (implemented; a measured run and
+   independent answer evaluation remain evidence steps);
 4. normalize public validation errors, then extend fuzzing, reproducible-build, storage-lifecycle,
    and failure-documentation evidence (validation normalization, native and format-aware fuzz
    slices, same-host reproducible-build evidence, the local storage lifecycle, and the public
@@ -135,6 +137,13 @@ metadata and ledger locators, use atomic file replacement, and are serialized by
 See [`context-broker.md`](context-broker.md) for the routing, budget, authority, and interface
 contracts. Focused coverage lives in `tests/test_beta_context.py`.
 
+The context-efficiency harness validates 100 representative code, runtime, decision, and
+cross-plane tasks against tracked full-document baselines. It measures supplied tokens, evidence
+recall, lineage, omitted candidates, fallback reasons, and the bounded QMD return. Reports contain
+question hashes rather than prompt text. Answer correctness requires a complete separate evaluation
+file and remains explicitly unmeasured otherwise. See [`context-broker.md`](context-broker.md) and
+`tests/test_context_benchmark.py`.
+
 ## Increment 4: validation errors and hardening evidence
 
 `PublicError` is the versioned, bounded validation-error envelope shared by the Python SDK, REST,
@@ -208,6 +217,8 @@ workflow. Focused coverage lives in `tests/test_beta_compatibility.py`.
 uv run pytest tests/test_beta_contracts.py tests/test_v04_interfaces.py tests/test_runtime_conformance.py
 uv run pytest tests/test_beta_lifecycle.py
 uv run pytest tests/test_beta_context.py
+uv run python scripts/run_context_benchmark.py --validate-only
+uv run pytest tests/test_context_benchmark.py
 uv run pytest tests/test_beta_validation_errors.py
 uv run pytest tests/test_beta_failure_catalogue.py
 uv run pytest tests/test_beta_parser_fuzz.py tests/test_beta_format_fuzz.py

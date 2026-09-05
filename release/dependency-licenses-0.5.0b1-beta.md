@@ -27,33 +27,35 @@ report does not make legal conclusions.
 
 | Input | SHA-256 |
 |---|---|
-| `scripts/release_v05_beta.toml` | `781a535b1d65d5d7eeb7e8c159c1aac9b4630fda2b01ddb4f73fc529f765bb87` |
-| `README.md` | `0d2b722321a7e33eb18e920fbd486b3f507126ac02f6af13cf416c27c1a7a644` |
+| `scripts/release_v05_beta.toml` | `c60f4a915cf8106ebf493f039a37b3ab9cf65ceebfd9c9b02cee5da717e2a409` |
+| `README.md` | `ed9079318f18ea38adbbc73d6aaf7a7a21ef00ece6a807846c52978ae77f76e9` |
 | `LICENSE` | `29f6bf2bd90a2e8ab6f01c805e4b28d47760597cea2f7474782221f3c283e594` |
 | `SECURITY.md` | `d6a5930c9e4b9b5a303f037328670e39b48c1694b0d19382907bbcc00eaf1f60` |
-| `CONTRIBUTING.md` | `47fc9b7f0b71d70f92b7a35af27db6ddcfe6f8ef3d4191c0c18a81bc0d57d6cc` |
-| `pyproject.toml` | `57ca5c72fa14ff5f6a620e84abe67d0e8a8cbf4b2f286026ecb3d1e660546b5f` |
+| `CONTRIBUTING.md` | `2cb0d10bfbac3bc811e6e87a9d362ec69634ed96982dfeaa384f80a8f824b891` |
+| `pyproject.toml` | `711d7e73a5c03ccd85608b0414cbfccade7b641078c550e7acb2f5263827c93c` |
 | `uv.lock` | `bc8e1f9ba74465628df5ad8512b3136ad180fcebcd1ec2a989abf1a1028d157f` |
 | `capabilities/manifest.yaml` | `0e51a9d84fb92fe35aa1fb4e486f5729a453dd17ffc6b3df524b5e9562ed6039` |
 | `compatibility/beta-v1.json` | `04df1bc150cb88f5f88f4822593f7c92697bf7c7c78080f843b7fd56bd7ef7ff` |
 | `compatibility/fixtures/v0.4.0a0-contracts.json` | `df9c7beabdcc0cc99a7f4ee2124e77faccb51ac9458cec5d1d1fe8da3b67d6c8` |
-| `.github/workflows/ci.yml` | `1f3d7c569a031a9f1e149e7257b1d6c307ded79f4dcbb0619d68e21560320659` |
+| `.github/workflows/ci.yml` | `9e9b4d8bcd30e2609c6be52a8ec7e762acdbea6f592aed0428d3dbbb7ab6ba3b` |
+| `benchmarks/context-tasks.yaml` | `8e81787876e599c443579c2313c17f5f76a2ba60e081a4d802914b6da26f3305` |
 | `docs/adr/0001-polyglot-logic-backends.md` | `f5c217f5ac68eeae5745f667d7b3fcde7452d80fe6b5e7c3f49003e65838fbe3` |
 | `docs/api-compatibility.md` | `cc3d56b6687b7b8854ea6e3cf601d878a240df1356735c168625644ae0f0ecba` |
-| `docs/architecture.md` | `820b7496f7fbdafbbca153ceae993852a08992845b9f9571da7fd1cb923ff8e2` |
-| `docs/beta-development.md` | `99a054a77dbbffb6a572508f5cf693b9901ad1790bd879dad2da729677a949f1` |
+| `docs/architecture.md` | `852c532f9dd2b07593a7a0ec14712c57f2bd80da8713f15ce8a9bfd7f248a3d7` |
+| `docs/beta-development.md` | `fe14095122373f6be5ad007f268353008e6acf0d44828dfac7ee323118c74002` |
 | `docs/capability-catalog.md` | `90ee03e51598c54ac848915d94576331f712fc7acff327b3f7f751821995ac65` |
-| `docs/context-broker.md` | `5bf918c41e5ff0aeddc845cd586e8ad13e98e3ad4400d69cf83ad78f45f89234` |
+| `docs/context-broker.md` | `2e4b05302931ec00c026227a5800738f7a2bc3350e8db130a9746e3776c4362d` |
 | `docs/extraction-provenance.md` | `c75c33e2e5dfc2558eaec526565c0f333cd43443c4e913637f01c0c7429dabd5` |
 | `docs/failure-semantics.md` | `23c036607e5290b0c94f695c3ade9556bcf089ba60fa2619d658087c117148af` |
 | `docs/fuzzing.md` | `b193e2a8f4ec09bff3080179328dfed677c0cde35ce2452147c8bb974f4b9673` |
 | `docs/reproducible-builds.md` | `81eb3508983349cbdf88c4071f4186eb9f8d08214054cab84ce5a237612df10a` |
 | `docs/security-threat-model.md` | `4ca84531f90fddb56b8f9e39588c4faf84da0d8ea7c410adc0c090b2f9dbe956` |
 | `docs/storage-lifecycle.md` | `b7b88891c1ff9554e988ab8935298c05f96c0510db6bfe4a2455726d40057e9c` |
-| `docs/releases/v0.5.0b1.md` | `578571f5d807351342956de5dd068c69a5b559d9483481dcf1d049a707881298` |
+| `docs/releases/v0.5.0b1.md` | `b3e13fafd7f47993134864959c38977030f402a512e03b61bc10317279ecad05` |
 | `release/fetech-v0.4.0a0-freeze.toml` | `234704314b9aaae1d3acdbe6b92c69ae250bb1db194f0c4971b34e16d3f143e6` |
 | `scripts/check_beta_compatibility.py` | `791ce2343645712199d00cf3b47277f5a8f4297d79fae0bc3c1e6f771df0648f` |
 | `scripts/generate_release_evidence.py` | `13efee887298c94e4ece0cc317fc189bbaa02847b0c7296075b7fa98eb8fb9db` |
+| `scripts/run_context_benchmark.py` | `835d54e9c69bfcf4a7e51192018d8e7a5ef9fabcb3ae6c0eb226c71fae23e89d` |
 | `scripts/release_license_catalog.toml` | `a5beffe5706530e99915a21b03835d7bdf2db186f68d2e1c18f127f63cc3d956` |
 | `scripts/release_published.toml` | `9ec0d58866ac9fdcda7b2c21b8a5957ecf0aef8c5909390f12f7712087e35731` |
 | `scripts/verify_reproducible_builds.py` | `b108340e29e37c9701ed6b68941d38e071bab6bf84d59685897535633ab93c70` |
@@ -84,6 +86,7 @@ report does not make legal conclusions.
 | `src/fetech/config.py` | `4d3bec5ccdd8c842f1e6200df91ab66d619eae66ad0b2dd6d8bc0b90b40a434a` |
 | `src/fetech/conformance.py` | `f0b3f8d063939e0cc323c05fd54cb2b9dde36ffc95dbe31d769b4824679e61fa` |
 | `src/fetech/context.py` | `55d6f38af5b24eec443c2027cd58e1229c695ce3af865d22a9a84109a86e5740` |
+| `src/fetech/context_benchmark.py` | `5d5f608bb8564608fd958a6059dbe227779c0dfec513a8734292496a118ccf34` |
 | `src/fetech/contracts.py` | `0c679893740cd2fb70384cfa2746a5dccc70b9b63e51b0e991e6510c2842761d` |
 | `src/fetech/daemon.py` | `127ac576c2e4336e1d3ada62ff8ae09e459394b07d30be1ad3c4c017b5ea6fd4` |
 | `src/fetech/docling_artifacts.py` | `1708370b8e7fb0f47511c2303e18e274a61fba62742e6f6c20d73833715ac278` |
@@ -134,10 +137,11 @@ report does not make legal conclusions.
 | `tests/test_beta_format_fuzz.py` | `2968bf9f20e551aa40664d45988a7bdbb5728c7aa0229635b4bc4a2d2bb440c6` |
 | `tests/test_beta_lifecycle.py` | `fe23a0efb346cd01a25d03c4580f8fb0326a4e1f3082dfa8c4b3e087825d1a55` |
 | `tests/test_beta_parser_fuzz.py` | `36af25b64835406d43823f476b879d4f72d1d47be4c5fac8052f5cf39955e68d` |
-| `tests/test_beta_release_evidence.py` | `6a38ef015a16304b0da41d5e11275245f2a00f8c96156c4b7729f440162cfdec` |
+| `tests/test_beta_release_evidence.py` | `7e07b417386de159ff649d75ba21de0293e8f0194490b8ef9c5a704b7a3ba730` |
 | `tests/test_beta_reproducible_builds.py` | `5af5223b4cd9f2aa0d1ff3c9be3a9dbba64b7e4d5675da5773c4ea4878cf8dda` |
 | `tests/test_beta_storage_lifecycle.py` | `8aa8efbef8fb8dc479ba44ccfdede66bc4eb4a1e7cc5143280195dca5363c941` |
 | `tests/test_beta_validation_errors.py` | `e99b0f1c9624404ebda6b8118991bc5ee8ae332e9bdb71a2d11c06afae6813c2` |
+| `tests/test_context_benchmark.py` | `28039720c58677706503203acc71c47d11579b2f187bdbe321f54043e4b6b0e8` |
 | `tests/test_beta_version.py` | `1ee8c0031ab9535b6383eb103234637ac1e2de658b4209c9fa117f4da67b357c` |
 | `tests/test_docling_artifacts.py` | `0afa8f95feaab5372231c70125fb136e63a5666425b44e2973fe425d54896983` |
 | `tests/test_enma_invariants.py` | `44af8dce736609ce18519aa2efa13bdb5c2d0464faf75de3ef50da661417e8f8` |
@@ -454,7 +458,7 @@ the narrower feature extras.
 - Exact-version live smoke evidence for separately installed tools, browser downloads, model artifacts, and configured services or connectors is incomplete.
 - The reviewed catalog covers all 168 third-party identities in the current universal lock. Artifact-level notice and redistribution legal review remains required for the explicit NVIDIA proprietary or EULA and pypdfium2 mixed-distribution LicenseRefs before bundled redistribution can be approved.
 - The competitor matrix predates the Beta surface and must be refreshed before product-positioning claims are reviewed.
-- The 100-task context-efficiency acceptance benchmark has not been completed.
+- The 100-task context-efficiency harness is implemented; the measured provider run and complete independent answer-correctness evaluation remain required before the acceptance gate can pass.
 - Platform-specific deployment attestations and format-fuzz campaigns are deliberately deferred and outside this evidence scope.
 - The separate v0.4.0a0 publication contract remains frozen at 10 of 14 gates; this Beta evidence does not relabel or satisfy it.
 

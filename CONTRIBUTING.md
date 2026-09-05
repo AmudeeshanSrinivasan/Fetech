@@ -45,6 +45,17 @@ The gate rejects every unreviewed difference. Use `--write` only after reviewing
 change, supplying any required migration fixture, and making an explicit compatibility or contract
 version decision. See [`docs/api-compatibility.md`](docs/api-compatibility.md).
 
+Context retrieval changes must preserve the checked-in 100-task corpus and its prompt-free report
+boundary:
+
+```bash
+uv run python scripts/run_context_benchmark.py --validate-only
+uv run pytest tests/test_context_benchmark.py
+```
+
+Do not claim the answer-correctness target from evidence recall. It requires complete independent
+full-context and broker evaluations for every task ID.
+
 Build or packaging changes must also pass the complete same-host reproducibility gate from a clean
 Git worktree:
 

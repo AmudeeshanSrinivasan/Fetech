@@ -74,6 +74,12 @@ bounded exact-source windows before being marked verified. All provider outcomes
 usage are typed and observable, while missing Graphify or QMD providers degrade to exact source
 without affecting fetch execution. See [`context-broker.md`](context-broker.md).
 
+The checked-in context-efficiency harness exercises that boundary with 100 code, runtime, decision,
+and cross-plane questions. It compares returned `ContextBundle` tokens with tracked full-document
+baselines, evaluates expected evidence and lineage, and emits only task IDs and question hashes.
+Independent full-context and broker answer outcomes remain mandatory for the separate correctness
+gate; retrieval recall is not treated as an answer score.
+
 The first slice of the fourth Beta increment normalizes request validation. `PublicError` is the
 single bounded error envelope for SDK exceptions, REST 422 responses, CLI validation failures, and
 MCP tool errors. Only allowlisted field locations, stable codes, generic messages, and omission

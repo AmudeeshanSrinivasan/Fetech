@@ -58,22 +58,26 @@ def test_beta_evidence_profile_binds_current_cross_platform_surface() -> None:
     assert len(inputs.packages) == 168
     assert {
         ".github/workflows/ci.yml",
+        "benchmarks/context-tasks.yaml",
         "capabilities/manifest.yaml",
         "compatibility/beta-v1.json",
         "docs/beta-development.md",
         "docs/releases/v0.5.0b1.md",
         "scripts/check_beta_compatibility.py",
         "scripts/generate_release_evidence.py",
+        "scripts/run_context_benchmark.py",
         "scripts/release_license_catalog.toml",
         "scripts/verify_reproducible_builds.py",
         "src/fetech/compatibility.py",
         "src/fetech/context.py",
+        "src/fetech/context_benchmark.py",
         "src/fetech/contracts.py",
         "src/fetech/failures.py",
         "src/fetech/storage_lifecycle.py",
         "tests/test_beta_compatibility.py",
         "tests/test_beta_release_evidence.py",
         "tests/test_beta_reproducible_builds.py",
+        "tests/test_context_benchmark.py",
     } <= set(declared_inputs)
     assert "tests/test_worker_isolation_linux.py" not in declared_inputs
 
@@ -117,9 +121,8 @@ def test_beta_spdx_and_license_report_are_current_and_sanitized(tmp_path: Path) 
     assert "not a published-release SBOM" in root_package["comment"]
     assert "Third-party locked packages: **168**" in expected_report
     assert "Declared AGPL expressions: **0**" in expected_report
-    assert "The 100-task context-efficiency acceptance benchmark has not been completed." in (
-        expected_report
-    )
+    assert "The 100-task context-efficiency harness is implemented" in expected_report
+    assert "complete independent answer-correctness evaluation remain required" in expected_report
     assert "Platform-specific deployment attestations" in expected_report
     assert "--overlay-profile scripts/release_v05_beta.toml --check" in expected_report
 

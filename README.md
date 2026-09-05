@@ -47,7 +47,10 @@ registration.
 > lifecycle with startup recovery, explicit retention, and reference-aware CAS garbage collection,
 > format-aware feed/OpenAPI, HTML, worker-envelope, and archive fuzz regressions, and a versioned
 > failure catalogue shared by all four interfaces. The fifth increment freezes the exact public
-> contract, SDK, REST, CLI, and MCP surface and adds pre-Beta migration fixtures.
+> contract, SDK, REST, CLI, and MCP surface and adds pre-Beta migration fixtures. A checked-in
+> 100-task context benchmark now measures full-document token reduction, evidence recall, lineage,
+> and vault-return bounds without logging questions; answer correctness remains a separate,
+> independently supplied evaluation gate.
 > See the [Beta development guide](docs/beta-development.md) and the
 > [`0.5.0b1` development note](docs/releases/v0.5.0b1.md).
 

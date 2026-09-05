@@ -71,3 +71,38 @@ The same `ContextBundle` is available from:
 The daemon and MCP server bind the broker to the gateway's configured runtime graph. QMD access is
 disabled unless `FETECH_OBSIDIAN_VAULT` or an explicit SDK/CLI vault is supplied. No context command
 writes to Obsidian.
+
+## Acceptance benchmark
+
+`benchmarks/context-tasks.yaml` is the checked-in 100-task acceptance corpus. It contains 50 code,
+20 runtime, 20 decision, and 10 cross-plane questions over a tracked repository corpus larger than
+5,000 words. Suite loading verifies cardinality, unique questions, deterministic routing, evidence
+expectations, and the full-document baseline before any provider is invoked.
+
+Run the provider-independent structural gate with:
+
+```bash
+uv run python scripts/run_context_benchmark.py --validate-only
+```
+
+Run the measured benchmark against the current code graph and configured runtime graph with:
+
+```bash
+uv run python scripts/run_context_benchmark.py
+```
+
+Pass `--vault PATH --qmd-index NAME` only for an explicitly selected, already indexed decision
+vault. Generated JSON and Markdown reports live under ignored `runtime-data/` by default. They
+record task IDs, question hashes, per-task token counts, expected-evidence matches, provider
+statuses, omitted candidates, and fallback reasons; questions, answers, excerpts, and provider
+stderr are not copied into the report.
+
+The harness enforces the 70% median token-reduction, 4,000-token bundle, 95% evidence-recall,
+complete lineage, and zero broad-vault-return targets. Answer correctness is intentionally separate:
+`--answer-evaluations FILE` accepts only a complete set of boolean full-context and broker outcomes
+for all task IDs. Without that independent evaluation, the correctness gate is `NOT_MEASURED` and
+the report is `INCOMPLETE`; evidence recall is never relabeled as answer correctness. Use
+`--enforce-targets` only when every gate must pass.
+
+The full-vault-load observation covers material returned to `ContextBundle` and the three-note
+ceiling. It does not claim visibility into a provider's private indexing implementation.

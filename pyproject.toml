@@ -89,6 +89,7 @@ packages = ["src/fetech"]
 [tool.hatch.build.targets.sdist]
 include = [
   "/src",
+  "/benchmarks",
   "/capabilities",
   "/compatibility",
   "/tests",
