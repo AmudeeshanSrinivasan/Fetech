@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -12,6 +13,7 @@ from pathlib import Path
 from fetech.context import ContextBroker
 from fetech.context_benchmark import (
     ContextBenchmarkError,
+    benchmark_source_identity,
     load_answer_evaluations,
     load_benchmark_suite,
     run_context_benchmark,
@@ -21,6 +23,7 @@ from fetech.context_benchmark import (
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SUITE = ROOT / "benchmarks" / "context-tasks.yaml"
+DEFAULT_PROTOCOL = ROOT / "benchmarks" / "context-answer-protocol.md"
 DEFAULT_JSON = ROOT / "runtime-data" / "context-benchmark.json"
 DEFAULT_MARKDOWN = ROOT / "runtime-data" / "context-benchmark.md"
 
@@ -35,6 +38,7 @@ def _arguments() -> argparse.Namespace:
     parser.add_argument("--vault", type=Path)
     parser.add_argument("--qmd-index", default="obsidian-mind")
     parser.add_argument("--answer-evaluations", type=Path)
+    parser.add_argument("--answer-generation-protocol", type=Path, default=DEFAULT_PROTOCOL)
     parser.add_argument("--output", type=Path, default=DEFAULT_JSON)
     parser.add_argument("--markdown-output", type=Path, default=DEFAULT_MARKDOWN)
     parser.add_argument("--concurrency", type=int, default=4)
@@ -66,6 +70,16 @@ def main() -> int:
             if arguments.answer_evaluations is not None
             else None
         )
+        if evaluations is not None and benchmark_source_identity(repository)[1]:
+            raise ContextBenchmarkError(
+                "answer correctness can only be measured from a clean Git worktree"
+            )
+        if evaluations is not None and evaluations.generation_protocol_sha256 != hashlib.sha256(
+            arguments.answer_generation_protocol.read_bytes()
+        ).hexdigest():
+            raise ContextBenchmarkError(
+                "answer evaluations do not match the answer-generation protocol"
+            )
         broker = ContextBroker(
             repository,
             runtime_graph=arguments.runtime_graph,

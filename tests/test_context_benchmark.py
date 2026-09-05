@@ -8,10 +8,12 @@ from pathlib import Path
 import pytest
 
 from fetech.context_benchmark import (
+    INDEPENDENT_REVIEW_ATTESTATION,
     AnswerEvaluation,
     AnswerEvaluationSet,
     ContextBenchmarkError,
     ContextBenchmarkSuite,
+    benchmark_source_identity,
     load_benchmark_suite,
     render_benchmark_json,
     run_context_benchmark,
@@ -103,8 +105,16 @@ def _complete_evaluations(
     *,
     broker_failures: int = 0,
 ) -> AnswerEvaluationSet:
+    commit, _ = benchmark_source_identity(ROOT)
+    assert commit is not None
     return AnswerEvaluationSet(
         evaluator="independent fixture evaluator",
+        independence_attestation=INDEPENDENT_REVIEW_ATTESTATION,
+        answer_producer="fixture answer system",
+        generation_protocol_sha256="1" * 64,
+        suite_sha256=hashlib.sha256(SUITE_PATH.read_bytes()).hexdigest(),
+        source_commit=commit,
+        review_packet_sha256="0" * 64,
         evaluations=tuple(
             AnswerEvaluation(
                 task_id=task.id,
@@ -182,6 +192,7 @@ async def test_missing_evidence_and_large_bundles_fail_closed() -> None:
         ROOT,
         suite,
         answer_evaluations=_complete_evaluations(suite),
+        suite_bytes=SUITE_PATH.read_bytes(),
     )
 
     assert report.status == "FAILED"
@@ -200,6 +211,7 @@ async def test_more_than_three_qmd_notes_is_observed_as_a_full_vault_load_violat
         ROOT,
         suite,
         answer_evaluations=_complete_evaluations(suite),
+        suite_bytes=SUITE_PATH.read_bytes(),
     )
 
     assert report.status == "FAILED"
@@ -210,9 +222,9 @@ async def test_more_than_three_qmd_notes_is_observed_as_a_full_vault_load_violat
 @pytest.mark.asyncio
 async def test_answer_evaluations_must_cover_every_task_exactly() -> None:
     suite = _suite()
-    incomplete = AnswerEvaluationSet(
-        evaluator="fixture",
-        evaluations=_complete_evaluations(suite).evaluations[:-1],
+    complete = _complete_evaluations(suite)
+    incomplete = complete.model_copy(
+        update={"evaluations": complete.evaluations[:-1]},
     )
 
     with pytest.raises(ContextBenchmarkError, match="cover the suite exactly"):
@@ -221,6 +233,7 @@ async def test_answer_evaluations_must_cover_every_task_exactly() -> None:
             ROOT,
             suite,
             answer_evaluations=incomplete,
+            suite_bytes=SUITE_PATH.read_bytes(),
         )
 
 
@@ -232,11 +245,37 @@ async def test_answer_correctness_drop_above_two_points_fails() -> None:
         ROOT,
         suite,
         answer_evaluations=_complete_evaluations(suite, broker_failures=3),
+        suite_bytes=SUITE_PATH.read_bytes(),
     )
 
     assert report.status == "FAILED"
     assert report.metrics.answer_correctness_drop_points == 3
     assert report.gates["answer_correctness_drop"].status == "FAILED"
+
+
+@pytest.mark.asyncio
+async def test_answer_evaluations_are_bound_to_suite_and_source_commit() -> None:
+    suite = _suite()
+    evaluations = _complete_evaluations(suite)
+    wrong_suite = evaluations.model_copy(update={"suite_sha256": "f" * 64})
+    wrong_commit = evaluations.model_copy(update={"source_commit": "f" * 40})
+
+    with pytest.raises(ContextBenchmarkError, match="do not match the benchmark suite"):
+        await run_context_benchmark(
+            _FixtureBroker(suite),
+            ROOT,
+            suite,
+            answer_evaluations=wrong_suite,
+            suite_bytes=SUITE_PATH.read_bytes(),
+        )
+    with pytest.raises(ContextBenchmarkError, match="do not match the source commit"):
+        await run_context_benchmark(
+            _FixtureBroker(suite),
+            ROOT,
+            suite,
+            answer_evaluations=wrong_commit,
+            suite_bytes=SUITE_PATH.read_bytes(),
+        )
 
 
 def test_ci_validates_the_suite_without_requiring_private_providers() -> None:
@@ -245,3 +284,4 @@ def test_ci_validates_the_suite_without_requiring_private_providers() -> None:
     assert "Validate context benchmark harness" in workflow
     assert "scripts/run_context_benchmark.py --validate-only" in workflow
     assert "pytest tests/test_context_benchmark.py -q" in workflow
+    assert "pytest tests/test_context_evaluation.py -q" in workflow

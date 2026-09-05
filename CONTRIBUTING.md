@@ -54,7 +54,9 @@ uv run pytest tests/test_context_benchmark.py
 ```
 
 Do not claim the answer-correctness target from evidence recall. It requires complete independent
-full-context and broker evaluations for every task ID.
+full-context and broker evaluations for every task ID. Use the commit-bound blinded workflow in
+[`docs/context-answer-evaluation.md`](docs/context-answer-evaluation.md); do not give the reviewer
+the A/B mapping or substitute generated/self-scored labels for independent review.
 
 Build or packaging changes must also pass the complete same-host reproducibility gate from a clean
 Git worktree:

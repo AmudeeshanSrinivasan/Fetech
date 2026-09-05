@@ -16,10 +16,10 @@ import statistics
 import subprocess
 from collections.abc import Sequence
 from pathlib import Path
-from typing import Literal, Protocol
+from typing import Final, Literal, Protocol
 
 import yaml
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, model_validator
 
 from fetech.context import classify_context_needs
 from fetech.models import ContextBundle, ContextNeed, ContextSource
@@ -29,6 +29,13 @@ _MAX_TRACKED_FILES = 20_000
 _MAX_CORPUS_BYTES = 100_000_000
 _WORD_RE = re.compile(r"[A-Za-z0-9_][A-Za-z0-9_'-]*")
 _SOURCE_LINE_RE = re.compile(r":L\d+(?:-L\d+)?$")
+INDEPENDENT_REVIEW_ATTESTATION: Final[
+    Literal[
+        "I independently judged both blinded answers without knowing which source produced them."
+    ]
+] = (
+    "I independently judged both blinded answers without knowing which source produced them."
+)
 
 
 class ContextBenchmarkError(ValueError):
@@ -121,13 +128,21 @@ class ContextBenchmarkSuite(_FrozenModel):
 
 class AnswerEvaluation(_FrozenModel):
     task_id: str = Field(pattern=r"^CTX-[A-Z]+-[0-9]{3}$")
-    full_context_correct: bool
-    broker_correct: bool
+    full_context_correct: StrictBool
+    broker_correct: StrictBool
 
 
 class AnswerEvaluationSet(_FrozenModel):
-    schema_version: Literal["1.0"] = "1.0"
+    schema_version: Literal["2.0"] = "2.0"
     evaluator: str = Field(min_length=1, max_length=128)
+    independence_attestation: Literal[
+        "I independently judged both blinded answers without knowing which source produced them."
+    ]
+    answer_producer: str = Field(min_length=1, max_length=128)
+    generation_protocol_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    suite_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    source_commit: str = Field(pattern=r"^[0-9a-f]{40}$")
+    review_packet_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     evaluations: tuple[AnswerEvaluation, ...]
 
     @model_validator(mode="after")
@@ -192,6 +207,11 @@ class ContextBenchmarkReport(_FrozenModel):
     source_commit: str | None = Field(default=None, pattern=r"^[0-9a-f]{40}$")
     source_dirty: bool
     answer_evaluator: str | None = None
+    answer_producer: str | None = None
+    answer_generation_protocol_sha256: str | None = Field(
+        default=None, pattern=r"^[0-9a-f]{64}$"
+    )
+    answer_review_packet_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     answer_evaluation_sha256: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$")
     status: Literal["PASSED", "FAILED", "INCOMPLETE"]
     metrics: BenchmarkMetrics
@@ -266,6 +286,16 @@ async def run_context_benchmark(
     if isinstance(concurrency, bool) or not 1 <= concurrency <= 16:
         raise ContextBenchmarkError("benchmark concurrency must be from 1 to 16")
     resolved_repository = repository.expanduser().resolve()
+    serialized_suite = suite_bytes or yaml.safe_dump(
+        suite.model_dump(mode="json"), sort_keys=True
+    ).encode("utf-8")
+    suite_sha256 = hashlib.sha256(serialized_suite).hexdigest()
+    identity = benchmark_source_identity(resolved_repository)
+    if answer_evaluations is not None:
+        if answer_evaluations.suite_sha256 != suite_sha256:
+            raise ContextBenchmarkError("answer evaluations do not match the benchmark suite")
+        if identity[0] is None or answer_evaluations.source_commit != identity[0]:
+            raise ContextBenchmarkError("answer evaluations do not match the source commit")
     corpus = _build_baseline_corpus(resolved_repository, suite)
     evaluations = _evaluation_map(suite, answer_evaluations)
     semaphore = asyncio.Semaphore(concurrency)
@@ -332,16 +362,19 @@ async def run_context_benchmark(
         status = "INCOMPLETE"
     else:
         status = "PASSED"
-    identity = _git_identity(resolved_repository)
-    serialized_suite = suite_bytes or yaml.safe_dump(
-        suite.model_dump(mode="json"), sort_keys=True
-    ).encode("utf-8")
     return ContextBenchmarkReport(
         suite_name=suite.name,
-        suite_sha256=hashlib.sha256(serialized_suite).hexdigest(),
+        suite_sha256=suite_sha256,
         source_commit=identity[0],
         source_dirty=identity[1],
         answer_evaluator=(answer_evaluations.evaluator if answer_evaluations else None),
+        answer_producer=(answer_evaluations.answer_producer if answer_evaluations else None),
+        answer_generation_protocol_sha256=(
+            answer_evaluations.generation_protocol_sha256 if answer_evaluations else None
+        ),
+        answer_review_packet_sha256=(
+            answer_evaluations.review_packet_sha256 if answer_evaluations else None
+        ),
         answer_evaluation_sha256=(
             hashlib.sha256(
                 answer_evaluations.model_dump_json().encode("utf-8")
@@ -700,7 +733,9 @@ def _gate(passed: bool, observed: int | float | bool, target: str) -> BenchmarkG
     return BenchmarkGate(status="PASSED" if passed else "FAILED", observed=observed, target=target)
 
 
-def _git_identity(repository: Path) -> tuple[str | None, bool]:
+def benchmark_source_identity(repository: Path) -> tuple[str | None, bool]:
+    """Return the checked-out commit and whether the worktree differs from it."""
+
     try:
         commit = subprocess.run(
             ("git", "rev-parse", "HEAD"),

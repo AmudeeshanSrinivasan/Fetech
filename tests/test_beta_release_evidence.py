@@ -121,8 +121,8 @@ def test_beta_spdx_and_license_report_are_current_and_sanitized(tmp_path: Path) 
     assert "not a published-release SBOM" in root_package["comment"]
     assert "Third-party locked packages: **168**" in expected_report
     assert "Declared AGPL expressions: **0**" in expected_report
-    assert "The 100-task context-efficiency harness is implemented" in expected_report
-    assert "complete independent answer-correctness evaluation remain required" in expected_report
+    assert "context-efficiency harness and commit-bound blinded-review workflow" in expected_report
+    assert "complete independent answer judgments remain required" in expected_report
     assert "Platform-specific deployment attestations" in expected_report
     assert "--overlay-profile scripts/release_v05_beta.toml --check" in expected_report
 

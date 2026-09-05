@@ -99,10 +99,12 @@ stderr are not copied into the report.
 
 The harness enforces the 70% median token-reduction, 4,000-token bundle, 95% evidence-recall,
 complete lineage, and zero broad-vault-return targets. Answer correctness is intentionally separate:
-`--answer-evaluations FILE` accepts only a complete set of boolean full-context and broker outcomes
-for all task IDs. Without that independent evaluation, the correctness gate is `NOT_MEASURED` and
-the report is `INCOMPLETE`; evidence recall is never relabeled as answer correctness. Use
-`--enforce-targets` only when every gate must pass.
+`--answer-evaluations FILE` accepts only a complete schema-2.0 set of boolean full-context and broker
+outcomes bound to the exact suite, source commit, generation protocol, and blinded review packet.
+Without that independent evaluation, the correctness gate is `NOT_MEASURED` and the report is
+`INCOMPLETE`; evidence recall is never relabeled as answer correctness. Use `--enforce-targets` only
+when every gate must pass. The complete operator/reviewer handoff is documented in
+[`context-answer-evaluation.md`](context-answer-evaluation.md).
 
 The full-vault-load observation covers material returned to `ContextBundle` and the three-note
 ceiling. It does not claim visibility into a provider's private indexing implementation.

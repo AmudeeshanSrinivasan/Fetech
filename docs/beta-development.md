@@ -33,8 +33,9 @@ Beta work proceeds in bounded increments:
 2. expand cross-interface conformance for lifecycle operations, cancellation, and event streaming
    (implemented);
 3. complete dual-graph and bounded-context behavior with source verification (implemented), then
-   add the checked-in 100-task token-efficiency acceptance harness (implemented; a measured run and
-   independent answer evaluation remain evidence steps);
+   add the checked-in 100-task token-efficiency acceptance harness and commit-bound blinded-review
+   workflow (implemented; a clean current-commit measured run and actual independent judgments
+   remain evidence steps);
 4. normalize public validation errors, then extend fuzzing, reproducible-build, storage-lifecycle,
    and failure-documentation evidence (validation normalization, native and format-aware fuzz
    slices, same-host reproducible-build evidence, the local storage lifecycle, and the public
