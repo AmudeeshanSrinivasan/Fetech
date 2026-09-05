@@ -45,7 +45,8 @@ registration.
 > deterministic same-host reproducible-build checks and a bounded local storage
 > lifecycle with startup recovery, explicit retention, and reference-aware CAS garbage collection,
 > format-aware feed/OpenAPI, HTML, worker-envelope, and archive fuzz regressions, and a versioned
-> failure catalogue shared by all four interfaces.
+> failure catalogue shared by all four interfaces. The fifth increment freezes the exact public
+> contract, SDK, REST, CLI, and MCP surface and adds pre-Beta migration fixtures.
 > See the [Beta development guide](docs/beta-development.md).
 
 Fetech permits local yt-dlp only in development mode; required mode refuses it until brokered, allowlisted egress is configured.

@@ -95,6 +95,12 @@ bounded data-directory quota, reserves terminal-ledger headroom, and performs st
 retention and live-reference CAS collection; see
 [`storage-lifecycle.md`](storage-lifecycle.md).
 
+The fifth Beta increment freezes the exact `v1` public surface across contract schemas, Python SDK
+signatures, REST operations, CLI parameters and MCP input schemas. The checked-in baseline excludes
+package version and nondeterministic metadata, and CI rejects all unreviewed drift. Pre-Beta
+omission fixtures preserve the supported `schema_version=1.0` normalization and reject explicit
+unknown versions. See [`api-compatibility.md`](api-compatibility.md).
+
 ## Runtime flow
 
 ```text

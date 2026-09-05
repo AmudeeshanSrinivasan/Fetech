@@ -32,6 +32,8 @@ jobs:
         run: uv run --no-sync playwright install --with-deps chromium
       - name: Verify lock
         run: uv lock --check
+      - name: Verify frozen Beta public interfaces
+        run: uv run --no-sync python scripts/check_beta_compatibility.py
       - name: Lint
         run: uv run --no-sync ruff check .
       - name: Type check

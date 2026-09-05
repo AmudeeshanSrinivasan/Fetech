@@ -34,6 +34,17 @@ model-artifact bundle.
 Run the repository verification commands in `AGENTS.md` before submitting changes. Generated
 Graphify output and local runtime data must remain untracked.
 
+Public contract, SDK, REST, CLI, or MCP changes must pass the frozen Beta compatibility gate:
+
+```bash
+uv run python scripts/check_beta_compatibility.py
+uv run pytest tests/test_beta_compatibility.py
+```
+
+The gate rejects every unreviewed difference. Use `--write` only after reviewing the exact surface
+change, supplying any required migration fixture, and making an explicit compatibility or contract
+version decision. See [`docs/api-compatibility.md`](docs/api-compatibility.md).
+
 Build or packaging changes must also pass the complete same-host reproducibility gate from a clean
 Git worktree:
 

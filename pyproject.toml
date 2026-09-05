@@ -90,6 +90,7 @@ packages = ["src/fetech"]
 include = [
   "/src",
   "/capabilities",
+  "/compatibility",
   "/tests",
   "/docs",
   "/release",

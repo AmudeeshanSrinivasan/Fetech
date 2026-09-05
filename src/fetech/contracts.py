@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -90,3 +91,12 @@ def contract_manifest() -> ContractManifest:
         package_version=__version__,
         contracts=descriptors,
     )
+
+
+def _public_contract_schemas() -> dict[str, dict[str, Any]]:
+    """Return fresh canonical serialization schemas for every public model."""
+
+    return {
+        model.__name__: model.model_json_schema(mode="serialization")
+        for model in sorted(_PUBLIC_CONTRACTS, key=lambda candidate: candidate.__name__)
+    }

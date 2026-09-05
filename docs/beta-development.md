@@ -39,6 +39,10 @@ Beta work proceeds in bounded increments:
    failure catalogue are implemented; the Linux-isolated format campaign remains in progress);
 5. freeze release-candidate APIs only after compatibility and migration tests pass.
 
+Increment 5 now enforces the current Beta `v1` surface through a checked-in exact baseline and
+pre-Beta migration fixtures. The required-Linux fuzz expansion remains a separately visible,
+deferred part of Increment 4; this local API-freeze work does not satisfy or waive it.
+
 No Beta distribution version has been assigned. Package metadata remains `0.4.0a0` until a separate
 version decision is made; this development branch is not a published v0.4 artifact.
 
@@ -176,6 +180,19 @@ The remaining Increment 4 work is the required-Linux OOXML/PDF and broader conta
 campaign. Focused validation and failure-catalogue coverage lives in
 `tests/test_beta_validation_errors.py` and `tests/test_beta_failure_catalogue.py`.
 
+## Increment 5: API compatibility and migration freeze
+
+`compatibility/beta-v1.json` is the deterministic exact-surface baseline for the contract schemas,
+Python SDK methods, REST operations, CLI commands and MCP tools. CI rebuilds the surface with the
+locked dependencies and fails on every difference. Additions are blocked as well as removals and
+changes so that a reviewer—not an automatic schema heuristic—decides compatibility before an
+explicit baseline refresh.
+
+Representative `0.4.0a0` request, plan, artifact and result fixtures omit `schema_version` and must
+normalize to `1.0`, round-trip, and continue rejecting explicit unknown versions. See
+[`api-compatibility.md`](api-compatibility.md) for the evidence boundary and reviewed refresh
+workflow. Focused coverage lives in `tests/test_beta_compatibility.py`.
+
 ## Verification
 
 ```bash
@@ -187,6 +204,8 @@ uv run pytest tests/test_beta_failure_catalogue.py
 uv run pytest tests/test_beta_parser_fuzz.py tests/test_beta_format_fuzz.py
 uv run pytest tests/test_beta_reproducible_builds.py
 uv run pytest tests/test_beta_storage_lifecycle.py
+uv run pytest tests/test_beta_compatibility.py
+uv run python scripts/check_beta_compatibility.py
 uv run pytest
 uv run ruff check .
 uv run mypy src/fetech

@@ -1,0 +1,86 @@
+{
+  "schema_version": "1.0",
+  "source_version": "0.4.0a0",
+  "cases": [
+    {
+      "model": "FetchRequest",
+      "input": {
+        "target": "https://example.com/report",
+        "intent": "retrieve",
+        "output_requirements": [
+          "clean_text"
+        ]
+      },
+      "expected_subset": {
+        "schema_version": "1.0",
+        "target": "https://example.com/report",
+        "intent": "retrieve",
+        "privacy_profile": "public",
+        "policy_profile": "default"
+      }
+    },
+    {
+      "model": "FetchPlan",
+      "input": {
+        "plan_id": "00000000-0000-0000-0000-000000000101",
+        "request": {
+          "target": "https://example.com/report"
+        },
+        "nodes": [
+          {
+            "id": "http",
+            "capability_id": "http_get",
+            "adapter": "http"
+          }
+        ],
+        "created_at": "2026-01-01T00:00:00Z"
+      },
+      "expected_subset": {
+        "schema_version": "1.0",
+        "plan_id": "00000000-0000-0000-0000-000000000101",
+        "request": {
+          "schema_version": "1.0",
+          "target": "https://example.com/report"
+        },
+        "deterministic": true,
+        "classifier": "rules-v1"
+      }
+    },
+    {
+      "model": "Artifact",
+      "input": {
+        "artifact_id": "00000000-0000-0000-0000-000000000102",
+        "role": "source",
+        "representation": "raw",
+        "media_type": "text/plain",
+        "cas_uri": "cas://sha256/0000000000000000000000000000000000000000000000000000000000000000",
+        "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "size": 0,
+        "source_resource_id": "00000000-0000-0000-0000-000000000103",
+        "extractor_version": "fixture/0.4"
+      },
+      "expected_subset": {
+        "schema_version": "1.0",
+        "artifact_id": "00000000-0000-0000-0000-000000000102",
+        "role": "source",
+        "representation": "raw",
+        "size": 0
+      }
+    },
+    {
+      "model": "FetchResult",
+      "input": {
+        "run_id": "00000000-0000-0000-0000-000000000104",
+        "status": "FAILED"
+      },
+      "expected_subset": {
+        "schema_version": "1.0",
+        "run_id": "00000000-0000-0000-0000-000000000104",
+        "status": "FAILED",
+        "resources": [],
+        "artifacts": [],
+        "attempts": []
+      }
+    }
+  ]
+}

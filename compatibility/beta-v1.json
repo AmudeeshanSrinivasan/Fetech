@@ -1,0 +1,6566 @@
+{
+  "api_version": "v1",
+  "baseline_id": "beta-v1",
+  "cli": {
+    "commands": {
+      "cancel": {
+        "parameters": [
+          {
+            "default": null,
+            "envvar": null,
+            "multiple": false,
+            "name": "run_id",
+            "nargs": 1,
+            "opts": [
+              "run_id"
+            ],
+            "param_type_name": "argument",
+            "required": true,
+            "secondary_opts": [],
+            "type": {
+              "name": "text",
+              "param_type": "String"
+            }
+          },
+          {
+            "count": false,
+            "default": "http://127.0.0.1:8787",
+            "envvar": "FETECH_DAEMON_URL",
+            "flag_value": null,
+            "hidden": false,
+            "is_flag": false,
+            "multiple": false,
+            "name": "daemon_url",
+            "nargs": 1,
+            "opts": [
+              "--daemon-url"
+            ],
+            "param_type_name": "option",
+            "prompt": null,
+            "required": false,
+            "secondary_opts": [],
+            "type": {
+              "name": "text",
+              "param_type": "String"
+            }
+          }
+        ]
+      },
+      "capabilities": {
+        "parameters": [
+          {
+            "count": false,
+            "default": false,
+            "envvar": null,
+            "flag_value": true,
+            "hidden": false,
+            "is_flag": true,
+            "multiple": false,
+            "name": "summary",
+            "nargs": 1,
+            "opts": [
+              "--summary"
+            ],
+            "param_type_name": "option",
+            "prompt": null,
+            "required": false,
+            "secondary_opts": [
+              "--no-summary"
+            ],
+            "type": {
+              "name": "boolean",
+              "param_type": "Bool"
+            }
+          }
+        ]
+      },
+      "context": {
+        "parameters": [
+          {
+            "default": null,
+            "envvar": null,
+            "multiple": false,
+            "name": "question",
+            "nargs": 1,
+            "opts": [
+              "question"
+            ],
+            "param_type_name": "argument",
+            "required": true,
+            "secondary_opts": [],
+            "type": {
+              "name": "text",
+              "param_type": "String"
+            }
+          },
+          {
+            "count": false,
+            "default": "<path>",
+            "envvar": null,
+            "flag_value": null,
+            "hidden": false,
+            "is_flag": false,
+            "multiple": false,
+            "name": "repository",
+            "nargs": 1,
+            "opts": [
+              "--repository",
+              "-r"
+            ],
+            "param_type_name": "option",
+            "prompt": null,
+            "required": false,
+            "secondary_opts": [],
+            "type": {
+              "allow_dash": false,
+              "dir_okay": true,
+              "exists": false,
+              "file_okay": true,
+              "name": "path",
+              "param_type": "TyperPath",
+              "readable": true,
+              "writable": false
+            }
+          },
+          {
+            "count": false,
+            "default": null,
+            "envvar": null,
+            "flag_value": null,
+            "hidden": false,
+            "is_flag": false,
+            "multiple": false,
+            "name": "vault",
+            "nargs": 1,
+            "opts": [
+              "--vault"
+            ],
+            "param_type_name": "option",
+            "prompt": null,
+            "required": false,
+            "secondary_opts": [],
+            "type": {
+              "allow_dash": false,
+              "dir_okay": true,
+              "exists": false,
+              "file_okay": true,
+              "name": "path",
+              "param_type": "TyperPath",
+              "readable": true,
+              "writable": false
+            }
+          },
+          {
+            "count": false,
+            "default": null,
+            "envvar": null,
+            "flag_value": null,
+            "hidden": false,
+            "is_flag": false,
+            "multiple": false,
+            "name": "runtime_graph",
+            "nargs": 1,
+            "opts": [
+              "--runtime-graph"
+            ],
+            "param_type_name": "option",
+            "prompt": null,
+            "required": false,
+            "secondary_opts": [],
+            "type": {
+              "allow_dash": false,
+              "dir_okay": true,
+              "exists": false,
+              "file_okay": true,
+              "name": "path",
+              "param_type": "TyperPath",
+              "readable": true,
+              "writable": false
+            }
+          },
+          {
+            "count": false,
+            "default": 4000,
+            "envvar": null,
+            "flag_value": null,
+            "hidden": false,
+            "is_flag": false,
+            "multiple": false,
+            "name": "token_budget",
+            "nargs": 1,
+            "opts": [
+              "--tokens"
+            ],
+            "param_type_name": "option",
+            "prompt": null,
+            "required": false,
+            "secondary_opts": [],
+            "type": {
+              "name": "integer",
+              "param_type": "Int"
+            }
+          }
+        ]
+      },
+      "contracts": {
+        "parameters": []
+      },
+      "crawl": {
+        "parameters": [
+          {
+            "default": null,
+            "envvar": null,
+            "multiple": false,
+            "name": "target",
+            "nargs": 1,
+            "opts": [
+              "target"
+            ],
+            "param_type_name": "argument",
+            "required": true,
+            "secondary_opts": [],
+            "type": {
+              "name": "text",
+              "param_type": "String"
+            }
+          },
+          {
+            "count": false,
+            "default": 20,
+            "envvar": null,
+            "flag_value": null,
+            "hidden": false,
+            "is_flag": false,
+            "multiple": false,
+            "name": "maximum_pages",
+            "nargs": 1,
+            "opts": [
+              "--max-pages"
+            ],
+            "param_type_name": "option",
+            "prompt": null,
+            "required": false,
+            "secondary_opts": [],
+            "type": {
+              "clamp": false,
+              "max": 99,
+              "max_open": false,
+              "min": 1,
+              "min_open": false,
+              "name": "integer range",
+              "param_type": "IntRange"
+            }
+          },
+          {
+            "count": false,
+            "default": 2,
+            "envvar": null,
+            "flag_value": null,
+            "hidden": false,
+            "is_flag": false,
+            "multiple": false,
+            "name": "maximum_depth",
+            "nargs": 1,
+            "opts": [
+              "--max-depth"
+            ],
+            "param_type_name": "option",
+            "prompt": null,
+            "required": false,
+            "secondary_opts": [],
+            "type": {
+              "clamp": false,
+              "max": 20,
+              "max_open": false,
+              "min": 0,
+              "min_open": false,
+              "name": "integer range",
+              "param_type": "IntRange"
+            }
+          },
+          {
+            "count": false,
+            "default": false,
+            "envvar": null,
+            "flag_value": true,
+            "hidden": false,
+            "is_flag": true,
+            "multiple": false,
+            "name": "search",
+            "nargs": 1,
+            "opts": [
+              "--search"
+            ],
+            "param_type_name": "option",
+            "prompt": null,
+            "required": false,
+            "secondary_opts": [],
+            "type": {
+              "name": "boolean",
+              "param_type": "Bool"
+            }
+          }
+        ]
+      },
+      "explain": {
+        "parameters": [
+          {
+            "default": null,
+            "envvar": null,
+            "multiple": false,
+            "name": "capability_id",
+            "nargs": 1,
+            "opts": [
+              "capability_id"
+            ],
+            "param_type_name": "argument",
+            "required": true,
+            "secondary_opts": [],
+            "type": {
+              "name": "text",
+              "param_type": "String"
+            }
+          },
+          {
+            "count": false,
+            "default": null,
+            "envvar": null,
+            "flag_value": null,
+            "hidden": false,
+            "is_flag": false,
+            "multiple": false,
+            "name": "backend",
+            "nargs": 1,
+            "opts": [
+              "--backend"
+            ],
+            "param_type_name": "option",
+            "prompt": null,
+            "required": false,
+            "secondary_opts": [],
+            "type": {
+              "name": "text",
+              "param_type": "String"
+            }
+          },
+          {
+            "count": false,
+            "default": false,
+            "envvar": null,
+            "flag_value": true,
+            "hidden": false,
+            "is_flag": true,
+            "multiple": false,
+            "name": "deny",
+            "nargs": 1,
+            "opts": [
+              "--deny"
+            ],
+            "param_type_name": "option",
+            "prompt": null,
+            "required": false,
+            "secondary_opts": [],
+            "type": {
+              "name": "boolean",
+              "param_type": "Bool"
+            }
+          }
+        ]
+      },
+      "failures": {
+        "parameters": []
+      },
+      "fetch": {
+        "parameters": [
+          {
+            "default": null,
+            "envvar": null,
+            "multiple": false,
+            "name": "target",
+            "nargs": 1,
+            "opts": [
+              "target"
+            ],
+            "param_type_name": "argument",
+            "required": true,
+            "secondary_opts": [],
+            "type": {
+              "name": "text",
+              "param_type": "String"
+            }
+          },
+          {
+            "count": false,
+            "default": null,
+            "envvar": null,
+            "flag_value": null,
+            "hidden": false,
+            "is_flag": false,
+            "multiple": true,
+            "name": "output",
+            "nargs": 1,
+            "opts": [
+              "--output",
+              "-o"
+            ],
+            "param_type_name": "option",
+            "prompt": null,
+            "required": false,
+            "secondary_opts": [],
+            "type": {
+              "name": "text",
+              "param_type": "String"
+            }
+          },
+          {
+            "count": false,
+            "default": 10000000,
+            "envvar": null,
+            "flag_value": null,
+            "hidden": false,
+            "is_flag": false,
+            "multiple": false,
+            "name": "maximum_bytes",
+            "nargs": 1,
+            "opts": [
+              "--max-bytes"
+            ],
+            "param_type_name": "option",
+            "prompt": null,
+            "required": false,
+            "secondary_opts": [],
+            "type": {
+              "name": "integer",
+              "param_type": "Int"
+            }
+          },
+          {
+            "count": false,
+            "default": null,
+            "envvar": null,
+            "flag_value": null,
+            "hidden": false,
+            "is_flag": false,
+            "multiple": false,
+            "name": "authentication_ref",
+            "nargs": 1,
+            "opts": [
+              "--auth-ref"
+            ],
+            "param_type_name": "option",
+            "prompt": null,
+            "required": false,
+            "secondary_opts": [],
+            "type": {
+              "name": "text",
+              "param_type": "String"
+            }
+          },
+          {
+            "count": false,
+            "default": "public",
+            "envvar": null,
+            "flag_value": null,
+            "hidden": false,
+            "is_flag": false,
+            "multiple": false,
+            "name": "privacy_profile",
+            "nargs": 1,
+            "opts": [
+              "--privacy"
+            ],
+            "param_type_name": "option",
+            "prompt": null,
+            "required": false,
+            "secondary_opts": [],
+            "type": {
+              "name": "text",
+              "param_type": "String"
+            }
+          },
+          {
+            "count": false,
+            "default": null,
+            "envvar": null,
+            "flag_value": null,
+            "hidden": false,
+            "is_flag": false,
+            "multiple": true,
+            "name": "approve",
+            "nargs": 1,
+            "opts": [
+              "--approve"
+            ],
+            "param_type_name": "option",
+            "prompt": null,
+            "required": false,
+            "secondary_opts": [],
+            "type": {
+              "name": "text",
+              "param_type": "String"
+            }
+          }
+        ]
+      },
+      "inspect": {
+        "parameters": [
+          {
+            "default": null,
+            "envvar": null,
+            "multiple": false,
+            "name": "target",
+            "nargs": 1,
+            "opts": [
+              "target"
+            ],
+            "param_type_name": "argument",
+            "required": true,
+            "secondary_opts": [],
+            "type": {
+              "name": "text",
+              "param_type": "String"
+            }
+          }
+        ]
+      },
+      "plan": {
+        "parameters": [
+          {
+            "default": null,
+            "envvar": null,
+            "multiple": false,
+            "name": "target",
+            "nargs": 1,
+            "opts": [
+              "target"
+            ],
+            "param_type_name": "argument",
+            "required": true,
+            "secondary_opts": [],
+            "type": {
+              "name": "text",
+              "param_type": "String"
+            }
+          },
+          {
+            "count": false,
+            "default": null,
+            "envvar": null,
+            "flag_value": null,
+            "hidden": false,
+            "is_flag": false,
+            "multiple": true,
+            "name": "output",
+            "nargs": 1,
+            "opts": [
+              "--output",
+              "-o"
+            ],
+            "param_type_name": "option",
+            "prompt": null,
+            "required": false,
+            "secondary_opts": [],
+            "type": {
+              "name": "text",
+              "param_type": "String"
+            }
+          },
+          {
+            "count": false,
+            "default": null,
+            "envvar": null,
+            "flag_value": null,
+            "hidden": false,
+            "is_flag": false,
+            "multiple": false,
+            "name": "backend",
+            "nargs": 1,
+            "opts": [
+              "--backend"
+            ],
+            "param_type_name": "option",
+            "prompt": null,
+            "required": false,
+            "secondary_opts": [],
+            "type": {
+              "name": "text",
+              "param_type": "String"
+            }
+          },
+          {
+            "count": false,
+            "default": null,
+            "envvar": null,
+            "flag_value": null,
+            "hidden": false,
+            "is_flag": false,
+            "multiple": false,
+            "name": "authentication_ref",
+            "nargs": 1,
+            "opts": [
+              "--auth-ref"
+            ],
+            "param_type_name": "option",
+            "prompt": null,
+            "required": false,
+            "secondary_opts": [],
+            "type": {
+              "name": "text",
+              "param_type": "String"
+            }
+          },
+          {
+            "count": false,
+            "default": "public",
+            "envvar": null,
+            "flag_value": null,
+            "hidden": false,
+            "is_flag": false,
+            "multiple": false,
+            "name": "privacy_profile",
+            "nargs": 1,
+            "opts": [
+              "--privacy"
+            ],
+            "param_type_name": "option",
+            "prompt": null,
+            "required": false,
+            "secondary_opts": [],
+            "type": {
+              "name": "text",
+              "param_type": "String"
+            }
+          },
+          {
+            "count": false,
+            "default": null,
+            "envvar": null,
+            "flag_value": null,
+            "hidden": false,
+            "is_flag": false,
+            "multiple": true,
+            "name": "approve",
+            "nargs": 1,
+            "opts": [
+              "--approve"
+            ],
+            "param_type_name": "option",
+            "prompt": null,
+            "required": false,
+            "secondary_opts": [],
+            "type": {
+              "name": "text",
+              "param_type": "String"
+            }
+          }
+        ]
+      },
+      "project-runtime-graph": {
+        "parameters": []
+      },
+      "run": {
+        "parameters": [
+          {
+            "default": null,
+            "envvar": null,
+            "multiple": false,
+            "name": "run_id",
+            "nargs": 1,
+            "opts": [
+              "run_id"
+            ],
+            "param_type_name": "argument",
+            "required": true,
+            "secondary_opts": [],
+            "type": {
+              "name": "text",
+              "param_type": "String"
+            }
+          }
+        ]
+      }
+    },
+    "no_args_is_help": true
+  },
+  "contracts": {
+    "Artifact": {
+      "json_schema_sha256": "bfc0c4a0f3fc91f18e0e5a87ff63e6fad3e1f09b8f910f974ca210ba69fe81b6",
+      "schema": {
+        "$defs": {
+          "PageState": {
+            "enum": [
+              "OK",
+              "EMPTY",
+              "LOGIN",
+              "CAPTCHA",
+              "BOT_BLOCK",
+              "PAYWALL",
+              "ERROR",
+              "WRONG_LANGUAGE",
+              "NEEDS_OCR",
+              "UNKNOWN"
+            ],
+            "title": "PageState",
+            "type": "string"
+          },
+          "QualityAssessment": {
+            "additionalProperties": false,
+            "properties": {
+              "accepted": {
+                "default": false,
+                "title": "Accepted",
+                "type": "boolean"
+              },
+              "completeness": {
+                "default": 0.0,
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "title": "Completeness",
+                "type": "number"
+              },
+              "duplicate_of": {
+                "anyOf": [
+                  {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Duplicate Of"
+              },
+              "language": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Language"
+              },
+              "page_state": {
+                "$ref": "#/$defs/PageState",
+                "default": "UNKNOWN"
+              },
+              "reasons": {
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "title": "Reasons",
+                "type": "array"
+              },
+              "score": {
+                "default": 0.0,
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "title": "Score",
+                "type": "number"
+              }
+            },
+            "title": "QualityAssessment",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "artifact_id": {
+            "format": "uuid",
+            "title": "Artifact Id",
+            "type": "string"
+          },
+          "cas_uri": {
+            "title": "Cas Uri",
+            "type": "string"
+          },
+          "extractor_version": {
+            "title": "Extractor Version",
+            "type": "string"
+          },
+          "locators": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Locators",
+            "type": "array"
+          },
+          "media_type": {
+            "title": "Media Type",
+            "type": "string"
+          },
+          "parent_artifact_ids": {
+            "default": [],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Parent Artifact Ids",
+            "type": "array"
+          },
+          "quality": {
+            "$ref": "#/$defs/QualityAssessment"
+          },
+          "representation": {
+            "title": "Representation",
+            "type": "string"
+          },
+          "role": {
+            "title": "Role",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "sha256": {
+            "title": "Sha256",
+            "type": "string"
+          },
+          "size": {
+            "minimum": 0,
+            "title": "Size",
+            "type": "integer"
+          },
+          "source_resource_id": {
+            "format": "uuid",
+            "title": "Source Resource Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "representation",
+          "media_type",
+          "cas_uri",
+          "sha256",
+          "size",
+          "source_resource_id",
+          "extractor_version"
+        ],
+        "title": "Artifact",
+        "type": "object"
+      },
+      "schema_version": "1.0"
+    },
+    "CapabilityManifestEntry": {
+      "json_schema_sha256": "c71edce9a8d532bb76f2ed67ed0d4b70daf00594d9f3e836dfed3fd1c879123b",
+      "schema": {
+        "$defs": {
+          "CapabilityKind": {
+            "enum": [
+              "operation",
+              "transport_feature",
+              "variant_generator",
+              "extractor",
+              "format_handler",
+              "detector",
+              "policy",
+              "connector",
+              "storage_strategy"
+            ],
+            "title": "CapabilityKind",
+            "type": "string"
+          },
+          "ImplementationStatus": {
+            "enum": [
+              "native",
+              "optional",
+              "planned"
+            ],
+            "title": "ImplementationStatus",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "adapter": {
+            "title": "Adapter",
+            "type": "string"
+          },
+          "aliases": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Aliases",
+            "type": "array"
+          },
+          "availability_reason": {
+            "default": "",
+            "title": "Availability Reason",
+            "type": "string"
+          },
+          "category": {
+            "title": "Category",
+            "type": "string"
+          },
+          "category_name": {
+            "title": "Category Name",
+            "type": "string"
+          },
+          "closure_release": {
+            "title": "Closure Release",
+            "type": "string"
+          },
+          "dependencies": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Dependencies",
+            "type": "array"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "implementation": {
+            "title": "Implementation",
+            "type": "string"
+          },
+          "implementation_available": {
+            "default": false,
+            "title": "Implementation Available",
+            "type": "boolean"
+          },
+          "implementation_status": {
+            "$ref": "#/$defs/ImplementationStatus",
+            "default": "planned"
+          },
+          "inputs": {
+            "default": [
+              "target"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "title": "Inputs",
+            "type": "array"
+          },
+          "kind": {
+            "$ref": "#/$defs/CapabilityKind"
+          },
+          "lifecycle_status": {
+            "default": "registered",
+            "title": "Lifecycle Status",
+            "type": "string"
+          },
+          "outputs": {
+            "default": [
+              "attempt"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "title": "Outputs",
+            "type": "array"
+          },
+          "reference": {
+            "title": "Reference",
+            "type": "string"
+          },
+          "risk_class": {
+            "title": "Risk Class",
+            "type": "string"
+          },
+          "runtime_available": {
+            "default": false,
+            "title": "Runtime Available",
+            "type": "boolean"
+          },
+          "tests": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tests",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "category",
+          "category_name",
+          "closure_release",
+          "kind",
+          "adapter",
+          "risk_class",
+          "reference",
+          "tests",
+          "implementation"
+        ],
+        "title": "CapabilityManifestEntry",
+        "type": "object"
+      },
+      "schema_version": "1.0"
+    },
+    "ContextBundle": {
+      "json_schema_sha256": "5ee002872b7df047b1e0fa994432f47afcc8bd0e5c760f9992a774750368efdd",
+      "schema": {
+        "$defs": {
+          "ContextNeed": {
+            "description": "Deterministic context families selected by the context broker.",
+            "enum": [
+              "code_architecture",
+              "runtime_history",
+              "decision_history"
+            ],
+            "title": "ContextNeed",
+            "type": "string"
+          },
+          "ContextProviderReport": {
+            "additionalProperties": false,
+            "description": "Typed retrieval result without leaking provider stderr or prompt content.",
+            "properties": {
+              "attempts": {
+                "default": 0,
+                "maximum": 2,
+                "minimum": 0,
+                "title": "Attempts",
+                "type": "integer"
+              },
+              "detail": {
+                "anyOf": [
+                  {
+                    "maxLength": 256,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Detail"
+              },
+              "provider": {
+                "enum": [
+                  "code_graph",
+                  "runtime_graph",
+                  "qmd",
+                  "exact_source"
+                ],
+                "title": "Provider",
+                "type": "string"
+              },
+              "result_count": {
+                "default": 0,
+                "minimum": 0,
+                "title": "Result Count",
+                "type": "integer"
+              },
+              "status": {
+                "$ref": "#/$defs/ContextProviderStatus"
+              }
+            },
+            "required": [
+              "provider",
+              "status"
+            ],
+            "title": "ContextProviderReport",
+            "type": "object"
+          },
+          "ContextProviderStatus": {
+            "description": "Observable outcome from one bounded context provider.",
+            "enum": [
+              "SUCCEEDED",
+              "SKIPPED",
+              "EMPTY",
+              "UNAVAILABLE",
+              "TIMED_OUT",
+              "OUTPUT_LIMIT",
+              "FAILED"
+            ],
+            "title": "ContextProviderStatus",
+            "type": "string"
+          },
+          "ContextSource": {
+            "additionalProperties": false,
+            "properties": {
+              "content_sha256": {
+                "anyOf": [
+                  {
+                    "pattern": "^[0-9a-f]{64}$",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Content Sha256"
+              },
+              "excerpt": {
+                "title": "Excerpt",
+                "type": "string"
+              },
+              "freshness": {
+                "anyOf": [
+                  {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Freshness"
+              },
+              "graph_nodes": {
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "title": "Graph Nodes",
+                "type": "array"
+              },
+              "graph_paths": {
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "title": "Graph Paths",
+                "type": "array"
+              },
+              "locator": {
+                "title": "Locator",
+                "type": "string"
+              },
+              "provenance": {
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "title": "Provenance",
+                "type": "array"
+              },
+              "score": {
+                "default": 0.0,
+                "minimum": 0.0,
+                "title": "Score",
+                "type": "number"
+              },
+              "source_locations": {
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "title": "Source Locations",
+                "type": "array"
+              },
+              "source_type": {
+                "title": "Source Type",
+                "type": "string"
+              },
+              "title": {
+                "title": "Title",
+                "type": "string"
+              },
+              "verified": {
+                "default": false,
+                "title": "Verified",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "source_type",
+              "title",
+              "locator",
+              "excerpt"
+            ],
+            "title": "ContextSource",
+            "type": "object"
+          },
+          "ContextTokenUsage": {
+            "additionalProperties": false,
+            "description": "Estimated excerpt tokens selected from each context plane.",
+            "properties": {
+              "code_graph": {
+                "default": 0,
+                "minimum": 0,
+                "title": "Code Graph",
+                "type": "integer"
+              },
+              "exact_source": {
+                "default": 0,
+                "minimum": 0,
+                "title": "Exact Source",
+                "type": "integer"
+              },
+              "qmd": {
+                "default": 0,
+                "minimum": 0,
+                "title": "Qmd",
+                "type": "integer"
+              },
+              "runtime_graph": {
+                "default": 0,
+                "minimum": 0,
+                "title": "Runtime Graph",
+                "type": "integer"
+              },
+              "total": {
+                "default": 0,
+                "minimum": 0,
+                "title": "Total",
+                "type": "integer"
+              }
+            },
+            "title": "ContextTokenUsage",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "confidence": {
+            "default": 0.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Confidence",
+            "type": "number"
+          },
+          "contradictions": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Contradictions",
+            "type": "array"
+          },
+          "estimated_tokens": {
+            "default": 0,
+            "title": "Estimated Tokens",
+            "type": "integer"
+          },
+          "fallback_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Fallback Reason"
+          },
+          "freshness": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Freshness"
+          },
+          "needs": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ContextNeed"
+            },
+            "title": "Needs",
+            "type": "array"
+          },
+          "omitted_results": {
+            "default": 0,
+            "title": "Omitted Results",
+            "type": "integer"
+          },
+          "provider_reports": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ContextProviderReport"
+            },
+            "title": "Provider Reports",
+            "type": "array"
+          },
+          "question": {
+            "title": "Question",
+            "type": "string"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/$defs/ContextSource"
+            },
+            "title": "Sources",
+            "type": "array"
+          },
+          "token_budget": {
+            "default": 4000,
+            "title": "Token Budget",
+            "type": "integer"
+          },
+          "token_usage": {
+            "$ref": "#/$defs/ContextTokenUsage"
+          }
+        },
+        "required": [
+          "question",
+          "sources"
+        ],
+        "title": "ContextBundle",
+        "type": "object"
+      },
+      "schema_version": "1.0"
+    },
+    "ContextProviderReport": {
+      "json_schema_sha256": "2836d42ab4dcd8fbd58b2df25721af467d1b10b2f9d2f554787282ba28109713",
+      "schema": {
+        "$defs": {
+          "ContextProviderStatus": {
+            "description": "Observable outcome from one bounded context provider.",
+            "enum": [
+              "SUCCEEDED",
+              "SKIPPED",
+              "EMPTY",
+              "UNAVAILABLE",
+              "TIMED_OUT",
+              "OUTPUT_LIMIT",
+              "FAILED"
+            ],
+            "title": "ContextProviderStatus",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Typed retrieval result without leaking provider stderr or prompt content.",
+        "properties": {
+          "attempts": {
+            "default": 0,
+            "maximum": 2,
+            "minimum": 0,
+            "title": "Attempts",
+            "type": "integer"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "maxLength": 256,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Detail"
+          },
+          "provider": {
+            "enum": [
+              "code_graph",
+              "runtime_graph",
+              "qmd",
+              "exact_source"
+            ],
+            "title": "Provider",
+            "type": "string"
+          },
+          "result_count": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Result Count",
+            "type": "integer"
+          },
+          "status": {
+            "$ref": "#/$defs/ContextProviderStatus"
+          }
+        },
+        "required": [
+          "provider",
+          "status"
+        ],
+        "title": "ContextProviderReport",
+        "type": "object"
+      },
+      "schema_version": "1.0"
+    },
+    "ContextSource": {
+      "json_schema_sha256": "eb7a2463cb3adabfda97635f5c95d57c800ae20d9f9646913f9e596aa4ecbca5",
+      "schema": {
+        "additionalProperties": false,
+        "properties": {
+          "content_sha256": {
+            "anyOf": [
+              {
+                "pattern": "^[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Content Sha256"
+          },
+          "excerpt": {
+            "title": "Excerpt",
+            "type": "string"
+          },
+          "freshness": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Freshness"
+          },
+          "graph_nodes": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Graph Nodes",
+            "type": "array"
+          },
+          "graph_paths": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Graph Paths",
+            "type": "array"
+          },
+          "locator": {
+            "title": "Locator",
+            "type": "string"
+          },
+          "provenance": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Provenance",
+            "type": "array"
+          },
+          "score": {
+            "default": 0.0,
+            "minimum": 0.0,
+            "title": "Score",
+            "type": "number"
+          },
+          "source_locations": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Source Locations",
+            "type": "array"
+          },
+          "source_type": {
+            "title": "Source Type",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "verified": {
+            "default": false,
+            "title": "Verified",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "source_type",
+          "title",
+          "locator",
+          "excerpt"
+        ],
+        "title": "ContextSource",
+        "type": "object"
+      },
+      "schema_version": "1.0"
+    },
+    "ContextTokenUsage": {
+      "json_schema_sha256": "50560c541a827e26766859765772b965997d64597d57aa72119ee73f9c89322b",
+      "schema": {
+        "additionalProperties": false,
+        "description": "Estimated excerpt tokens selected from each context plane.",
+        "properties": {
+          "code_graph": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Code Graph",
+            "type": "integer"
+          },
+          "exact_source": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Exact Source",
+            "type": "integer"
+          },
+          "qmd": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Qmd",
+            "type": "integer"
+          },
+          "runtime_graph": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Runtime Graph",
+            "type": "integer"
+          },
+          "total": {
+            "default": 0,
+            "minimum": 0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "title": "ContextTokenUsage",
+        "type": "object"
+      },
+      "schema_version": "1.0"
+    },
+    "ContractManifest": {
+      "json_schema_sha256": "6df986f717ce2f846cb916bca0840321114ade1a5565f10b5670f6b98fc19db3",
+      "schema": {
+        "$defs": {
+          "ContractDescriptor": {
+            "additionalProperties": false,
+            "description": "Stable identity for one public JSON contract.",
+            "properties": {
+              "json_schema_sha256": {
+                "pattern": "^[0-9a-f]{64}$",
+                "title": "Json Schema Sha256",
+                "type": "string"
+              },
+              "name": {
+                "title": "Name",
+                "type": "string"
+              },
+              "schema_version": {
+                "const": "1.0",
+                "default": "1.0",
+                "title": "Schema Version",
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "json_schema_sha256"
+            ],
+            "title": "ContractDescriptor",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Machine-readable contract inventory shared by every public interface.",
+        "properties": {
+          "api_version": {
+            "const": "v1",
+            "default": "v1",
+            "title": "Api Version",
+            "type": "string"
+          },
+          "contracts": {
+            "items": {
+              "$ref": "#/$defs/ContractDescriptor"
+            },
+            "title": "Contracts",
+            "type": "array"
+          },
+          "package_version": {
+            "title": "Package Version",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "package_version",
+          "contracts"
+        ],
+        "title": "ContractManifest",
+        "type": "object"
+      },
+      "schema_version": "1.0"
+    },
+    "FailureCatalogue": {
+      "json_schema_sha256": "e0a5f97d146cdda1eab73153675393b7b0dfb8f91f93c793704785260be1a827",
+      "schema": {
+        "$defs": {
+          "FailureCodeDescriptor": {
+            "additionalProperties": false,
+            "description": "Sanitized meaning and scope for one built-in failure code.",
+            "properties": {
+              "code": {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$",
+                "title": "Code",
+                "type": "string"
+              },
+              "retryable": {
+                "default": false,
+                "title": "Retryable",
+                "type": "boolean"
+              },
+              "scopes": {
+                "items": {
+                  "enum": [
+                    "attempt",
+                    "crawl",
+                    "diagnostic"
+                  ],
+                  "type": "string"
+                },
+                "title": "Scopes",
+                "type": "array"
+              },
+              "summary": {
+                "maxLength": 256,
+                "minLength": 1,
+                "title": "Summary",
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "scopes",
+              "summary"
+            ],
+            "title": "FailureCodeDescriptor",
+            "type": "object"
+          },
+          "PublicErrorCode": {
+            "description": "Stable machine-readable failures returned by public interfaces.",
+            "enum": [
+              "INVALID_REQUEST"
+            ],
+            "title": "PublicErrorCode",
+            "type": "string"
+          },
+          "PublicErrorDescriptor": {
+            "additionalProperties": false,
+            "description": "Cross-interface delivery contract for one pre-execution error.",
+            "properties": {
+              "cli_exit_code": {
+                "maximum": 255,
+                "minimum": 1,
+                "title": "Cli Exit Code",
+                "type": "integer"
+              },
+              "code": {
+                "$ref": "#/$defs/PublicErrorCode"
+              },
+              "issue_codes": {
+                "items": {
+                  "type": "string"
+                },
+                "title": "Issue Codes",
+                "type": "array"
+              },
+              "mcp_delivery": {
+                "const": "tool error",
+                "default": "tool error",
+                "title": "Mcp Delivery",
+                "type": "string"
+              },
+              "rest_status": {
+                "maximum": 599,
+                "minimum": 400,
+                "title": "Rest Status",
+                "type": "integer"
+              },
+              "retryable": {
+                "default": false,
+                "title": "Retryable",
+                "type": "boolean"
+              },
+              "sdk_delivery": {
+                "const": "FetechValidationError",
+                "default": "FetechValidationError",
+                "title": "Sdk Delivery",
+                "type": "string"
+              },
+              "summary": {
+                "maxLength": 256,
+                "minLength": 1,
+                "title": "Summary",
+                "type": "string"
+              }
+            },
+            "required": [
+              "code",
+              "summary",
+              "issue_codes",
+              "rest_status",
+              "cli_exit_code"
+            ],
+            "title": "PublicErrorDescriptor",
+            "type": "object"
+          },
+          "ResultStatus": {
+            "enum": [
+              "SUCCEEDED",
+              "PARTIAL",
+              "BLOCKED_BY_POLICY",
+              "AUTH_REQUIRED",
+              "DEPENDENCY_MISSING",
+              "BUDGET_EXHAUSTED",
+              "LOW_QUALITY",
+              "NOT_FOUND",
+              "FAILED"
+            ],
+            "title": "ResultStatus",
+            "type": "string"
+          },
+          "ResultStatusDescriptor": {
+            "additionalProperties": false,
+            "description": "Stable terminal semantics for one canonical fetch result status.",
+            "properties": {
+              "artifact_disposition": {
+                "enum": [
+                  "accepted_required",
+                  "artifacts_required",
+                  "optional"
+                ],
+                "title": "Artifact Disposition",
+                "type": "string"
+              },
+              "cli_exit_code": {
+                "const": 0,
+                "default": 0,
+                "title": "Cli Exit Code",
+                "type": "integer"
+              },
+              "common_diagnostic_codes": {
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "title": "Common Diagnostic Codes",
+                "type": "array"
+              },
+              "mcp_delivery": {
+                "const": "FetchResult JSON",
+                "default": "FetchResult JSON",
+                "title": "Mcp Delivery",
+                "type": "string"
+              },
+              "rest_result_status": {
+                "const": 200,
+                "default": 200,
+                "title": "Rest Result Status",
+                "type": "integer"
+              },
+              "rest_submission_status": {
+                "const": 202,
+                "default": 202,
+                "title": "Rest Submission Status",
+                "type": "integer"
+              },
+              "retryable": {
+                "default": false,
+                "title": "Retryable",
+                "type": "boolean"
+              },
+              "sdk_delivery": {
+                "const": "FetchResult",
+                "default": "FetchResult",
+                "title": "Sdk Delivery",
+                "type": "string"
+              },
+              "status": {
+                "$ref": "#/$defs/ResultStatus"
+              },
+              "successful": {
+                "title": "Successful",
+                "type": "boolean"
+              },
+              "summary": {
+                "maxLength": 256,
+                "minLength": 1,
+                "title": "Summary",
+                "type": "string"
+              }
+            },
+            "required": [
+              "status",
+              "summary",
+              "successful",
+              "artifact_disposition"
+            ],
+            "title": "ResultStatusDescriptor",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Versioned failure semantics shared by SDK, REST, CLI, and MCP.",
+        "properties": {
+          "api_version": {
+            "const": "v1",
+            "default": "v1",
+            "title": "Api Version",
+            "type": "string"
+          },
+          "codes": {
+            "items": {
+              "$ref": "#/$defs/FailureCodeDescriptor"
+            },
+            "title": "Codes",
+            "type": "array"
+          },
+          "package_version": {
+            "title": "Package Version",
+            "type": "string"
+          },
+          "public_errors": {
+            "items": {
+              "$ref": "#/$defs/PublicErrorDescriptor"
+            },
+            "title": "Public Errors",
+            "type": "array"
+          },
+          "result_statuses": {
+            "items": {
+              "$ref": "#/$defs/ResultStatusDescriptor"
+            },
+            "title": "Result Statuses",
+            "type": "array"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "package_version",
+          "result_statuses",
+          "codes",
+          "public_errors"
+        ],
+        "title": "FailureCatalogue",
+        "type": "object"
+      },
+      "schema_version": "1.0"
+    },
+    "FailureCodeDescriptor": {
+      "json_schema_sha256": "1c07d8a5a5298b5900200cbe0a0c59028b21eb96349233dbe1b83f635ef71673",
+      "schema": {
+        "additionalProperties": false,
+        "description": "Sanitized meaning and scope for one built-in failure code.",
+        "properties": {
+          "code": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$",
+            "title": "Code",
+            "type": "string"
+          },
+          "retryable": {
+            "default": false,
+            "title": "Retryable",
+            "type": "boolean"
+          },
+          "scopes": {
+            "items": {
+              "enum": [
+                "attempt",
+                "crawl",
+                "diagnostic"
+              ],
+              "type": "string"
+            },
+            "title": "Scopes",
+            "type": "array"
+          },
+          "summary": {
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Summary",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "scopes",
+          "summary"
+        ],
+        "title": "FailureCodeDescriptor",
+        "type": "object"
+      },
+      "schema_version": "1.0"
+    },
+    "FetchAttempt": {
+      "json_schema_sha256": "8a3af4a229d210a52ee0f6a3d51dcf621dc2cf2fafe2755ed886a3dad1478393",
+      "schema": {
+        "$defs": {
+          "AttemptStatus": {
+            "enum": [
+              "PLANNED",
+              "RUNNING",
+              "SUCCEEDED",
+              "SKIPPED",
+              "FAILED",
+              "CANCELLED"
+            ],
+            "title": "AttemptStatus",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "adapter_version": {
+            "default": "0.3.0a0",
+            "title": "Adapter Version",
+            "type": "string"
+          },
+          "artifact_ids": {
+            "default": [],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Artifact Ids",
+            "type": "array"
+          },
+          "attempt_id": {
+            "format": "uuid",
+            "title": "Attempt Id",
+            "type": "string"
+          },
+          "bytes_received": {
+            "default": 0,
+            "title": "Bytes Received",
+            "type": "integer"
+          },
+          "capability_id": {
+            "title": "Capability Id",
+            "type": "string"
+          },
+          "consumed_budget": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            "title": "Consumed Budget",
+            "type": "object"
+          },
+          "failure_code": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Failure Code"
+          },
+          "finished_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Finished At"
+          },
+          "http_status": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Http Status"
+          },
+          "parser": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Parser"
+          },
+          "sanitized_destination": {
+            "title": "Sanitized Destination",
+            "type": "string"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/$defs/AttemptStatus",
+            "default": "PLANNED"
+          },
+          "warnings": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "capability_id",
+          "sanitized_destination"
+        ],
+        "title": "FetchAttempt",
+        "type": "object"
+      },
+      "schema_version": "1.0"
+    },
+    "FetchPlan": {
+      "json_schema_sha256": "1fd7bb05d87704ced282836aa83ad454b8847e31547b81f5589cb4cf1b76ad2e",
+      "schema": {
+        "$defs": {
+          "FetchRequest": {
+            "additionalProperties": false,
+            "properties": {
+              "allow_capabilities": {
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 256,
+                "title": "Allow Capabilities",
+                "type": "array",
+                "uniqueItems": true
+              },
+              "approved_capabilities": {
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 256,
+                "title": "Approved Capabilities",
+                "type": "array",
+                "uniqueItems": true
+              },
+              "authentication_ref": {
+                "anyOf": [
+                  {
+                    "maxLength": 2048,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Authentication Ref"
+              },
+              "budget": {
+                "$ref": "#/$defs/ResourceBudget"
+              },
+              "deny_capabilities": {
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 256,
+                "title": "Deny Capabilities",
+                "type": "array",
+                "uniqueItems": true
+              },
+              "freshness_seconds": {
+                "anyOf": [
+                  {
+                    "minimum": 0,
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Freshness Seconds"
+              },
+              "intent": {
+                "default": "retrieve",
+                "maxLength": 256,
+                "minLength": 1,
+                "title": "Intent",
+                "type": "string"
+              },
+              "language": {
+                "anyOf": [
+                  {
+                    "maxLength": 128,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Language"
+              },
+              "metadata": {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "maxProperties": 128,
+                "title": "Metadata",
+                "type": "object"
+              },
+              "output_requirements": {
+                "default": [
+                  "clean_text"
+                ],
+                "items": {
+                  "type": "string"
+                },
+                "maxItems": 256,
+                "title": "Output Requirements",
+                "type": "array"
+              },
+              "policy_profile": {
+                "default": "default",
+                "maxLength": 256,
+                "minLength": 1,
+                "title": "Policy Profile",
+                "type": "string"
+              },
+              "privacy_profile": {
+                "default": "public",
+                "description": "Use 'public' for ordinary acquisition and 'private' for explicitly authorized private-workspace execution.",
+                "enum": [
+                  "public",
+                  "private"
+                ],
+                "title": "Privacy Profile",
+                "type": "string"
+              },
+              "region": {
+                "anyOf": [
+                  {
+                    "maxLength": 128,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Region"
+              },
+              "schema_version": {
+                "const": "1.0",
+                "default": "1.0",
+                "title": "Schema Version",
+                "type": "string"
+              },
+              "target": {
+                "maxLength": 16384,
+                "minLength": 1,
+                "title": "Target",
+                "type": "string"
+              }
+            },
+            "required": [
+              "target"
+            ],
+            "title": "FetchRequest",
+            "type": "object"
+          },
+          "PlanNode": {
+            "additionalProperties": false,
+            "properties": {
+              "adapter": {
+                "title": "Adapter",
+                "type": "string"
+              },
+              "capability_id": {
+                "title": "Capability Id",
+                "type": "string"
+              },
+              "dependencies": {
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "title": "Dependencies",
+                "type": "array"
+              },
+              "fallback_for": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Fallback For"
+              },
+              "id": {
+                "title": "Id",
+                "type": "string"
+              },
+              "parallel_group": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Parallel Group"
+              },
+              "parameters": {
+                "additionalProperties": true,
+                "title": "Parameters",
+                "type": "object"
+              },
+              "requires_approval": {
+                "default": false,
+                "title": "Requires Approval",
+                "type": "boolean"
+              },
+              "reserved_budget": {
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                "title": "Reserved Budget",
+                "type": "object"
+              },
+              "retry": {
+                "$ref": "#/$defs/RetryRule"
+              },
+              "stop_on_acceptance": {
+                "default": false,
+                "title": "Stop On Acceptance",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "id",
+              "capability_id",
+              "adapter"
+            ],
+            "title": "PlanNode",
+            "type": "object"
+          },
+          "ResourceBudget": {
+            "additionalProperties": false,
+            "properties": {
+              "archive_members": {
+                "default": 1000,
+                "maximum": 1000000,
+                "minimum": 1,
+                "title": "Archive Members",
+                "type": "integer"
+              },
+              "archive_ratio": {
+                "default": 100.0,
+                "maximum": 100000,
+                "minimum": 1,
+                "title": "Archive Ratio",
+                "type": "number"
+              },
+              "attempts": {
+                "default": 6,
+                "maximum": 100,
+                "minimum": 0,
+                "title": "Attempts",
+                "type": "integer"
+              },
+              "browser_seconds": {
+                "default": 20.0,
+                "maximum": 1800,
+                "minimum": 0,
+                "title": "Browser Seconds",
+                "type": "number"
+              },
+              "bytes": {
+                "default": 10000000,
+                "maximum": 2000000000,
+                "minimum": 0,
+                "title": "Bytes",
+                "type": "integer"
+              },
+              "crawl_depth": {
+                "default": 2,
+                "maximum": 20,
+                "minimum": 0,
+                "title": "Crawl Depth",
+                "type": "integer"
+              },
+              "crawl_pages": {
+                "default": 20,
+                "maximum": 100000,
+                "minimum": 1,
+                "title": "Crawl Pages",
+                "type": "integer"
+              },
+              "deadline_seconds": {
+                "default": 30.0,
+                "exclusiveMinimum": 0,
+                "maximum": 3600,
+                "title": "Deadline Seconds",
+                "type": "number"
+              },
+              "decompressed_bytes": {
+                "default": 50000000,
+                "maximum": 4000000000,
+                "minimum": 0,
+                "title": "Decompressed Bytes",
+                "type": "integer"
+              },
+              "model_tokens": {
+                "default": 0,
+                "maximum": 1000000,
+                "minimum": 0,
+                "title": "Model Tokens",
+                "type": "integer"
+              },
+              "monetary_ceiling": {
+                "default": 0.0,
+                "minimum": 0,
+                "title": "Monetary Ceiling",
+                "type": "number"
+              },
+              "redirects": {
+                "default": 8,
+                "maximum": 30,
+                "minimum": 0,
+                "title": "Redirects",
+                "type": "integer"
+              }
+            },
+            "title": "ResourceBudget",
+            "type": "object"
+          },
+          "RetryRule": {
+            "additionalProperties": false,
+            "properties": {
+              "backoff_seconds": {
+                "default": 0.25,
+                "maximum": 60,
+                "minimum": 0,
+                "title": "Backoff Seconds",
+                "type": "number"
+              },
+              "maximum": {
+                "default": 1,
+                "maximum": 10,
+                "minimum": 0,
+                "title": "Maximum",
+                "type": "integer"
+              },
+              "retryable_codes": {
+                "default": [
+                  "timeout",
+                  "connection",
+                  "429",
+                  "5xx"
+                ],
+                "items": {
+                  "type": "string"
+                },
+                "title": "Retryable Codes",
+                "type": "array"
+              }
+            },
+            "title": "RetryRule",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "classifier": {
+            "default": "rules-v1",
+            "title": "Classifier",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "deterministic": {
+            "default": true,
+            "title": "Deterministic",
+            "type": "boolean"
+          },
+          "nodes": {
+            "items": {
+              "$ref": "#/$defs/PlanNode"
+            },
+            "title": "Nodes",
+            "type": "array"
+          },
+          "plan_id": {
+            "format": "uuid",
+            "title": "Plan Id",
+            "type": "string"
+          },
+          "request": {
+            "$ref": "#/$defs/FetchRequest"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "warnings": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "request",
+          "nodes"
+        ],
+        "title": "FetchPlan",
+        "type": "object"
+      },
+      "schema_version": "1.0"
+    },
+    "FetchRequest": {
+      "json_schema_sha256": "fe53c38a522f644c8505d5729a46b99173f9f09b01e8b4f40594e7b22b9680b1",
+      "schema": {
+        "$defs": {
+          "ResourceBudget": {
+            "additionalProperties": false,
+            "properties": {
+              "archive_members": {
+                "default": 1000,
+                "maximum": 1000000,
+                "minimum": 1,
+                "title": "Archive Members",
+                "type": "integer"
+              },
+              "archive_ratio": {
+                "default": 100.0,
+                "maximum": 100000,
+                "minimum": 1,
+                "title": "Archive Ratio",
+                "type": "number"
+              },
+              "attempts": {
+                "default": 6,
+                "maximum": 100,
+                "minimum": 0,
+                "title": "Attempts",
+                "type": "integer"
+              },
+              "browser_seconds": {
+                "default": 20.0,
+                "maximum": 1800,
+                "minimum": 0,
+                "title": "Browser Seconds",
+                "type": "number"
+              },
+              "bytes": {
+                "default": 10000000,
+                "maximum": 2000000000,
+                "minimum": 0,
+                "title": "Bytes",
+                "type": "integer"
+              },
+              "crawl_depth": {
+                "default": 2,
+                "maximum": 20,
+                "minimum": 0,
+                "title": "Crawl Depth",
+                "type": "integer"
+              },
+              "crawl_pages": {
+                "default": 20,
+                "maximum": 100000,
+                "minimum": 1,
+                "title": "Crawl Pages",
+                "type": "integer"
+              },
+              "deadline_seconds": {
+                "default": 30.0,
+                "exclusiveMinimum": 0,
+                "maximum": 3600,
+                "title": "Deadline Seconds",
+                "type": "number"
+              },
+              "decompressed_bytes": {
+                "default": 50000000,
+                "maximum": 4000000000,
+                "minimum": 0,
+                "title": "Decompressed Bytes",
+                "type": "integer"
+              },
+              "model_tokens": {
+                "default": 0,
+                "maximum": 1000000,
+                "minimum": 0,
+                "title": "Model Tokens",
+                "type": "integer"
+              },
+              "monetary_ceiling": {
+                "default": 0.0,
+                "minimum": 0,
+                "title": "Monetary Ceiling",
+                "type": "number"
+              },
+              "redirects": {
+                "default": 8,
+                "maximum": 30,
+                "minimum": 0,
+                "title": "Redirects",
+                "type": "integer"
+              }
+            },
+            "title": "ResourceBudget",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "allow_capabilities": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 256,
+            "title": "Allow Capabilities",
+            "type": "array",
+            "uniqueItems": true
+          },
+          "approved_capabilities": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 256,
+            "title": "Approved Capabilities",
+            "type": "array",
+            "uniqueItems": true
+          },
+          "authentication_ref": {
+            "anyOf": [
+              {
+                "maxLength": 2048,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Authentication Ref"
+          },
+          "budget": {
+            "$ref": "#/$defs/ResourceBudget"
+          },
+          "deny_capabilities": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 256,
+            "title": "Deny Capabilities",
+            "type": "array",
+            "uniqueItems": true
+          },
+          "freshness_seconds": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Freshness Seconds"
+          },
+          "intent": {
+            "default": "retrieve",
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Intent",
+            "type": "string"
+          },
+          "language": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Language"
+          },
+          "metadata": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "maxProperties": 128,
+            "title": "Metadata",
+            "type": "object"
+          },
+          "output_requirements": {
+            "default": [
+              "clean_text"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 256,
+            "title": "Output Requirements",
+            "type": "array"
+          },
+          "policy_profile": {
+            "default": "default",
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Policy Profile",
+            "type": "string"
+          },
+          "privacy_profile": {
+            "default": "public",
+            "description": "Use 'public' for ordinary acquisition and 'private' for explicitly authorized private-workspace execution.",
+            "enum": [
+              "public",
+              "private"
+            ],
+            "title": "Privacy Profile",
+            "type": "string"
+          },
+          "region": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Region"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "target": {
+            "maxLength": 16384,
+            "minLength": 1,
+            "title": "Target",
+            "type": "string"
+          }
+        },
+        "required": [
+          "target"
+        ],
+        "title": "FetchRequest",
+        "type": "object"
+      },
+      "schema_version": "1.0"
+    },
+    "FetchResult": {
+      "json_schema_sha256": "dbe7feeadf8be71254a2113dbb0dc461c55e62950d1bff0734c44db6cd05f1ef",
+      "schema": {
+        "$defs": {
+          "Artifact": {
+            "additionalProperties": false,
+            "properties": {
+              "artifact_id": {
+                "format": "uuid",
+                "title": "Artifact Id",
+                "type": "string"
+              },
+              "cas_uri": {
+                "title": "Cas Uri",
+                "type": "string"
+              },
+              "extractor_version": {
+                "title": "Extractor Version",
+                "type": "string"
+              },
+              "locators": {
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "title": "Locators",
+                "type": "array"
+              },
+              "media_type": {
+                "title": "Media Type",
+                "type": "string"
+              },
+              "parent_artifact_ids": {
+                "default": [],
+                "items": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "title": "Parent Artifact Ids",
+                "type": "array"
+              },
+              "quality": {
+                "$ref": "#/$defs/QualityAssessment"
+              },
+              "representation": {
+                "title": "Representation",
+                "type": "string"
+              },
+              "role": {
+                "title": "Role",
+                "type": "string"
+              },
+              "schema_version": {
+                "const": "1.0",
+                "default": "1.0",
+                "title": "Schema Version",
+                "type": "string"
+              },
+              "sha256": {
+                "title": "Sha256",
+                "type": "string"
+              },
+              "size": {
+                "minimum": 0,
+                "title": "Size",
+                "type": "integer"
+              },
+              "source_resource_id": {
+                "format": "uuid",
+                "title": "Source Resource Id",
+                "type": "string"
+              }
+            },
+            "required": [
+              "role",
+              "representation",
+              "media_type",
+              "cas_uri",
+              "sha256",
+              "size",
+              "source_resource_id",
+              "extractor_version"
+            ],
+            "title": "Artifact",
+            "type": "object"
+          },
+          "AttemptStatus": {
+            "enum": [
+              "PLANNED",
+              "RUNNING",
+              "SUCCEEDED",
+              "SKIPPED",
+              "FAILED",
+              "CANCELLED"
+            ],
+            "title": "AttemptStatus",
+            "type": "string"
+          },
+          "CapabilityOutcome": {
+            "additionalProperties": false,
+            "properties": {
+              "capability_id": {
+                "title": "Capability Id",
+                "type": "string"
+              },
+              "details": {
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "title": "Details",
+                "type": "object"
+              },
+              "observed_at": {
+                "format": "date-time",
+                "title": "Observed At",
+                "type": "string"
+              },
+              "stage": {
+                "title": "Stage",
+                "type": "string"
+              },
+              "status": {
+                "$ref": "#/$defs/CapabilityOutcomeStatus"
+              }
+            },
+            "required": [
+              "capability_id",
+              "status",
+              "stage"
+            ],
+            "title": "CapabilityOutcome",
+            "type": "object"
+          },
+          "CapabilityOutcomeStatus": {
+            "description": "Observable per-run disposition of a registered capability.",
+            "enum": [
+              "APPLIED",
+              "OBSERVED",
+              "NOT_APPLICABLE",
+              "BLOCKED",
+              "DEPENDENCY_MISSING",
+              "FAILED"
+            ],
+            "title": "CapabilityOutcomeStatus",
+            "type": "string"
+          },
+          "CrawlReport": {
+            "additionalProperties": false,
+            "properties": {
+              "frontier_omitted": {
+                "minimum": 0,
+                "title": "Frontier Omitted",
+                "type": "integer"
+              },
+              "maximum_depth_reached": {
+                "minimum": 0,
+                "title": "Maximum Depth Reached",
+                "type": "integer"
+              },
+              "pages_failed": {
+                "minimum": 0,
+                "title": "Pages Failed",
+                "type": "integer"
+              },
+              "pages_fetched": {
+                "minimum": 0,
+                "title": "Pages Fetched",
+                "type": "integer"
+              },
+              "root_url": {
+                "title": "Root Url",
+                "type": "string"
+              },
+              "targets": {
+                "items": {
+                  "$ref": "#/$defs/DiscoveredTarget"
+                },
+                "title": "Targets",
+                "type": "array"
+              }
+            },
+            "required": [
+              "root_url",
+              "targets",
+              "pages_fetched",
+              "pages_failed",
+              "maximum_depth_reached",
+              "frontier_omitted"
+            ],
+            "title": "CrawlReport",
+            "type": "object"
+          },
+          "Diagnostic": {
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$",
+                "title": "Code",
+                "type": "string"
+              },
+              "details": {
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "title": "Details",
+                "type": "object"
+              },
+              "message": {
+                "title": "Message",
+                "type": "string"
+              },
+              "retryable": {
+                "default": false,
+                "title": "Retryable",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ],
+            "title": "Diagnostic",
+            "type": "object"
+          },
+          "DiscoveredTarget": {
+            "additionalProperties": false,
+            "properties": {
+              "accepted": {
+                "default": false,
+                "title": "Accepted",
+                "type": "boolean"
+              },
+              "depth": {
+                "minimum": 0,
+                "title": "Depth",
+                "type": "integer"
+              },
+              "failure_code": {
+                "anyOf": [
+                  {
+                    "maxLength": 128,
+                    "minLength": 1,
+                    "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Failure Code"
+              },
+              "fetched": {
+                "default": false,
+                "title": "Fetched",
+                "type": "boolean"
+              },
+              "parent_url": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Parent Url"
+              },
+              "relation": {
+                "title": "Relation",
+                "type": "string"
+              },
+              "url": {
+                "title": "Url",
+                "type": "string"
+              }
+            },
+            "required": [
+              "url",
+              "depth",
+              "relation"
+            ],
+            "title": "DiscoveredTarget",
+            "type": "object"
+          },
+          "FetchAttempt": {
+            "additionalProperties": false,
+            "properties": {
+              "adapter_version": {
+                "default": "0.3.0a0",
+                "title": "Adapter Version",
+                "type": "string"
+              },
+              "artifact_ids": {
+                "default": [],
+                "items": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "title": "Artifact Ids",
+                "type": "array"
+              },
+              "attempt_id": {
+                "format": "uuid",
+                "title": "Attempt Id",
+                "type": "string"
+              },
+              "bytes_received": {
+                "default": 0,
+                "title": "Bytes Received",
+                "type": "integer"
+              },
+              "capability_id": {
+                "title": "Capability Id",
+                "type": "string"
+              },
+              "consumed_budget": {
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                "title": "Consumed Budget",
+                "type": "object"
+              },
+              "failure_code": {
+                "anyOf": [
+                  {
+                    "maxLength": 128,
+                    "minLength": 1,
+                    "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Failure Code"
+              },
+              "finished_at": {
+                "anyOf": [
+                  {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Finished At"
+              },
+              "http_status": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Http Status"
+              },
+              "parser": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Parser"
+              },
+              "sanitized_destination": {
+                "title": "Sanitized Destination",
+                "type": "string"
+              },
+              "started_at": {
+                "format": "date-time",
+                "title": "Started At",
+                "type": "string"
+              },
+              "status": {
+                "$ref": "#/$defs/AttemptStatus",
+                "default": "PLANNED"
+              },
+              "warnings": {
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "title": "Warnings",
+                "type": "array"
+              }
+            },
+            "required": [
+              "capability_id",
+              "sanitized_destination"
+            ],
+            "title": "FetchAttempt",
+            "type": "object"
+          },
+          "PageState": {
+            "enum": [
+              "OK",
+              "EMPTY",
+              "LOGIN",
+              "CAPTCHA",
+              "BOT_BLOCK",
+              "PAYWALL",
+              "ERROR",
+              "WRONG_LANGUAGE",
+              "NEEDS_OCR",
+              "UNKNOWN"
+            ],
+            "title": "PageState",
+            "type": "string"
+          },
+          "PolicyDecision": {
+            "additionalProperties": false,
+            "properties": {
+              "allowed": {
+                "title": "Allowed",
+                "type": "boolean"
+              },
+              "destination": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Destination"
+              },
+              "evaluated_at": {
+                "format": "date-time",
+                "title": "Evaluated At",
+                "type": "string"
+              },
+              "policy_id": {
+                "title": "Policy Id",
+                "type": "string"
+              },
+              "reason": {
+                "title": "Reason",
+                "type": "string"
+              }
+            },
+            "required": [
+              "policy_id",
+              "allowed",
+              "reason"
+            ],
+            "title": "PolicyDecision",
+            "type": "object"
+          },
+          "QualityAssessment": {
+            "additionalProperties": false,
+            "properties": {
+              "accepted": {
+                "default": false,
+                "title": "Accepted",
+                "type": "boolean"
+              },
+              "completeness": {
+                "default": 0.0,
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "title": "Completeness",
+                "type": "number"
+              },
+              "duplicate_of": {
+                "anyOf": [
+                  {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Duplicate Of"
+              },
+              "language": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Language"
+              },
+              "page_state": {
+                "$ref": "#/$defs/PageState",
+                "default": "UNKNOWN"
+              },
+              "reasons": {
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "title": "Reasons",
+                "type": "array"
+              },
+              "score": {
+                "default": 0.0,
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "title": "Score",
+                "type": "number"
+              }
+            },
+            "title": "QualityAssessment",
+            "type": "object"
+          },
+          "Resource": {
+            "additionalProperties": false,
+            "properties": {
+              "authority_url": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Authority Url"
+              },
+              "canonical_url": {
+                "title": "Canonical Url",
+                "type": "string"
+              },
+              "checked_only": {
+                "default": false,
+                "title": "Checked Only",
+                "type": "boolean"
+              },
+              "media_type": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Media Type"
+              },
+              "requested_url": {
+                "title": "Requested Url",
+                "type": "string"
+              },
+              "resource_id": {
+                "format": "uuid",
+                "title": "Resource Id",
+                "type": "string"
+              },
+              "retrieved_at": {
+                "format": "date-time",
+                "title": "Retrieved At",
+                "type": "string"
+              },
+              "status_code": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Status Code"
+              }
+            },
+            "required": [
+              "canonical_url",
+              "requested_url"
+            ],
+            "title": "Resource",
+            "type": "object"
+          },
+          "ResourceBudget": {
+            "additionalProperties": false,
+            "properties": {
+              "archive_members": {
+                "default": 1000,
+                "maximum": 1000000,
+                "minimum": 1,
+                "title": "Archive Members",
+                "type": "integer"
+              },
+              "archive_ratio": {
+                "default": 100.0,
+                "maximum": 100000,
+                "minimum": 1,
+                "title": "Archive Ratio",
+                "type": "number"
+              },
+              "attempts": {
+                "default": 6,
+                "maximum": 100,
+                "minimum": 0,
+                "title": "Attempts",
+                "type": "integer"
+              },
+              "browser_seconds": {
+                "default": 20.0,
+                "maximum": 1800,
+                "minimum": 0,
+                "title": "Browser Seconds",
+                "type": "number"
+              },
+              "bytes": {
+                "default": 10000000,
+                "maximum": 2000000000,
+                "minimum": 0,
+                "title": "Bytes",
+                "type": "integer"
+              },
+              "crawl_depth": {
+                "default": 2,
+                "maximum": 20,
+                "minimum": 0,
+                "title": "Crawl Depth",
+                "type": "integer"
+              },
+              "crawl_pages": {
+                "default": 20,
+                "maximum": 100000,
+                "minimum": 1,
+                "title": "Crawl Pages",
+                "type": "integer"
+              },
+              "deadline_seconds": {
+                "default": 30.0,
+                "exclusiveMinimum": 0,
+                "maximum": 3600,
+                "title": "Deadline Seconds",
+                "type": "number"
+              },
+              "decompressed_bytes": {
+                "default": 50000000,
+                "maximum": 4000000000,
+                "minimum": 0,
+                "title": "Decompressed Bytes",
+                "type": "integer"
+              },
+              "model_tokens": {
+                "default": 0,
+                "maximum": 1000000,
+                "minimum": 0,
+                "title": "Model Tokens",
+                "type": "integer"
+              },
+              "monetary_ceiling": {
+                "default": 0.0,
+                "minimum": 0,
+                "title": "Monetary Ceiling",
+                "type": "number"
+              },
+              "redirects": {
+                "default": 8,
+                "maximum": 30,
+                "minimum": 0,
+                "title": "Redirects",
+                "type": "integer"
+              }
+            },
+            "title": "ResourceBudget",
+            "type": "object"
+          },
+          "ResultStatus": {
+            "enum": [
+              "SUCCEEDED",
+              "PARTIAL",
+              "BLOCKED_BY_POLICY",
+              "AUTH_REQUIRED",
+              "DEPENDENCY_MISSING",
+              "BUDGET_EXHAUSTED",
+              "LOW_QUALITY",
+              "NOT_FOUND",
+              "FAILED"
+            ],
+            "title": "ResultStatus",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "artifacts": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/Artifact"
+            },
+            "title": "Artifacts",
+            "type": "array"
+          },
+          "attempts": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/FetchAttempt"
+            },
+            "title": "Attempts",
+            "type": "array"
+          },
+          "capability_outcomes": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/CapabilityOutcome"
+            },
+            "title": "Capability Outcomes",
+            "type": "array"
+          },
+          "crawl_report": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/CrawlReport"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "diagnostics": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/Diagnostic"
+            },
+            "title": "Diagnostics",
+            "type": "array"
+          },
+          "policy_decisions": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/PolicyDecision"
+            },
+            "title": "Policy Decisions",
+            "type": "array"
+          },
+          "provenance_event_ids": {
+            "default": [],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Provenance Event Ids",
+            "type": "array"
+          },
+          "remaining_budget": {
+            "$ref": "#/$defs/ResourceBudget"
+          },
+          "resources": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/Resource"
+            },
+            "title": "Resources",
+            "type": "array"
+          },
+          "run_id": {
+            "format": "uuid",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/$defs/ResultStatus"
+          }
+        },
+        "required": [
+          "status"
+        ],
+        "title": "FetchResult",
+        "type": "object"
+      },
+      "schema_version": "1.0"
+    },
+    "FetchRun": {
+      "json_schema_sha256": "4cb5ad2d27c28db77aa56ceb2f9f6a050396243e3fe1886d8ddfb504035e55fe",
+      "schema": {
+        "$defs": {
+          "Artifact": {
+            "additionalProperties": false,
+            "properties": {
+              "artifact_id": {
+                "format": "uuid",
+                "title": "Artifact Id",
+                "type": "string"
+              },
+              "cas_uri": {
+                "title": "Cas Uri",
+                "type": "string"
+              },
+              "extractor_version": {
+                "title": "Extractor Version",
+                "type": "string"
+              },
+              "locators": {
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "title": "Locators",
+                "type": "array"
+              },
+              "media_type": {
+                "title": "Media Type",
+                "type": "string"
+              },
+              "parent_artifact_ids": {
+                "default": [],
+                "items": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "title": "Parent Artifact Ids",
+                "type": "array"
+              },
+              "quality": {
+                "$ref": "#/$defs/QualityAssessment"
+              },
+              "representation": {
+                "title": "Representation",
+                "type": "string"
+              },
+              "role": {
+                "title": "Role",
+                "type": "string"
+              },
+              "schema_version": {
+                "const": "1.0",
+                "default": "1.0",
+                "title": "Schema Version",
+                "type": "string"
+              },
+              "sha256": {
+                "title": "Sha256",
+                "type": "string"
+              },
+              "size": {
+                "minimum": 0,
+                "title": "Size",
+                "type": "integer"
+              },
+              "source_resource_id": {
+                "format": "uuid",
+                "title": "Source Resource Id",
+                "type": "string"
+              }
+            },
+            "required": [
+              "role",
+              "representation",
+              "media_type",
+              "cas_uri",
+              "sha256",
+              "size",
+              "source_resource_id",
+              "extractor_version"
+            ],
+            "title": "Artifact",
+            "type": "object"
+          },
+          "AttemptStatus": {
+            "enum": [
+              "PLANNED",
+              "RUNNING",
+              "SUCCEEDED",
+              "SKIPPED",
+              "FAILED",
+              "CANCELLED"
+            ],
+            "title": "AttemptStatus",
+            "type": "string"
+          },
+          "CapabilityOutcome": {
+            "additionalProperties": false,
+            "properties": {
+              "capability_id": {
+                "title": "Capability Id",
+                "type": "string"
+              },
+              "details": {
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "title": "Details",
+                "type": "object"
+              },
+              "observed_at": {
+                "format": "date-time",
+                "title": "Observed At",
+                "type": "string"
+              },
+              "stage": {
+                "title": "Stage",
+                "type": "string"
+              },
+              "status": {
+                "$ref": "#/$defs/CapabilityOutcomeStatus"
+              }
+            },
+            "required": [
+              "capability_id",
+              "status",
+              "stage"
+            ],
+            "title": "CapabilityOutcome",
+            "type": "object"
+          },
+          "CapabilityOutcomeStatus": {
+            "description": "Observable per-run disposition of a registered capability.",
+            "enum": [
+              "APPLIED",
+              "OBSERVED",
+              "NOT_APPLICABLE",
+              "BLOCKED",
+              "DEPENDENCY_MISSING",
+              "FAILED"
+            ],
+            "title": "CapabilityOutcomeStatus",
+            "type": "string"
+          },
+          "CrawlReport": {
+            "additionalProperties": false,
+            "properties": {
+              "frontier_omitted": {
+                "minimum": 0,
+                "title": "Frontier Omitted",
+                "type": "integer"
+              },
+              "maximum_depth_reached": {
+                "minimum": 0,
+                "title": "Maximum Depth Reached",
+                "type": "integer"
+              },
+              "pages_failed": {
+                "minimum": 0,
+                "title": "Pages Failed",
+                "type": "integer"
+              },
+              "pages_fetched": {
+                "minimum": 0,
+                "title": "Pages Fetched",
+                "type": "integer"
+              },
+              "root_url": {
+                "title": "Root Url",
+                "type": "string"
+              },
+              "targets": {
+                "items": {
+                  "$ref": "#/$defs/DiscoveredTarget"
+                },
+                "title": "Targets",
+                "type": "array"
+              }
+            },
+            "required": [
+              "root_url",
+              "targets",
+              "pages_fetched",
+              "pages_failed",
+              "maximum_depth_reached",
+              "frontier_omitted"
+            ],
+            "title": "CrawlReport",
+            "type": "object"
+          },
+          "Diagnostic": {
+            "additionalProperties": false,
+            "properties": {
+              "code": {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$",
+                "title": "Code",
+                "type": "string"
+              },
+              "details": {
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    },
+                    {
+                      "type": "boolean"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "title": "Details",
+                "type": "object"
+              },
+              "message": {
+                "title": "Message",
+                "type": "string"
+              },
+              "retryable": {
+                "default": false,
+                "title": "Retryable",
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "code",
+              "message"
+            ],
+            "title": "Diagnostic",
+            "type": "object"
+          },
+          "DiscoveredTarget": {
+            "additionalProperties": false,
+            "properties": {
+              "accepted": {
+                "default": false,
+                "title": "Accepted",
+                "type": "boolean"
+              },
+              "depth": {
+                "minimum": 0,
+                "title": "Depth",
+                "type": "integer"
+              },
+              "failure_code": {
+                "anyOf": [
+                  {
+                    "maxLength": 128,
+                    "minLength": 1,
+                    "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Failure Code"
+              },
+              "fetched": {
+                "default": false,
+                "title": "Fetched",
+                "type": "boolean"
+              },
+              "parent_url": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Parent Url"
+              },
+              "relation": {
+                "title": "Relation",
+                "type": "string"
+              },
+              "url": {
+                "title": "Url",
+                "type": "string"
+              }
+            },
+            "required": [
+              "url",
+              "depth",
+              "relation"
+            ],
+            "title": "DiscoveredTarget",
+            "type": "object"
+          },
+          "FetchAttempt": {
+            "additionalProperties": false,
+            "properties": {
+              "adapter_version": {
+                "default": "0.3.0a0",
+                "title": "Adapter Version",
+                "type": "string"
+              },
+              "artifact_ids": {
+                "default": [],
+                "items": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "title": "Artifact Ids",
+                "type": "array"
+              },
+              "attempt_id": {
+                "format": "uuid",
+                "title": "Attempt Id",
+                "type": "string"
+              },
+              "bytes_received": {
+                "default": 0,
+                "title": "Bytes Received",
+                "type": "integer"
+              },
+              "capability_id": {
+                "title": "Capability Id",
+                "type": "string"
+              },
+              "consumed_budget": {
+                "additionalProperties": {
+                  "anyOf": [
+                    {
+                      "type": "integer"
+                    },
+                    {
+                      "type": "number"
+                    }
+                  ]
+                },
+                "title": "Consumed Budget",
+                "type": "object"
+              },
+              "failure_code": {
+                "anyOf": [
+                  {
+                    "maxLength": 128,
+                    "minLength": 1,
+                    "pattern": "^[A-Za-z][A-Za-z0-9_.-]*$",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Failure Code"
+              },
+              "finished_at": {
+                "anyOf": [
+                  {
+                    "format": "date-time",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Finished At"
+              },
+              "http_status": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Http Status"
+              },
+              "parser": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Parser"
+              },
+              "sanitized_destination": {
+                "title": "Sanitized Destination",
+                "type": "string"
+              },
+              "started_at": {
+                "format": "date-time",
+                "title": "Started At",
+                "type": "string"
+              },
+              "status": {
+                "$ref": "#/$defs/AttemptStatus",
+                "default": "PLANNED"
+              },
+              "warnings": {
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "title": "Warnings",
+                "type": "array"
+              }
+            },
+            "required": [
+              "capability_id",
+              "sanitized_destination"
+            ],
+            "title": "FetchAttempt",
+            "type": "object"
+          },
+          "FetchResult": {
+            "additionalProperties": false,
+            "properties": {
+              "artifacts": {
+                "default": [],
+                "items": {
+                  "$ref": "#/$defs/Artifact"
+                },
+                "title": "Artifacts",
+                "type": "array"
+              },
+              "attempts": {
+                "default": [],
+                "items": {
+                  "$ref": "#/$defs/FetchAttempt"
+                },
+                "title": "Attempts",
+                "type": "array"
+              },
+              "capability_outcomes": {
+                "default": [],
+                "items": {
+                  "$ref": "#/$defs/CapabilityOutcome"
+                },
+                "title": "Capability Outcomes",
+                "type": "array"
+              },
+              "crawl_report": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/CrawlReport"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null
+              },
+              "diagnostics": {
+                "default": [],
+                "items": {
+                  "$ref": "#/$defs/Diagnostic"
+                },
+                "title": "Diagnostics",
+                "type": "array"
+              },
+              "policy_decisions": {
+                "default": [],
+                "items": {
+                  "$ref": "#/$defs/PolicyDecision"
+                },
+                "title": "Policy Decisions",
+                "type": "array"
+              },
+              "provenance_event_ids": {
+                "default": [],
+                "items": {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                "title": "Provenance Event Ids",
+                "type": "array"
+              },
+              "remaining_budget": {
+                "$ref": "#/$defs/ResourceBudget"
+              },
+              "resources": {
+                "default": [],
+                "items": {
+                  "$ref": "#/$defs/Resource"
+                },
+                "title": "Resources",
+                "type": "array"
+              },
+              "run_id": {
+                "format": "uuid",
+                "title": "Run Id",
+                "type": "string"
+              },
+              "schema_version": {
+                "const": "1.0",
+                "default": "1.0",
+                "title": "Schema Version",
+                "type": "string"
+              },
+              "status": {
+                "$ref": "#/$defs/ResultStatus"
+              }
+            },
+            "required": [
+              "status"
+            ],
+            "title": "FetchResult",
+            "type": "object"
+          },
+          "PageState": {
+            "enum": [
+              "OK",
+              "EMPTY",
+              "LOGIN",
+              "CAPTCHA",
+              "BOT_BLOCK",
+              "PAYWALL",
+              "ERROR",
+              "WRONG_LANGUAGE",
+              "NEEDS_OCR",
+              "UNKNOWN"
+            ],
+            "title": "PageState",
+            "type": "string"
+          },
+          "PolicyDecision": {
+            "additionalProperties": false,
+            "properties": {
+              "allowed": {
+                "title": "Allowed",
+                "type": "boolean"
+              },
+              "destination": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Destination"
+              },
+              "evaluated_at": {
+                "format": "date-time",
+                "title": "Evaluated At",
+                "type": "string"
+              },
+              "policy_id": {
+                "title": "Policy Id",
+                "type": "string"
+              },
+              "reason": {
+                "title": "Reason",
+                "type": "string"
+              }
+            },
+            "required": [
+              "policy_id",
+              "allowed",
+              "reason"
+            ],
+            "title": "PolicyDecision",
+            "type": "object"
+          },
+          "QualityAssessment": {
+            "additionalProperties": false,
+            "properties": {
+              "accepted": {
+                "default": false,
+                "title": "Accepted",
+                "type": "boolean"
+              },
+              "completeness": {
+                "default": 0.0,
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "title": "Completeness",
+                "type": "number"
+              },
+              "duplicate_of": {
+                "anyOf": [
+                  {
+                    "format": "uuid",
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Duplicate Of"
+              },
+              "language": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Language"
+              },
+              "page_state": {
+                "$ref": "#/$defs/PageState",
+                "default": "UNKNOWN"
+              },
+              "reasons": {
+                "default": [],
+                "items": {
+                  "type": "string"
+                },
+                "title": "Reasons",
+                "type": "array"
+              },
+              "score": {
+                "default": 0.0,
+                "maximum": 1.0,
+                "minimum": 0.0,
+                "title": "Score",
+                "type": "number"
+              }
+            },
+            "title": "QualityAssessment",
+            "type": "object"
+          },
+          "Resource": {
+            "additionalProperties": false,
+            "properties": {
+              "authority_url": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Authority Url"
+              },
+              "canonical_url": {
+                "title": "Canonical Url",
+                "type": "string"
+              },
+              "checked_only": {
+                "default": false,
+                "title": "Checked Only",
+                "type": "boolean"
+              },
+              "media_type": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Media Type"
+              },
+              "requested_url": {
+                "title": "Requested Url",
+                "type": "string"
+              },
+              "resource_id": {
+                "format": "uuid",
+                "title": "Resource Id",
+                "type": "string"
+              },
+              "retrieved_at": {
+                "format": "date-time",
+                "title": "Retrieved At",
+                "type": "string"
+              },
+              "status_code": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Status Code"
+              }
+            },
+            "required": [
+              "canonical_url",
+              "requested_url"
+            ],
+            "title": "Resource",
+            "type": "object"
+          },
+          "ResourceBudget": {
+            "additionalProperties": false,
+            "properties": {
+              "archive_members": {
+                "default": 1000,
+                "maximum": 1000000,
+                "minimum": 1,
+                "title": "Archive Members",
+                "type": "integer"
+              },
+              "archive_ratio": {
+                "default": 100.0,
+                "maximum": 100000,
+                "minimum": 1,
+                "title": "Archive Ratio",
+                "type": "number"
+              },
+              "attempts": {
+                "default": 6,
+                "maximum": 100,
+                "minimum": 0,
+                "title": "Attempts",
+                "type": "integer"
+              },
+              "browser_seconds": {
+                "default": 20.0,
+                "maximum": 1800,
+                "minimum": 0,
+                "title": "Browser Seconds",
+                "type": "number"
+              },
+              "bytes": {
+                "default": 10000000,
+                "maximum": 2000000000,
+                "minimum": 0,
+                "title": "Bytes",
+                "type": "integer"
+              },
+              "crawl_depth": {
+                "default": 2,
+                "maximum": 20,
+                "minimum": 0,
+                "title": "Crawl Depth",
+                "type": "integer"
+              },
+              "crawl_pages": {
+                "default": 20,
+                "maximum": 100000,
+                "minimum": 1,
+                "title": "Crawl Pages",
+                "type": "integer"
+              },
+              "deadline_seconds": {
+                "default": 30.0,
+                "exclusiveMinimum": 0,
+                "maximum": 3600,
+                "title": "Deadline Seconds",
+                "type": "number"
+              },
+              "decompressed_bytes": {
+                "default": 50000000,
+                "maximum": 4000000000,
+                "minimum": 0,
+                "title": "Decompressed Bytes",
+                "type": "integer"
+              },
+              "model_tokens": {
+                "default": 0,
+                "maximum": 1000000,
+                "minimum": 0,
+                "title": "Model Tokens",
+                "type": "integer"
+              },
+              "monetary_ceiling": {
+                "default": 0.0,
+                "minimum": 0,
+                "title": "Monetary Ceiling",
+                "type": "number"
+              },
+              "redirects": {
+                "default": 8,
+                "maximum": 30,
+                "minimum": 0,
+                "title": "Redirects",
+                "type": "integer"
+              }
+            },
+            "title": "ResourceBudget",
+            "type": "object"
+          },
+          "ResultStatus": {
+            "enum": [
+              "SUCCEEDED",
+              "PARTIAL",
+              "BLOCKED_BY_POLICY",
+              "AUTH_REQUIRED",
+              "DEPENDENCY_MISSING",
+              "BUDGET_EXHAUSTED",
+              "LOW_QUALITY",
+              "NOT_FOUND",
+              "FAILED"
+            ],
+            "title": "ResultStatus",
+            "type": "string"
+          },
+          "RunState": {
+            "enum": [
+              "QUEUED",
+              "PLANNING",
+              "RUNNING",
+              "FINISHED"
+            ],
+            "title": "RunState",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "result": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/FetchResult"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "run_id": {
+            "format": "uuid",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "state": {
+            "$ref": "#/$defs/RunState"
+          },
+          "submitted_at": {
+            "format": "date-time",
+            "title": "Submitted At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "state",
+          "submitted_at"
+        ],
+        "title": "FetchRun",
+        "type": "object"
+      },
+      "schema_version": "1.0"
+    },
+    "InspectionResult": {
+      "json_schema_sha256": "0144b92077400a97b27a9a3015e5d56e822f6906a02f4b2e9ee30ac8fc246798",
+      "schema": {
+        "$defs": {
+          "PolicyDecision": {
+            "additionalProperties": false,
+            "properties": {
+              "allowed": {
+                "title": "Allowed",
+                "type": "boolean"
+              },
+              "destination": {
+                "anyOf": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Destination"
+              },
+              "evaluated_at": {
+                "format": "date-time",
+                "title": "Evaluated At",
+                "type": "string"
+              },
+              "policy_id": {
+                "title": "Policy Id",
+                "type": "string"
+              },
+              "reason": {
+                "title": "Reason",
+                "type": "string"
+              }
+            },
+            "required": [
+              "policy_id",
+              "allowed",
+              "reason"
+            ],
+            "title": "PolicyDecision",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "family": {
+            "title": "Family",
+            "type": "string"
+          },
+          "media_type_hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Media Type Hint"
+          },
+          "normalized_target": {
+            "title": "Normalized Target",
+            "type": "string"
+          },
+          "policy_decisions": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/PolicyDecision"
+            },
+            "title": "Policy Decisions",
+            "type": "array"
+          },
+          "suggested_capabilities": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Suggested Capabilities",
+            "type": "array"
+          }
+        },
+        "required": [
+          "normalized_target",
+          "family"
+        ],
+        "title": "InspectionResult",
+        "type": "object"
+      },
+      "schema_version": "1.0"
+    },
+    "PlanNode": {
+      "json_schema_sha256": "1d6b94d7e3263b75cb27f25da160ad51666f4589e2b5dc812ee28f20da9aaea8",
+      "schema": {
+        "$defs": {
+          "RetryRule": {
+            "additionalProperties": false,
+            "properties": {
+              "backoff_seconds": {
+                "default": 0.25,
+                "maximum": 60,
+                "minimum": 0,
+                "title": "Backoff Seconds",
+                "type": "number"
+              },
+              "maximum": {
+                "default": 1,
+                "maximum": 10,
+                "minimum": 0,
+                "title": "Maximum",
+                "type": "integer"
+              },
+              "retryable_codes": {
+                "default": [
+                  "timeout",
+                  "connection",
+                  "429",
+                  "5xx"
+                ],
+                "items": {
+                  "type": "string"
+                },
+                "title": "Retryable Codes",
+                "type": "array"
+              }
+            },
+            "title": "RetryRule",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "adapter": {
+            "title": "Adapter",
+            "type": "string"
+          },
+          "capability_id": {
+            "title": "Capability Id",
+            "type": "string"
+          },
+          "dependencies": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Dependencies",
+            "type": "array"
+          },
+          "fallback_for": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Fallback For"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "parallel_group": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Parallel Group"
+          },
+          "parameters": {
+            "additionalProperties": true,
+            "title": "Parameters",
+            "type": "object"
+          },
+          "requires_approval": {
+            "default": false,
+            "title": "Requires Approval",
+            "type": "boolean"
+          },
+          "reserved_budget": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            "title": "Reserved Budget",
+            "type": "object"
+          },
+          "retry": {
+            "$ref": "#/$defs/RetryRule"
+          },
+          "stop_on_acceptance": {
+            "default": false,
+            "title": "Stop On Acceptance",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "capability_id",
+          "adapter"
+        ],
+        "title": "PlanNode",
+        "type": "object"
+      },
+      "schema_version": "1.0"
+    },
+    "ProvenanceEvent": {
+      "json_schema_sha256": "36a197ccb15d4f23674860d433f3352269517773cc5a685893e1fbe8d5af3cf2",
+      "schema": {
+        "additionalProperties": false,
+        "properties": {
+          "actor": {
+            "title": "Actor",
+            "type": "string"
+          },
+          "event_id": {
+            "format": "uuid",
+            "title": "Event Id",
+            "type": "string"
+          },
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "parent_event_ids": {
+            "default": [],
+            "items": {
+              "format": "uuid",
+              "type": "string"
+            },
+            "title": "Parent Event Ids",
+            "type": "array"
+          },
+          "payload": {
+            "additionalProperties": true,
+            "title": "Payload",
+            "type": "object"
+          },
+          "run_id": {
+            "format": "uuid",
+            "title": "Run Id",
+            "type": "string"
+          },
+          "timestamp": {
+            "format": "date-time",
+            "title": "Timestamp",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "event_type",
+          "actor"
+        ],
+        "title": "ProvenanceEvent",
+        "type": "object"
+      },
+      "schema_version": "1.0"
+    },
+    "PublicError": {
+      "json_schema_sha256": "81c0024db4cd1a5d1b5c1000dadea64ab31445c4f93a4c05d7d914a0cc6cf4d9",
+      "schema": {
+        "$defs": {
+          "PublicErrorCode": {
+            "description": "Stable machine-readable failures returned by public interfaces.",
+            "enum": [
+              "INVALID_REQUEST"
+            ],
+            "title": "PublicErrorCode",
+            "type": "string"
+          },
+          "ValidationIssue": {
+            "additionalProperties": false,
+            "description": "One sanitized validation issue without rejected input or exception context.",
+            "properties": {
+              "code": {
+                "maxLength": 128,
+                "minLength": 1,
+                "pattern": "^[a-z0-9_.-]+$",
+                "title": "Code",
+                "type": "string"
+              },
+              "location": {
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "integer"
+                    }
+                  ]
+                },
+                "maxItems": 8,
+                "title": "Location",
+                "type": "array"
+              },
+              "message": {
+                "maxLength": 256,
+                "minLength": 1,
+                "title": "Message",
+                "type": "string"
+              }
+            },
+            "required": [
+              "location",
+              "code",
+              "message"
+            ],
+            "title": "ValidationIssue",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Bounded error envelope shared by the SDK, REST, CLI, and MCP.",
+        "properties": {
+          "code": {
+            "$ref": "#/$defs/PublicErrorCode"
+          },
+          "issues": {
+            "default": [],
+            "items": {
+              "$ref": "#/$defs/ValidationIssue"
+            },
+            "maxItems": 32,
+            "title": "Issues",
+            "type": "array"
+          },
+          "message": {
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Message",
+            "type": "string"
+          },
+          "omitted_issues": {
+            "default": 0,
+            "maximum": 1000000,
+            "minimum": 0,
+            "title": "Omitted Issues",
+            "type": "integer"
+          },
+          "retryable": {
+            "default": false,
+            "title": "Retryable",
+            "type": "boolean"
+          },
+          "schema_version": {
+            "const": "1.0",
+            "default": "1.0",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "status_code": {
+            "maximum": 599,
+            "minimum": 400,
+            "title": "Status Code",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "status_code"
+        ],
+        "title": "PublicError",
+        "type": "object"
+      },
+      "schema_version": "1.0"
+    },
+    "PublicErrorDescriptor": {
+      "json_schema_sha256": "b819f7cc7968420395422b0e7a33801ce946ff0483ae78cc5cfbb34418fdd39e",
+      "schema": {
+        "$defs": {
+          "PublicErrorCode": {
+            "description": "Stable machine-readable failures returned by public interfaces.",
+            "enum": [
+              "INVALID_REQUEST"
+            ],
+            "title": "PublicErrorCode",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Cross-interface delivery contract for one pre-execution error.",
+        "properties": {
+          "cli_exit_code": {
+            "maximum": 255,
+            "minimum": 1,
+            "title": "Cli Exit Code",
+            "type": "integer"
+          },
+          "code": {
+            "$ref": "#/$defs/PublicErrorCode"
+          },
+          "issue_codes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Issue Codes",
+            "type": "array"
+          },
+          "mcp_delivery": {
+            "const": "tool error",
+            "default": "tool error",
+            "title": "Mcp Delivery",
+            "type": "string"
+          },
+          "rest_status": {
+            "maximum": 599,
+            "minimum": 400,
+            "title": "Rest Status",
+            "type": "integer"
+          },
+          "retryable": {
+            "default": false,
+            "title": "Retryable",
+            "type": "boolean"
+          },
+          "sdk_delivery": {
+            "const": "FetechValidationError",
+            "default": "FetechValidationError",
+            "title": "Sdk Delivery",
+            "type": "string"
+          },
+          "summary": {
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Summary",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "summary",
+          "issue_codes",
+          "rest_status",
+          "cli_exit_code"
+        ],
+        "title": "PublicErrorDescriptor",
+        "type": "object"
+      },
+      "schema_version": "1.0"
+    },
+    "ReasoningQuery": {
+      "json_schema_sha256": "513e0607f13eed06a89378a1a1d9b73dc01ef00dc69a7be7fd1c33e9e395fdb7",
+      "schema": {
+        "additionalProperties": false,
+        "properties": {
+          "allowed": {
+            "default": true,
+            "title": "Allowed",
+            "type": "boolean"
+          },
+          "available": {
+            "default": true,
+            "title": "Available",
+            "type": "boolean"
+          },
+          "capability_id": {
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Capability Id",
+            "type": "string"
+          },
+          "dependencies": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 64,
+            "title": "Dependencies",
+            "type": "array"
+          },
+          "facts": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Facts",
+            "type": "object"
+          },
+          "query_type": {
+            "default": "capability_eligibility",
+            "title": "Query Type",
+            "type": "string"
+          },
+          "risk_class": {
+            "default": "low",
+            "maxLength": 32,
+            "title": "Risk Class",
+            "type": "string"
+          }
+        },
+        "required": [
+          "capability_id"
+        ],
+        "title": "ReasoningQuery",
+        "type": "object"
+      },
+      "schema_version": "1.0"
+    },
+    "ReasoningResult": {
+      "json_schema_sha256": "c498c47e2aa7ec2751559cfc6830db9a94774fb98b4e9802c0fd22fe6b1c974d",
+      "schema": {
+        "$defs": {
+          "BackendStatus": {
+            "enum": [
+              "SUCCEEDED",
+              "FALLBACK",
+              "UNAVAILABLE",
+              "FAILED"
+            ],
+            "title": "BackendStatus",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "properties": {
+          "backend": {
+            "title": "Backend",
+            "type": "string"
+          },
+          "capability_id": {
+            "title": "Capability Id",
+            "type": "string"
+          },
+          "conclusion": {
+            "title": "Conclusion",
+            "type": "string"
+          },
+          "diagnostics": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Diagnostics",
+            "type": "array"
+          },
+          "eligible": {
+            "title": "Eligible",
+            "type": "boolean"
+          },
+          "executable_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Executable Version"
+          },
+          "input_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Input Sha256"
+          },
+          "reasons": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Reasons",
+            "type": "array"
+          },
+          "result_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Result Sha256"
+          },
+          "ruleset_sha256": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Ruleset Sha256"
+          },
+          "status": {
+            "$ref": "#/$defs/BackendStatus"
+          }
+        },
+        "required": [
+          "backend",
+          "status",
+          "capability_id",
+          "conclusion",
+          "eligible"
+        ],
+        "title": "ReasoningResult",
+        "type": "object"
+      },
+      "schema_version": "1.0"
+    },
+    "Resource": {
+      "json_schema_sha256": "0d34a5630332d201f9cf55c63c5c03f843e0c3b4fd47d30510bc700da435727e",
+      "schema": {
+        "additionalProperties": false,
+        "properties": {
+          "authority_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Authority Url"
+          },
+          "canonical_url": {
+            "title": "Canonical Url",
+            "type": "string"
+          },
+          "checked_only": {
+            "default": false,
+            "title": "Checked Only",
+            "type": "boolean"
+          },
+          "media_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Media Type"
+          },
+          "requested_url": {
+            "title": "Requested Url",
+            "type": "string"
+          },
+          "resource_id": {
+            "format": "uuid",
+            "title": "Resource Id",
+            "type": "string"
+          },
+          "retrieved_at": {
+            "format": "date-time",
+            "title": "Retrieved At",
+            "type": "string"
+          },
+          "status_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Status Code"
+          }
+        },
+        "required": [
+          "canonical_url",
+          "requested_url"
+        ],
+        "title": "Resource",
+        "type": "object"
+      },
+      "schema_version": "1.0"
+    },
+    "ResourceBudget": {
+      "json_schema_sha256": "848ec1517227022d5ef37a874a2e8e5604cff5818b5b63cf2f06814928d48c9d",
+      "schema": {
+        "additionalProperties": false,
+        "properties": {
+          "archive_members": {
+            "default": 1000,
+            "maximum": 1000000,
+            "minimum": 1,
+            "title": "Archive Members",
+            "type": "integer"
+          },
+          "archive_ratio": {
+            "default": 100.0,
+            "maximum": 100000,
+            "minimum": 1,
+            "title": "Archive Ratio",
+            "type": "number"
+          },
+          "attempts": {
+            "default": 6,
+            "maximum": 100,
+            "minimum": 0,
+            "title": "Attempts",
+            "type": "integer"
+          },
+          "browser_seconds": {
+            "default": 20.0,
+            "maximum": 1800,
+            "minimum": 0,
+            "title": "Browser Seconds",
+            "type": "number"
+          },
+          "bytes": {
+            "default": 10000000,
+            "maximum": 2000000000,
+            "minimum": 0,
+            "title": "Bytes",
+            "type": "integer"
+          },
+          "crawl_depth": {
+            "default": 2,
+            "maximum": 20,
+            "minimum": 0,
+            "title": "Crawl Depth",
+            "type": "integer"
+          },
+          "crawl_pages": {
+            "default": 20,
+            "maximum": 100000,
+            "minimum": 1,
+            "title": "Crawl Pages",
+            "type": "integer"
+          },
+          "deadline_seconds": {
+            "default": 30.0,
+            "exclusiveMinimum": 0,
+            "maximum": 3600,
+            "title": "Deadline Seconds",
+            "type": "number"
+          },
+          "decompressed_bytes": {
+            "default": 50000000,
+            "maximum": 4000000000,
+            "minimum": 0,
+            "title": "Decompressed Bytes",
+            "type": "integer"
+          },
+          "model_tokens": {
+            "default": 0,
+            "maximum": 1000000,
+            "minimum": 0,
+            "title": "Model Tokens",
+            "type": "integer"
+          },
+          "monetary_ceiling": {
+            "default": 0.0,
+            "minimum": 0,
+            "title": "Monetary Ceiling",
+            "type": "number"
+          },
+          "redirects": {
+            "default": 8,
+            "maximum": 30,
+            "minimum": 0,
+            "title": "Redirects",
+            "type": "integer"
+          }
+        },
+        "title": "ResourceBudget",
+        "type": "object"
+      },
+      "schema_version": "1.0"
+    },
+    "ResultStatusDescriptor": {
+      "json_schema_sha256": "0e8deb4bc3c1922562f744b3567f7b6d6c22fce7212d347c2c9db7064d0b0c03",
+      "schema": {
+        "$defs": {
+          "ResultStatus": {
+            "enum": [
+              "SUCCEEDED",
+              "PARTIAL",
+              "BLOCKED_BY_POLICY",
+              "AUTH_REQUIRED",
+              "DEPENDENCY_MISSING",
+              "BUDGET_EXHAUSTED",
+              "LOW_QUALITY",
+              "NOT_FOUND",
+              "FAILED"
+            ],
+            "title": "ResultStatus",
+            "type": "string"
+          }
+        },
+        "additionalProperties": false,
+        "description": "Stable terminal semantics for one canonical fetch result status.",
+        "properties": {
+          "artifact_disposition": {
+            "enum": [
+              "accepted_required",
+              "artifacts_required",
+              "optional"
+            ],
+            "title": "Artifact Disposition",
+            "type": "string"
+          },
+          "cli_exit_code": {
+            "const": 0,
+            "default": 0,
+            "title": "Cli Exit Code",
+            "type": "integer"
+          },
+          "common_diagnostic_codes": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Common Diagnostic Codes",
+            "type": "array"
+          },
+          "mcp_delivery": {
+            "const": "FetchResult JSON",
+            "default": "FetchResult JSON",
+            "title": "Mcp Delivery",
+            "type": "string"
+          },
+          "rest_result_status": {
+            "const": 200,
+            "default": 200,
+            "title": "Rest Result Status",
+            "type": "integer"
+          },
+          "rest_submission_status": {
+            "const": 202,
+            "default": 202,
+            "title": "Rest Submission Status",
+            "type": "integer"
+          },
+          "retryable": {
+            "default": false,
+            "title": "Retryable",
+            "type": "boolean"
+          },
+          "sdk_delivery": {
+            "const": "FetchResult",
+            "default": "FetchResult",
+            "title": "Sdk Delivery",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/$defs/ResultStatus"
+          },
+          "successful": {
+            "title": "Successful",
+            "type": "boolean"
+          },
+          "summary": {
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Summary",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "summary",
+          "successful",
+          "artifact_disposition"
+        ],
+        "title": "ResultStatusDescriptor",
+        "type": "object"
+      },
+      "schema_version": "1.0"
+    },
+    "ValidationIssue": {
+      "json_schema_sha256": "1ac2050894204c58dbeea96f47979c6ce151734395fb5d8d5afdfcf6fb0f9d8f",
+      "schema": {
+        "additionalProperties": false,
+        "description": "One sanitized validation issue without rejected input or exception context.",
+        "properties": {
+          "code": {
+            "maxLength": 128,
+            "minLength": 1,
+            "pattern": "^[a-z0-9_.-]+$",
+            "title": "Code",
+            "type": "string"
+          },
+          "location": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "maxItems": 8,
+            "title": "Location",
+            "type": "array"
+          },
+          "message": {
+            "maxLength": 256,
+            "minLength": 1,
+            "title": "Message",
+            "type": "string"
+          }
+        },
+        "required": [
+          "location",
+          "code",
+          "message"
+        ],
+        "title": "ValidationIssue",
+        "type": "object"
+      },
+      "schema_version": "1.0"
+    }
+  },
+  "mcp": {
+    "tools": {
+      "cancel_fetch": {
+        "input_schema": {
+          "properties": {
+            "run_id": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "run_id"
+          ],
+          "title": "cancel_fetchArguments",
+          "type": "object"
+        },
+        "result": "str"
+      },
+      "crawl_domain": {
+        "input_schema": {
+          "properties": {
+            "maximum_depth": {
+              "default": 2,
+              "title": "Maximum Depth",
+              "type": "integer"
+            },
+            "maximum_pages": {
+              "default": 20,
+              "title": "Maximum Pages",
+              "type": "integer"
+            },
+            "target": {
+              "title": "Target",
+              "type": "string"
+            }
+          },
+          "required": [
+            "target"
+          ],
+          "title": "crawl_domainArguments",
+          "type": "object"
+        },
+        "result": "str"
+      },
+      "explain_capability": {
+        "input_schema": {
+          "properties": {
+            "allowed": {
+              "default": true,
+              "title": "Allowed",
+              "type": "boolean"
+            },
+            "capability_id": {
+              "title": "Capability Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "capability_id"
+          ],
+          "title": "explain_capabilityArguments",
+          "type": "object"
+        },
+        "result": "str"
+      },
+      "extract_document": {
+        "input_schema": {
+          "properties": {
+            "target": {
+              "title": "Target",
+              "type": "string"
+            }
+          },
+          "required": [
+            "target"
+          ],
+          "title": "extract_documentArguments",
+          "type": "object"
+        },
+        "result": "str"
+      },
+      "extract_media": {
+        "input_schema": {
+          "properties": {
+            "target": {
+              "title": "Target",
+              "type": "string"
+            }
+          },
+          "required": [
+            "target"
+          ],
+          "title": "extract_mediaArguments",
+          "type": "object"
+        },
+        "result": "str"
+      },
+      "fetch_content": {
+        "input_schema": {
+          "properties": {
+            "approved_capabilities": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Approved Capabilities"
+            },
+            "authentication_ref": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Authentication Ref"
+            },
+            "maximum_bytes": {
+              "default": 10000000,
+              "title": "Maximum Bytes",
+              "type": "integer"
+            },
+            "outputs": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Outputs"
+            },
+            "privacy_profile": {
+              "default": "public",
+              "enum": [
+                "public",
+                "private"
+              ],
+              "title": "Privacy Profile",
+              "type": "string"
+            },
+            "target": {
+              "title": "Target",
+              "type": "string"
+            }
+          },
+          "required": [
+            "target"
+          ],
+          "title": "fetch_contentArguments",
+          "type": "object"
+        },
+        "result": "str"
+      },
+      "get_context": {
+        "input_schema": {
+          "properties": {
+            "question": {
+              "title": "Question",
+              "type": "string"
+            },
+            "token_budget": {
+              "default": 4000,
+              "title": "Token Budget",
+              "type": "integer"
+            }
+          },
+          "required": [
+            "question"
+          ],
+          "title": "get_contextArguments",
+          "type": "object"
+        },
+        "result": "str"
+      },
+      "get_contracts": {
+        "input_schema": {
+          "properties": {},
+          "title": "get_contractsArguments",
+          "type": "object"
+        },
+        "result": "str"
+      },
+      "get_failures": {
+        "input_schema": {
+          "properties": {},
+          "title": "get_failuresArguments",
+          "type": "object"
+        },
+        "result": "str"
+      },
+      "get_fetch_trace": {
+        "input_schema": {
+          "properties": {
+            "run_id": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "run_id"
+          ],
+          "title": "get_fetch_traceArguments",
+          "type": "object"
+        },
+        "result": "str"
+      },
+      "inspect_target": {
+        "input_schema": {
+          "properties": {
+            "target": {
+              "title": "Target",
+              "type": "string"
+            }
+          },
+          "required": [
+            "target"
+          ],
+          "title": "inspect_targetArguments",
+          "type": "object"
+        },
+        "result": "str"
+      },
+      "query_provenance": {
+        "input_schema": {
+          "properties": {
+            "run_id": {
+              "title": "Run Id",
+              "type": "string"
+            }
+          },
+          "required": [
+            "run_id"
+          ],
+          "title": "query_provenanceArguments",
+          "type": "object"
+        },
+        "result": "str"
+      },
+      "submit_fetch": {
+        "input_schema": {
+          "properties": {
+            "approved_capabilities": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Approved Capabilities"
+            },
+            "authentication_ref": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Authentication Ref"
+            },
+            "maximum_bytes": {
+              "default": 10000000,
+              "title": "Maximum Bytes",
+              "type": "integer"
+            },
+            "outputs": {
+              "anyOf": [
+                {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "default": null,
+              "title": "Outputs"
+            },
+            "privacy_profile": {
+              "default": "public",
+              "enum": [
+                "public",
+                "private"
+              ],
+              "title": "Privacy Profile",
+              "type": "string"
+            },
+            "target": {
+              "title": "Target",
+              "type": "string"
+            }
+          },
+          "required": [
+            "target"
+          ],
+          "title": "submit_fetchArguments",
+          "type": "object"
+        },
+        "result": "str"
+      }
+    }
+  },
+  "rest": {
+    "operations": [
+      {
+        "method": "GET",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "artifact_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Artifact Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "content",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Content",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "maximum_bytes",
+            "required": false,
+            "schema": {
+              "default": 1000000,
+              "maximum": 10000000,
+              "minimum": 1,
+              "title": "Maximum Bytes",
+              "type": "integer"
+            }
+          }
+        ],
+        "path": "/v1/artifacts/{artifact_id}",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Artifact V1 Artifacts  Artifact Id  Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicError"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "method": "GET",
+        "parameters": [],
+        "path": "/v1/capabilities",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "title": "Response Capabilities V1 Capabilities Get",
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "method": "GET",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "capability_id",
+            "required": true,
+            "schema": {
+              "title": "Capability Id",
+              "type": "string"
+            }
+          }
+        ],
+        "path": "/v1/capabilities/{capability_id}/explanation",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReasoningResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "method": "POST",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "capability_id",
+            "required": true,
+            "schema": {
+              "title": "Capability Id",
+              "type": "string"
+            }
+          }
+        ],
+        "path": "/v1/capabilities/{capability_id}/explanation",
+        "request_body": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FetchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReasoningResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicError"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "method": "POST",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "question",
+            "required": true,
+            "schema": {
+              "title": "Question",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "token_budget",
+            "required": false,
+            "schema": {
+              "default": 4000,
+              "title": "Token Budget",
+              "type": "integer"
+            }
+          }
+        ],
+        "path": "/v1/context/search",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContextBundle"
+                }
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicError"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "method": "GET",
+        "parameters": [],
+        "path": "/v1/contracts",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ContractManifest"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "method": "POST",
+        "parameters": [],
+        "path": "/v1/crawl",
+        "request_body": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FetchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FetchRun"
+                }
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicError"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "method": "GET",
+        "parameters": [],
+        "path": "/v1/failures",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FailureCatalogue"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "method": "POST",
+        "parameters": [],
+        "path": "/v1/fetch",
+        "request_body": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FetchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FetchRun"
+                }
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicError"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "method": "POST",
+        "parameters": [],
+        "path": "/v1/inspect",
+        "request_body": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FetchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InspectionResult"
+                }
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicError"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "method": "POST",
+        "parameters": [],
+        "path": "/v1/plan",
+        "request_body": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FetchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FetchPlan"
+                }
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicError"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "method": "DELETE",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "path": "/v1/runs/{run_id}",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FetchRun"
+                }
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicError"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "method": "GET",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "path": "/v1/runs/{run_id}",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FetchRun"
+                }
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicError"
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "method": "GET",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Run Id",
+              "type": "string"
+            }
+          }
+        ],
+        "path": "/v1/runs/{run_id}/events",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "title": "Response Events V1 Runs  Run Id  Events Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PublicError"
+                }
+              }
+            }
+          }
+        }
+      }
+    ]
+  },
+  "schema_version": "1.0",
+  "sdk": {
+    "classes": {
+      "FetchHandle": {
+        "constructor": {
+          "async": false,
+          "parameters": [
+            {
+              "annotation": "UUID",
+              "kind": "POSITIONAL_OR_KEYWORD",
+              "name": "run_id",
+              "required": true
+            },
+            {
+              "annotation": "UniversalFetchGateway",
+              "kind": "POSITIONAL_OR_KEYWORD",
+              "name": "gateway",
+              "required": true
+            }
+          ],
+          "return": "None"
+        },
+        "methods": {
+          "cancel": {
+            "async": true,
+            "parameters": [],
+            "return": "FetchRun"
+          },
+          "events": {
+            "async": true,
+            "parameters": [],
+            "return": "AsyncIterator[ProvenanceEvent]"
+          },
+          "result": {
+            "async": true,
+            "parameters": [],
+            "return": "FetchResult"
+          },
+          "snapshot": {
+            "async": true,
+            "parameters": [],
+            "return": "FetchRun"
+          }
+        }
+      },
+      "FetechClient": {
+        "constructor": {
+          "async": false,
+          "parameters": [
+            {
+              "annotation": "Settings | None",
+              "default": null,
+              "kind": "POSITIONAL_OR_KEYWORD",
+              "name": "settings",
+              "required": false
+            },
+            {
+              "annotation": "CredentialProvider | None",
+              "default": null,
+              "kind": "KEYWORD_ONLY",
+              "name": "credential_provider",
+              "required": false
+            },
+            {
+              "annotation": "SessionProvider | None",
+              "default": null,
+              "kind": "KEYWORD_ONLY",
+              "name": "session_provider",
+              "required": false
+            },
+            {
+              "annotation": "FormSubmissionProvider | None",
+              "default": null,
+              "kind": "KEYWORD_ONLY",
+              "name": "form_submission_provider",
+              "required": false
+            },
+            {
+              "annotation": "GitLFSResolver | None",
+              "default": null,
+              "kind": "KEYWORD_ONLY",
+              "name": "git_lfs_resolver",
+              "required": false
+            },
+            {
+              "annotation": "PDFOCRProvider | None",
+              "default": null,
+              "kind": "KEYWORD_ONLY",
+              "name": "pdf_ocr_provider",
+              "required": false
+            },
+            {
+              "annotation": "MediaAdapter | None",
+              "default": null,
+              "kind": "KEYWORD_ONLY",
+              "name": "media_adapter",
+              "required": false
+            },
+            {
+              "annotation": "Mapping[str, SnapshotConnector] | None",
+              "default": null,
+              "kind": "KEYWORD_ONLY",
+              "name": "snapshot_connectors",
+              "required": false
+            },
+            {
+              "annotation": "Path | None",
+              "default": null,
+              "kind": "KEYWORD_ONLY",
+              "name": "repository",
+              "required": false
+            },
+            {
+              "annotation": "Path | None",
+              "default": null,
+              "kind": "KEYWORD_ONLY",
+              "name": "vault",
+              "required": false
+            },
+            {
+              "annotation": "str",
+              "default": "obsidian-mind",
+              "kind": "KEYWORD_ONLY",
+              "name": "qmd_index",
+              "required": false
+            }
+          ],
+          "return": "None"
+        },
+        "methods": {
+          "__aenter__": {
+            "async": true,
+            "parameters": [],
+            "return": "FetechClient"
+          },
+          "__aexit__": {
+            "async": true,
+            "parameters": [
+              {
+                "annotation": "object",
+                "kind": "VAR_POSITIONAL",
+                "name": "_",
+                "required": true
+              }
+            ],
+            "return": "None"
+          },
+          "cancel": {
+            "async": true,
+            "parameters": [
+              {
+                "annotation": "UUID | str",
+                "kind": "POSITIONAL_OR_KEYWORD",
+                "name": "run_id",
+                "required": true
+              }
+            ],
+            "return": "FetchRun"
+          },
+          "close": {
+            "async": true,
+            "parameters": [],
+            "return": "None"
+          },
+          "context": {
+            "async": true,
+            "parameters": [
+              {
+                "annotation": "str",
+                "kind": "POSITIONAL_OR_KEYWORD",
+                "name": "question",
+                "required": true
+              },
+              {
+                "annotation": "int",
+                "default": 4000,
+                "kind": "KEYWORD_ONLY",
+                "name": "token_budget",
+                "required": false
+              }
+            ],
+            "return": "ContextBundle"
+          },
+          "contracts": {
+            "async": false,
+            "parameters": [],
+            "return": "ContractManifest"
+          },
+          "crawl": {
+            "async": true,
+            "parameters": [
+              {
+                "annotation": "FetchRequest | Mapping[str, object]",
+                "kind": "POSITIONAL_OR_KEYWORD",
+                "name": "request",
+                "required": true
+              }
+            ],
+            "return": "FetchResult"
+          },
+          "explain_capability": {
+            "async": true,
+            "parameters": [
+              {
+                "annotation": "str",
+                "kind": "POSITIONAL_OR_KEYWORD",
+                "name": "capability_id",
+                "required": true
+              },
+              {
+                "annotation": "FetchRequest | None",
+                "default": null,
+                "kind": "KEYWORD_ONLY",
+                "name": "request",
+                "required": false
+              }
+            ],
+            "return": "ReasoningResult"
+          },
+          "failures": {
+            "async": false,
+            "parameters": [],
+            "return": "FailureCatalogue"
+          },
+          "fetch": {
+            "async": true,
+            "parameters": [
+              {
+                "annotation": "FetchRequest | Mapping[str, object]",
+                "kind": "POSITIONAL_OR_KEYWORD",
+                "name": "request",
+                "required": true
+              }
+            ],
+            "return": "FetchResult"
+          },
+          "inspect": {
+            "async": true,
+            "parameters": [
+              {
+                "annotation": "FetchRequest | Mapping[str, object]",
+                "kind": "POSITIONAL_OR_KEYWORD",
+                "name": "request",
+                "required": true
+              }
+            ],
+            "return": "InspectionResult"
+          },
+          "plan": {
+            "async": true,
+            "parameters": [
+              {
+                "annotation": "FetchRequest | Mapping[str, object]",
+                "kind": "POSITIONAL_OR_KEYWORD",
+                "name": "request",
+                "required": true
+              }
+            ],
+            "return": "FetchPlan"
+          },
+          "plan_deterministic": {
+            "async": false,
+            "parameters": [
+              {
+                "annotation": "FetchRequest | Mapping[str, object]",
+                "kind": "POSITIONAL_OR_KEYWORD",
+                "name": "request",
+                "required": true
+              }
+            ],
+            "return": "FetchPlan"
+          },
+          "submit": {
+            "async": true,
+            "parameters": [
+              {
+                "annotation": "FetchRequest | Mapping[str, object]",
+                "kind": "POSITIONAL_OR_KEYWORD",
+                "name": "request",
+                "required": true
+              }
+            ],
+            "return": "FetchHandle"
+          }
+        }
+      }
+    },
+    "exports": [
+      "ArchivedSnapshot",
+      "Artifact",
+      "CapabilityOutcome",
+      "CapabilityOutcomeStatus",
+      "ContextBroker",
+      "ContextBudget",
+      "ContextBundle",
+      "ContextNeed",
+      "ContextProviderReport",
+      "ContextProviderStatus",
+      "ContextSource",
+      "ContextTokenUsage",
+      "ContractDescriptor",
+      "ContractManifest",
+      "CrawlReport",
+      "CredentialMaterial",
+      "CredentialNotFoundError",
+      "CredentialProvider",
+      "CredentialProviderError",
+      "CredentialProviderUnavailableError",
+      "DiscoveredTarget",
+      "FailureCatalogue",
+      "FailureCodeDescriptor",
+      "FetchPlan",
+      "FetchRequest",
+      "FetchResult",
+      "FetechClient",
+      "FetechValidationError",
+      "FormSubmission",
+      "FormSubmissionApproval",
+      "FormSubmissionProvider",
+      "GitLFSResolveRequest",
+      "GitLFSResolvedObject",
+      "GitLFSResolver",
+      "InMemoryCredentialProvider",
+      "InMemoryFormSubmissionProvider",
+      "InMemorySessionProvider",
+      "MediaAdapter",
+      "NullSessionProvider",
+      "OriginScopedSession",
+      "PDFOCRPage",
+      "PDFOCRProvider",
+      "PrivateWorkspaceTarget",
+      "PublicError",
+      "PublicErrorCode",
+      "PublicErrorDescriptor",
+      "ReasoningQuery",
+      "ReasoningResult",
+      "RefreshableCredentialProvider",
+      "ResourceBudget",
+      "ResultStatus",
+      "ResultStatusDescriptor",
+      "SessionProvider",
+      "SnapshotConnector",
+      "TranscriptProvider",
+      "ValidationIssue",
+      "WaybackSnapshotConnector",
+      "YouTubeMetadataProvider",
+      "__version__",
+      "classify_context_needs",
+      "contract_manifest",
+      "extract_csrf_token",
+      "failure_catalogue",
+      "public_validation_error",
+      "validate_context_request",
+      "validate_fetch_request",
+      "validate_uuid"
+    ]
+  }
+}

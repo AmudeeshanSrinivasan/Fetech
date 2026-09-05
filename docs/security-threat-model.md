@@ -396,6 +396,7 @@ controls, not proofs against unknown vulnerabilities.
 | Bounded JSON, XML, feed, OpenAPI, and GraphQL normalization | `tests/test_v03_api.py`, structured-API regression tests |
 | Deterministic malformed-input and format-aware properties for request/URL, structured API/feed, HTML reader/discovery/navigation, browser/document IPC, native document, archive, media, Clingo, and Prolog boundaries | `tests/test_beta_parser_fuzz.py`, `tests/test_beta_format_fuzz.py`, `docs/fuzzing.md` |
 | Stable, sanitized terminal statuses and attempt/crawl/diagnostic/validation codes across SDK, REST, CLI, and MCP | `tests/test_beta_failure_catalogue.py`, `docs/failure-semantics.md` |
+| Fail-closed drift detection for public schemas, SDK methods, REST operations, CLI parameters, MCP tools, and supported pre-Beta migrations | `tests/test_beta_compatibility.py`, `scripts/check_beta_compatibility.py`, `docs/api-compatibility.md` |
 | Same-host deterministic wheel/sdist bytes, bounded archive metadata, wheel `RECORD`, and clean artifact installs | `tests/test_beta_reproducible_builds.py`, `scripts/verify_reproducible_builds.py`, mandatory Beta CI evidence |
 | SDK, REST, CLI, and MCP behavioral parity | `tests/test_v03_interfaces.py`, runtime conformance tests |
 
