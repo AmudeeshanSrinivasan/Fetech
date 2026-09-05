@@ -19,6 +19,7 @@ jobs:
         with:
           ref: ${{ env.FETECH_EXPECTED_COMMIT }}
           persist-credentials: false
+          fetch-depth: 0
       - name: Verify checked-out commit identity
         run: test "$(git rev-parse HEAD)" = "$FETECH_EXPECTED_COMMIT"
       - uses: actions/setup-python@v6

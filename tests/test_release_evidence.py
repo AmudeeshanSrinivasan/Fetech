@@ -104,6 +104,7 @@ def _verify_frozen_v04_candidate() -> None:
 def test_beta_ci_verifies_the_frozen_candidate_without_regeneration() -> None:
     workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(encoding="utf-8")
 
+    assert workflow.count("fetch-depth: 0") == 1
     assert "Verify release evidence" in workflow
     assert "generate_release_evidence.py --check-published" in workflow
     assert "pytest tests/test_release_evidence.py -q" in workflow
