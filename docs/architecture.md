@@ -417,9 +417,10 @@ requires exact-version live smoke evidence for optional dependencies, tools, and
 endpoint/service evidence for Wayback; artifact-level notice and redistribution legal review for
 the explicit NVIDIA proprietary/EULA and pypdfium2 mixed-distribution LicenseRefs; and verified
 release-specific SBOM, dependency-license, wheel, source-distribution, checksum, tag, and package
-artifacts. The exact-version catalog now covers all 167 third-party identities in the current
-universal lock and regenerates the v0.4.0a0 candidate reports; those candidate artifacts do not
-by themselves satisfy the remaining publication steps. The published v0.3 evidence is immutable historical
+artifacts. The exact-version catalog covers all 168 third-party identities in the current
+universal lock and regenerates the v0.5.0b1 Beta reports. The v0.4.0a0 candidate reports remain
+frozen; none of these candidate artifacts by themselves satisfy the remaining publication steps.
+The published v0.3 evidence is immutable historical
 evidence and is checked against its separate release profile instead of being regenerated from the
 current lock.
 

@@ -48,6 +48,13 @@ agree on that identity. Assigning the version does not create a tag, GitHub Rele
 publication, and it does not alter the frozen `0.4.0a0` publication contract. The bounded scope and
 remaining evidence gaps are recorded in [`releases/v0.5.0b1.md`](releases/v0.5.0b1.md).
 
+The Beta dependency inventory is tracked separately as
+`release/fetech-0.5.0b1-beta.spdx.json` and
+`release/dependency-licenses-0.5.0b1-beta.md`. Both are deterministic, unpublished engineering
+evidence generated from the exact universal lock, reviewed versioned license catalog, and the
+hash-bound inputs declared by `scripts/release_v05_beta.toml`. They do not constitute legal
+approval, installed-runtime evidence, or a publication receipt.
+
 ## Increment 1: contract discovery and fail-closed versions
 
 The public contract version remains `1.0`, and the REST namespace remains `v1`.
@@ -209,6 +216,9 @@ uv run pytest tests/test_beta_storage_lifecycle.py
 uv run pytest tests/test_beta_compatibility.py
 uv run pytest tests/test_beta_version.py
 uv run python scripts/check_beta_compatibility.py
+uv run python scripts/generate_release_evidence.py \
+  --overlay-profile scripts/release_v05_beta.toml --check
+uv run pytest tests/test_beta_release_evidence.py
 uv run pytest
 uv run ruff check .
 uv run mypy src/fetech

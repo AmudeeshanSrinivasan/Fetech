@@ -63,11 +63,16 @@ immutable:
 
 ```bash
 uv run python scripts/generate_release_evidence.py --check-published
+uv run python scripts/generate_release_evidence.py \
+  --overlay-profile scripts/release_v05_beta.toml --check
 uv run pytest tests/test_release_evidence.py
+uv run pytest tests/test_beta_release_evidence.py
 ```
 
-For a future explicitly unfrozen candidate, generate and check evidence only under that candidate's
-own profile. An ordinary readiness `--check` confirms that its tracked report is exact, including
+The current Beta evidence is generated and checked only under `scripts/release_v05_beta.toml`; it
+does not alter the frozen v0.4 candidate. For a future explicitly unfrozen candidate, generate and
+check evidence only under that candidate's own profile. An ordinary readiness `--check` confirms
+that its tracked report is exact, including
 truthful blockers; it does not mean a release is publishable. Only the final release environment
 may run `--require-publishable`, and it must not provide or relabel evidence that did not actually
 pass.

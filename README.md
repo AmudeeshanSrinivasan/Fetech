@@ -301,7 +301,7 @@ uv run ruff check .
 uv run mypy src/fetech
 uv run python scripts/generate_release_evidence.py --check-published
 uv run python scripts/generate_release_evidence.py \
-  --overlay-profile scripts/release_v04_candidate.toml --check
+  --overlay-profile scripts/release_v05_beta.toml --check
 uv build
 git diff --check
 ```
@@ -318,4 +318,7 @@ market superiority. The published v0.3 evidence is immutable and is hash- and me
 separately tracked
 [v0.4.0a0 candidate SBOM](release/fetech-0.4.0a0-candidate.spdx.json) and
 [candidate dependency-license report](release/dependency-licenses-0.4.0a0-candidate.md) are
-explicitly unreleased evidence for package version `0.4.0a0`.
+explicitly unreleased evidence for package version `0.4.0a0`. The current Beta has its own
+[hash-bound SPDX snapshot](release/fetech-0.5.0b1-beta.spdx.json) and
+[dependency-license report](release/dependency-licenses-0.5.0b1-beta.md); they identify
+`0.5.0b1` and remain unreleased engineering evidence rather than publication or legal approval.

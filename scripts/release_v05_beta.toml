@@ -1,0 +1,226 @@
+[overlay]
+identifier = "v0.5.0b1-beta"
+title = "v0.5.0b1 Beta candidate"
+package_version = "0.5.0b1"
+status = "unreleased-candidate"
+created = "2026-09-05T00:00:00Z"
+closure_release = "v0.4"
+capability_count = 36
+cumulative_capability_count = 155
+spdx_filename = "fetech-0.5.0b1-beta.spdx.json"
+license_report_filename = "dependency-licenses-0.5.0b1-beta.md"
+evidence_inputs = [
+  "README.md",
+  "LICENSE",
+  "SECURITY.md",
+  "CONTRIBUTING.md",
+  "pyproject.toml",
+  "uv.lock",
+  "capabilities/manifest.yaml",
+  "compatibility/beta-v1.json",
+  "compatibility/fixtures/v0.4.0a0-contracts.json",
+  ".github/workflows/ci.yml",
+  "docs/adr/0001-polyglot-logic-backends.md",
+  "docs/api-compatibility.md",
+  "docs/architecture.md",
+  "docs/beta-development.md",
+  "docs/capability-catalog.md",
+  "docs/context-broker.md",
+  "docs/extraction-provenance.md",
+  "docs/failure-semantics.md",
+  "docs/fuzzing.md",
+  "docs/reproducible-builds.md",
+  "docs/security-threat-model.md",
+  "docs/storage-lifecycle.md",
+  "docs/releases/v0.5.0b1.md",
+  "release/fetech-v0.4.0a0-freeze.toml",
+  "scripts/check_beta_compatibility.py",
+  "scripts/generate_release_evidence.py",
+  "scripts/release_license_catalog.toml",
+  "scripts/release_published.toml",
+  "scripts/verify_reproducible_builds.py",
+  "src/fetech/__init__.py",
+  "src/fetech/adapters/__init__.py",
+  "src/fetech/adapters/api.py",
+  "src/fetech/adapters/archive.py",
+  "src/fetech/adapters/auth.py",
+  "src/fetech/adapters/base.py",
+  "src/fetech/adapters/browser.py",
+  "src/fetech/adapters/cache.py",
+  "src/fetech/adapters/discovery.py",
+  "src/fetech/adapters/documents.py",
+  "src/fetech/adapters/http.py",
+  "src/fetech/adapters/media.py",
+  "src/fetech/adapters/reader.py",
+  "src/fetech/adapters/structured.py",
+  "src/fetech/adapters/variants.py",
+  "src/fetech/archive_worker.py",
+  "src/fetech/auth.py",
+  "src/fetech/auth_flows.py",
+  "src/fetech/browser_reader.py",
+  "src/fetech/browser_render.py",
+  "src/fetech/browser_worker.py",
+  "src/fetech/cli.py",
+  "src/fetech/client.py",
+  "src/fetech/compatibility.py",
+  "src/fetech/config.py",
+  "src/fetech/conformance.py",
+  "src/fetech/context.py",
+  "src/fetech/contracts.py",
+  "src/fetech/daemon.py",
+  "src/fetech/docling_artifacts.py",
+  "src/fetech/document_worker.py",
+  "src/fetech/errors.py",
+  "src/fetech/executor.py",
+  "src/fetech/failures.py",
+  "src/fetech/gateway.py",
+  "src/fetech/http3.py",
+  "src/fetech/image_worker.py",
+  "src/fetech/ledger.py",
+  "src/fetech/logic/__init__.py",
+  "src/fetech/logic/base.py",
+  "src/fetech/logic/clingo_backend.py",
+  "src/fetech/logic/coordinator.py",
+  "src/fetech/logic/models.py",
+  "src/fetech/logic/process.py",
+  "src/fetech/logic/process_bootstrap.py",
+  "src/fetech/logic/prolog_backend.py",
+  "src/fetech/logic/python_backend.py",
+  "src/fetech/logic/rules/planner.lp",
+  "src/fetech/logic/rules/reasoner.pl",
+  "src/fetech/mcp_server.py",
+  "src/fetech/models.py",
+  "src/fetech/planning.py",
+  "src/fetech/provenance.py",
+  "src/fetech/quality.py",
+  "src/fetech/registry.py",
+  "src/fetech/scheduling.py",
+  "src/fetech/search.py",
+  "src/fetech/security.py",
+  "src/fetech/storage.py",
+  "src/fetech/storage_lifecycle.py",
+  "src/fetech/transport.py",
+  "src/fetech/variants.py",
+  "src/fetech/version.py",
+  "src/fetech/wayback.py",
+  "src/fetech/worker_audit.py",
+  "src/fetech/worker_isolation.py",
+  "src/fetech/worker_isolation_bootstrap.py",
+  "src/fetech/yt_dlp.py",
+  "src/fetech/yt_dlp_worker.py",
+  "tests/conftest.py",
+  "tests/test_beta_compatibility.py",
+  "tests/test_beta_context.py",
+  "tests/test_beta_contracts.py",
+  "tests/test_beta_failure_catalogue.py",
+  "tests/test_beta_format_fuzz.py",
+  "tests/test_beta_lifecycle.py",
+  "tests/test_beta_parser_fuzz.py",
+  "tests/test_beta_release_evidence.py",
+  "tests/test_beta_reproducible_builds.py",
+  "tests/test_beta_storage_lifecycle.py",
+  "tests/test_beta_validation_errors.py",
+  "tests/test_beta_version.py",
+  "tests/test_docling_artifacts.py",
+  "tests/test_enma_invariants.py",
+  "tests/test_http_adapter.py",
+  "tests/test_logic_backends.py",
+  "tests/test_network_scheduling.py",
+  "tests/test_pinned_transport.py",
+  "tests/test_release_evidence.py",
+  "tests/test_runtime_bugfixes.py",
+  "tests/test_runtime_conformance.py",
+  "tests/test_storage_cas.py",
+  "tests/test_v01_conformance.py",
+  "tests/test_v02_browser.py",
+  "tests/test_v02_conformance.py",
+  "tests/test_v02_discovery.py",
+  "tests/test_v02_interfaces.py",
+  "tests/test_v02_variants.py",
+  "tests/test_v03_api.py",
+  "tests/test_v03_auth.py",
+  "tests/test_v03_auth_flows.py",
+  "tests/test_v03_capability_matrix.py",
+  "tests/test_v03_integration.py",
+  "tests/test_v03_interfaces.py",
+  "tests/test_v03_login_cookie_handoff.py",
+  "tests/test_v03_runtime_regressions.py",
+  "tests/test_v03_security_regressions.py",
+  "tests/test_v03_session_connector.py",
+  "tests/test_v04_budget_accounting.py",
+  "tests/test_v04_cache_archives.py",
+  "tests/test_v04_cache_expiry_provenance.py",
+  "tests/test_v04_capability_matrix.py",
+  "tests/test_v04_docling.py",
+  "tests/test_v04_document_providers_integration.py",
+  "tests/test_v04_documents.py",
+  "tests/test_v04_integration.py",
+  "tests/test_v04_interfaces.py",
+  "tests/test_v04_media.py",
+  "tests/test_v04_planning.py",
+  "tests/test_v04_smoke_evidence.py",
+  "tests/test_v04_ytdlp.py",
+  "tests/test_v04_ytdlp_release_claim.py",
+  "tests/test_wayback.py",
+  "tests/test_worker_audit.py",
+  "tests/test_worker_isolation.py",
+]
+publication_gaps = [
+  "The Beta package is untagged and unpublished; this evidence is an unreleased snapshot and not release approval.",
+  "Same-host reproducible-build CI is implemented, but final signed release checksums and publication receipts do not exist.",
+  "Exact-version live smoke evidence for separately installed tools, browser downloads, model artifacts, and configured services or connectors is incomplete.",
+  "The reviewed catalog covers all 168 third-party identities in the current universal lock. Artifact-level notice and redistribution legal review remains required for the explicit NVIDIA proprietary or EULA and pypdfium2 mixed-distribution LicenseRefs before bundled redistribution can be approved.",
+  "The competitor matrix predates the Beta surface and must be refreshed before product-positioning claims are reviewed.",
+  "The 100-task context-efficiency acceptance benchmark has not been completed.",
+  "Platform-specific deployment attestations and format-fuzz campaigns are deliberately deferred and outside this evidence scope.",
+  "The separate v0.4.0a0 publication contract remains frozen at 10 of 14 gates; this Beta evidence does not relabel or satisfy it.",
+]
+
+[[external_components]]
+name = "SWI-Prolog"
+status = "Optional logic executable installed separately and not shipped by Fetech."
+license_observation = "`BSD-2-Clause` for the core."
+required_review = "The selected build may link GMP or load add-ons with additional terms. Inspect it with the `license.` predicate."
+source_url = "https://www.swi-prolog.org/license.html"
+
+[[external_components]]
+name = "curl"
+status = "Optional HTTP/3 executable installed separately and not shipped by Fetech."
+license_observation = "SPDX `curl`."
+required_review = "Record the selected build, linked libraries, license texts, and notices before redistributing a system image."
+source_url = "https://curl.se/docs/copyright.html"
+
+[[external_components]]
+name = "GitHub CLI"
+status = "Release executable installed separately and not shipped by Fetech."
+license_observation = "MIT license."
+required_review = "Use an authenticated, reviewed gh installation only in the release environment; it is not a runtime dependency."
+source_url = "https://github.com/cli/cli/blob/trunk/LICENSE"
+
+[[external_components]]
+name = "Playwright browser binaries"
+status = "Downloaded separately by the Playwright CLI and not contained in the Python wheel."
+license_observation = "Varies by browser and build."
+required_review = "Record each selected browser build and preserve its bundled licenses and notices."
+source_url = "https://playwright.dev/python/docs/browsers"
+
+[[external_components]]
+name = "Tesseract OCR"
+status = "Optional OCR executable discovered at runtime and not shipped by Fetech."
+license_observation = "Apache-2.0 for the upstream engine."
+required_review = "Record the exact executable, trained-data packages, linked libraries, licenses, and notices used by a distribution."
+source_url = "https://github.com/tesseract-ocr/tesseract/blob/main/LICENSE"
+
+[[external_components]]
+name = "FFmpeg and FFprobe"
+status = "Optional media executables discovered at runtime and not shipped by Fetech."
+license_observation = "`LGPL-2.1-or-later` baseline."
+required_review = "GPL-covered build options can change the complete build license. Record configure flags and linked libraries."
+source_url = "https://ffmpeg.org/legal.html"
+
+[[external_components]]
+name = "Docling Layout Heron model artifacts"
+status = "Operator-provisioned local artifact bundle for the preferred offline Docling path; not contained in the Python wheel or universal lock."
+license_observation = "Reference bundle e9aab284777b02541f427ff10ff7e2f1b5656eda04afa3082b9b448d8201bd76 records docling-project/docling-layout-heron@8f39ad3c0b4c58e9c2d2c84a38465abf757272d8 with published Apache-2.0 metadata."
+required_review = "Technical provenance is not legal approval. Review the bundled model card, license text, notices, and redistribution terms before release or image publication."
+source_url = "https://huggingface.co/docling-project/docling-layout-heron/tree/8f39ad3c0b4c58e9c2d2c84a38465abf757272d8"

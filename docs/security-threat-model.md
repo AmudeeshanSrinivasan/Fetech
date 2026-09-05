@@ -456,9 +456,10 @@ still requires:
   endpoint/service metadata for unversioned remote services, in the release evidence;
 - artifact-level notice and redistribution legal review for dependencies recorded under explicit
   NVIDIA proprietary/EULA and pypdfium2 mixed-distribution LicenseRefs; the exact-version catalog
-  already covers all 167 third-party identities in the current universal lock and regenerates the
-  v0.4.0a0 candidate SPDX and dependency-license evidence. The published v0.3 artifacts remain
-  immutable and are checked against their historical release profile;
+  covers all 168 third-party identities in the current universal lock and regenerates the
+  v0.5.0b1 Beta SPDX and dependency-license evidence. The v0.4.0a0 candidate evidence remains
+  frozen, while the published v0.3 artifacts remain immutable and are checked against their
+  historical release profile;
 - a passing mandatory `containment-linux` job on the release commit and
   verification of the delegated reference systemd unit on its target Linux
   distribution;
@@ -467,7 +468,8 @@ still requires:
 - malware-scanning integration points where deployments require them.
 
 Release administration is also unfinished: current package metadata reports `0.5.0b1`, but the Beta
-is untagged and unpublished. The separate v0.4 candidate remains frozen at 10/14 gates.
+is untagged and unpublished. Its tracked SPDX and dependency-license files are deterministic
+engineering evidence, not approval or publication receipts. The separate v0.4 candidate remains frozen at 10/14 gates.
 Reproducible v0.4 candidate SPDX and dependency-license reports exist; its remaining attestations,
 approvals, tag, and published package/release artifacts do not.
 

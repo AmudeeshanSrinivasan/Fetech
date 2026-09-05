@@ -49,6 +49,11 @@ jobs:
         run: |
           uv run --no-sync python scripts/generate_release_evidence.py --check-published
           uv run --no-sync pytest tests/test_release_evidence.py -q
+      - name: Verify Beta release evidence
+        run: |
+          uv run --no-sync python scripts/generate_release_evidence.py \
+            --overlay-profile scripts/release_v05_beta.toml --check
+          uv run --no-sync pytest tests/test_beta_release_evidence.py -q
       - name: Build Beta distributions
         run: |
           uv build
