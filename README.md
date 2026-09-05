@@ -3,15 +3,15 @@
 Fetech is an Apache-2.0, policy-aware content-acquisition runtime. It registers 155 capabilities
 across 13 categories and selects only the capabilities needed for a request.
 
-The current release-candidate branch implements the canonical registry and contracts, deterministic
+The current Beta branch implements the canonical registry and contracts, deterministic
 planning, SSRF-safe HTTP acquisition, bounded crawling, URL alternatives, bounded browser,
 document, media, and archive subprocesses, typed artifacts, a SQLite event ledger,
 content-addressed storage, validated snapshots, quality validation, runtime provenance projection,
 Python SDK, CLI, REST, MCP, a bounded Graphify/QMD context broker, origin-scoped authentication
 sessions, approved form submission, and bounded structured API/feed normalization.
 
-The published `v0.3.0a0` prerelease closes 119 paths. The unreleased `v0.4.0a0` candidate adds the final 36
-document, media, cache, snapshot, and archive paths, giving 155/155 implementation paths: 17 v0.4
+The published `v0.3.0a0` prerelease closes 119 paths. The frozen, unreleased `v0.4.0a0` candidate
+adds the final 36 document, media, cache, snapshot, and archive paths, giving 155/155 implementation paths: 17 v0.4
 paths are native and 19 use typed optional dependencies or configured providers. Optional means an
 implementation boundary ships but its binary or service may be absent; absence returns
 `DEPENDENCY_MISSING`. HTTP/3 similarly uses bounded `curl --http3-only`.
@@ -19,8 +19,9 @@ implementation boundary ships but its binary or service may be absent; absence r
 counts separately; Fetech never infers successful local execution merely from manifest
 registration.
 
-> **Release status:** `0.4.0a0` is an unreleased candidate. Package and lock metadata now identify
-> `0.4.0a0`, but no v0.4 tag, GitHub Release, or package publication exists. The preferred offline
+> **Release status:** the `0.4.0a0` candidate is frozen at 10/14 publication gates. Its retained
+> evidence identifies `0.4.0a0`, but no v0.4 tag, GitHub Release, or package publication exists.
+> Current source, runtime, and lock metadata identify the separate, unpublished `0.5.0b1` Beta. The preferred offline
 > Docling path, shared network admission, and an independent
 > POSIX startup deadline are implemented. Fail-closed Linux per-worker profiles are implemented;
 > passing release-commit Linux enforcement evidence and target systemd verification, a clean
@@ -32,7 +33,7 @@ registration.
 > verified wheel/source distributions and checksums, a tag, and package publication remain release
 > gates. Candidate evidence and notes are not published-release artifacts.
 
-> **Beta development:** post-v0.4 stabilization work now lives on the `beta` branch. The official
+> **Beta development (`0.5.0b1`):** post-v0.4 stabilization work now lives on the `beta` branch. The official
 > v0.4 publication contract remains frozen at 10/14 gates; Beta changes do not relabel, regenerate,
 > or waive its outstanding systemd-attestation, legal-review, tag/release, and package-publication
 > gates. The first Beta increment adds fail-closed contract-schema versions and a deterministic
@@ -47,7 +48,8 @@ registration.
 > format-aware feed/OpenAPI, HTML, worker-envelope, and archive fuzz regressions, and a versioned
 > failure catalogue shared by all four interfaces. The fifth increment freezes the exact public
 > contract, SDK, REST, CLI, and MCP surface and adds pre-Beta migration fixtures.
-> See the [Beta development guide](docs/beta-development.md).
+> See the [Beta development guide](docs/beta-development.md) and the
+> [`0.5.0b1` development note](docs/releases/v0.5.0b1.md).
 
 Fetech permits local yt-dlp only in development mode; required mode refuses it until brokered, allowlisted egress is configured.
 
@@ -66,7 +68,7 @@ Logic-engine results are treated as untrusted proposals. Python accepts only reg
 IDs and schema-valid outputs, then reapplies destination, authorization, and resource policies before
 execution. Fetech continues deterministically when either logic engine is absent or times out.
 
-> **Alpha status:** the current package ships the pure-Python planner, a bounded Clingo planner
+> **Beta status:** the current package ships the pure-Python planner, a bounded Clingo planner
 > adapter, and a bounded SWI-Prolog reasoner. Python remains the default. Clingo can be installed with
 > the `logic` extra; SWI-Prolog is discovered as an explicitly installed system executable.
 

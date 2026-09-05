@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import importlib.util
-import inspect
 import json
 import sys
 from pathlib import Path
@@ -599,32 +598,6 @@ def test_version_gate_rejects_runtime_or_openapi_drift(
     )
 
     assert version_gate["state"] == "blocked"
-
-
-def test_default_outbound_identity_matches_candidate_version() -> None:
-    from fetech.adapters.browser import BrowserAdapter
-    from fetech.adapters.reader import ReaderAdapter
-    from fetech.browser_worker import DEFAULT_USER_AGENT as WORKER_USER_AGENT
-    from fetech.config import Settings
-    from fetech.search import HTTPSearchProvider
-    from fetech.version import DEFAULT_USER_AGENT, __version__
-
-    assert __version__ == "0.4.0a0"
-    assert DEFAULT_USER_AGENT.startswith(f"Fetech/{__version__} ")
-    assert Settings.__dataclass_fields__["user_agent"].default == DEFAULT_USER_AGENT
-    assert (
-        inspect.signature(BrowserAdapter).parameters["user_agent"].default
-        == DEFAULT_USER_AGENT
-    )
-    assert (
-        inspect.signature(ReaderAdapter).parameters["user_agent"].default
-        == DEFAULT_USER_AGENT
-    )
-    assert (
-        inspect.signature(HTTPSearchProvider).parameters["user_agent"].default
-        == DEFAULT_USER_AGENT
-    )
-    assert WORKER_USER_AGENT == DEFAULT_USER_AGENT
 
 
 def test_release_note_capability_accounting_matches_live_registry() -> None:

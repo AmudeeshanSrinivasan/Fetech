@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import copy
 import importlib.util
+import subprocess
 import sys
+import tomllib
 from collections import Counter
 from pathlib import Path
 
@@ -89,10 +91,22 @@ def test_builds_canonical_exact_commit_default_branch_attestation() -> None:
     assert render_attestation(receipt).endswith("\n")
 
 
-def test_workflow_contains_every_release_critical_named_step() -> None:
-    workflow = (ROOT / ".github" / "workflows" / "ci.yml").read_text(
-        encoding="utf-8"
+def test_frozen_v04_workflow_contains_every_release_critical_named_step() -> None:
+    freeze = tomllib.loads(
+        (ROOT / "release" / "fetech-v0.4.0a0-freeze.toml").read_text(
+            encoding="utf-8"
+        )
     )
+    workflow = subprocess.run(
+        [
+            "git",
+            "show",
+            f"{freeze['candidate_commit']}:.github/workflows/ci.yml",
+        ],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+    ).stdout.decode("utf-8", errors="strict")
 
     expected = Counter(
         step

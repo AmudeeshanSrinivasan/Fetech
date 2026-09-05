@@ -4,7 +4,7 @@ Fetech is a Python-first, optionally polyglot content-acquisition runtime. Pytho
 interfaces and every security-sensitive effect. Clingo and SWI-Prolog are optional reasoning engines
 behind typed protocols; neither is required for deterministic operation.
 
-Implementation status: the alpha implements the Python runtime and deterministic planner, the Clingo
+Implementation status: the `0.5.0b1` Beta implements the Python runtime and deterministic planner, the Clingo
 `PlannerBackend`, and the SWI-Prolog `ReasonerBackend`. Python is the default and fallback. The
 Clingo executable may come from `fetech[logic]` or an explicitly configured path; SWI-Prolog remains
 an explicitly installed system dependency.
@@ -31,8 +31,8 @@ uses bounded native or external-tool media parsers, and stores sanitized immutab
 over CAS artifacts. It includes built-in bounded yt-dlp and Wayback paths; other live media and
 snapshot connectors are injected protocols whose results are revalidated. Missing optional
 dependencies, tools, or providers are observable dependency failures; neither
-registration nor cache presence is accepted as evidence. Package metadata identifies `0.4.0a0`,
-but the candidate remains untagged and unpublished.
+registration nor cache presence is accepted as evidence. The frozen v0.4 candidate remains
+untagged and unpublished; current Beta package metadata identifies `0.5.0b1` independently.
 
 ## Beta contract stabilization
 

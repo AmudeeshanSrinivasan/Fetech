@@ -109,6 +109,9 @@ def test_beta_ci_verifies_the_frozen_candidate_without_regeneration() -> None:
     assert "pytest tests/test_release_evidence.py -q" in workflow
     assert "check_v04_release_readiness.py --check" not in workflow
     assert "--overlay-profile scripts/release_v04_candidate.toml --check" not in workflow
+    assert "verify_v04_release_artifacts.py" not in workflow
+    assert "fetech-0.5.0b1-py3-none-any.whl" in workflow
+    assert "fetech-0.5.0b1.tar.gz" in workflow
 
 
 def _inputs():
@@ -459,7 +462,7 @@ def test_check_mode_rejects_missing_or_stale_artifacts(tmp_path: Path) -> None:
     historical_report = tmp_path / "dependency-licenses.md"
     historical_report.write_text("immutable historical evidence\n", encoding="utf-8")
     generate(ROOT, tmp_path, check=False)
-    report = tmp_path / "dependency-licenses-0.4.0a0.md"
+    report = tmp_path / "dependency-licenses-0.5.0b1.md"
     assert historical_report.read_text(encoding="utf-8") == (
         "immutable historical evidence\n"
     )
@@ -469,21 +472,38 @@ def test_check_mode_rejects_missing_or_stale_artifacts(tmp_path: Path) -> None:
         generate(ROOT, tmp_path, check=True)
 
 
-def test_v04_candidate_overlay_is_reproducible_without_relabeling_package(
+def test_v04_candidate_overlay_structure_and_frozen_evidence_are_preserved(
     tmp_path: Path,
 ) -> None:
     inputs = _inputs()
+    assert inputs.project["version"] == "0.5.0b1"
+    with pytest.raises(ValueError, match="cannot relabel the package"):
+        load_development_overlay(
+            ROOT,
+            V04_OVERLAY,
+            package_version=str(inputs.project["version"]),
+        )
+
+    candidate_inputs = replace(
+        inputs,
+        project={**inputs.project, "version": "0.4.0a0"},
+    )
     overlay = load_development_overlay(
         ROOT,
         V04_OVERLAY,
-        package_version=str(inputs.project["version"]),
+        package_version="0.4.0a0",
     )
-    version, expected_spdx, expected_report = render_release_evidence(
-        PROJECT,
-        LOCK,
-        CATALOG,
-        overlay,
+    version = "0.4.0a0"
+    expected_spdx = (
+        json.dumps(
+            build_spdx_document(candidate_inputs, overlay),
+            indent=2,
+            sort_keys=True,
+            ensure_ascii=False,
+        )
+        + "\n"
     )
+    expected_report = build_license_report(candidate_inputs, overlay)
     document = json.loads(expected_spdx)
     root_package = next(
         package
@@ -781,7 +801,7 @@ def test_v04_overlay_counts_are_derived_from_the_canonical_manifest() -> None:
     overlay = load_development_overlay(
         ROOT,
         V04_OVERLAY,
-        package_version=str(_inputs().project["version"]),
+        package_version="0.4.0a0",
     )
     assert (
         overlay.closure_release,

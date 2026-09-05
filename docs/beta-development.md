@@ -43,8 +43,10 @@ Increment 5 now enforces the current Beta `v1` surface through a checked-in exac
 pre-Beta migration fixtures. The required-Linux fuzz expansion remains a separately visible,
 deferred part of Increment 4; this local API-freeze work does not satisfy or waive it.
 
-No Beta distribution version has been assigned. Package metadata remains `0.4.0a0` until a separate
-version decision is made; this development branch is not a published v0.4 artifact.
+The Beta distribution version is `0.5.0b1`. Source, runtime, lock, FastAPI and build metadata must
+agree on that identity. Assigning the version does not create a tag, GitHub Release or package
+publication, and it does not alter the frozen `0.4.0a0` publication contract. The bounded scope and
+remaining evidence gaps are recorded in [`releases/v0.5.0b1.md`](releases/v0.5.0b1.md).
 
 ## Increment 1: contract discovery and fail-closed versions
 
@@ -205,6 +207,7 @@ uv run pytest tests/test_beta_parser_fuzz.py tests/test_beta_format_fuzz.py
 uv run pytest tests/test_beta_reproducible_builds.py
 uv run pytest tests/test_beta_storage_lifecycle.py
 uv run pytest tests/test_beta_compatibility.py
+uv run pytest tests/test_beta_version.py
 uv run python scripts/check_beta_compatibility.py
 uv run pytest
 uv run ruff check .

@@ -1,17 +1,18 @@
 # Fetech security threat model
 
-Status: v0.4.0a0 unreleased candidate snapshot
+Status: v0.5.0b1 unpublished Beta snapshot; v0.4.0a0 candidate evidence frozen
 
-Last reviewed: 2026-07-18
+Last reviewed: 2026-09-05
 
 Reference platform: Linux daemon; macOS local development and library use
 
-This document describes the security posture of the Fetech v0.4.0a0 candidate runtime. It is
+This document describes the security posture of the Fetech v0.5.0b1 Beta runtime while preserving
+the separate frozen v0.4.0a0 release boundary. It is
 an implementation-grounded threat model, not a certification or a claim that
 the process is a complete sandbox. The normative runtime invariants remain in
 [`SECURITY.md`](../SECURITY.md).
 
-Fetech is a single-tenant, local/self-hosted alpha. Python is authoritative for
+Fetech is a single-tenant, local/self-hosted Beta. Python is authoritative for
 security, authorization, budgets, storage, and execution. Clingo and SWI-Prolog
 may propose plans or explanations, but their output is untrusted and cannot
 override Python policy checks.
@@ -465,10 +466,10 @@ still requires:
   SQLite, and Postgres implementations; and
 - malware-scanning integration points where deployments require them.
 
-Release administration is also unfinished: package metadata reports `0.4.0a0`, but the candidate is
-untagged and unpublished. Reproducible candidate SPDX and dependency-license reports exist; clean
-release-commit distributions, checksums, attestations, a tag, and published package/release
-artifacts do not.
+Release administration is also unfinished: current package metadata reports `0.5.0b1`, but the Beta
+is untagged and unpublished. The separate v0.4 candidate remains frozen at 10/14 gates.
+Reproducible v0.4 candidate SPDX and dependency-license reports exist; its remaining attestations,
+approvals, tag, and published package/release artifacts do not.
 
 The release boundary fails closed for external evidence. Target-systemd and
 legal receipts must be canonical, fresh, exact-commit and exact-artifact bound,

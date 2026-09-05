@@ -6,6 +6,8 @@ Released Fetech baseline: **v0.3.0a0**, tag commit `9a5da4dca170`
 
 Candidate scope checked here: **unreleased v0.4.0a0 implementation**
 
+The later `0.5.0b1` Beta stabilization surface is outside this dated comparison snapshot.
+
 This document positions Fetech against a deliberately small set of actively documented,
 open-source acquisition, crawling, extraction, and archival runtimes. It is not a performance
 benchmark and does not support a claim that Fetech is the first, most complete, or best runtime.

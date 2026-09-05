@@ -48,16 +48,11 @@ jobs:
         run: |
           uv run --no-sync python scripts/generate_release_evidence.py --check-published
           uv run --no-sync pytest tests/test_release_evidence.py -q
-      - name: Build and verify candidate distributions
+      - name: Build Beta distributions
         run: |
           uv build
-          (cd dist && sha256sum \
-            fetech-0.4.0a0-py3-none-any.whl \
-            fetech-0.4.0a0.tar.gz > SHA256SUMS)
-          uv run --no-sync python scripts/verify_v04_release_artifacts.py \
-            --wheel dist/fetech-0.4.0a0-py3-none-any.whl \
-            --sdist dist/fetech-0.4.0a0.tar.gz \
-            --checksums dist/SHA256SUMS
+          test -s dist/fetech-0.5.0b1-py3-none-any.whl
+          test -s dist/fetech-0.5.0b1.tar.gz
       - name: Verify reproducible Beta distributions
         run: |
           uv run --no-sync python scripts/verify_reproducible_builds.py \

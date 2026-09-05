@@ -29,7 +29,7 @@ ReproducibleBuildError = MODULE.ReproducibleBuildError
 render_receipt = MODULE.render_receipt
 verify_artifact_pair = MODULE.verify_artifact_pair
 
-VERSION = "0.4.0a0"
+VERSION = "0.5.0b1"
 EPOCH = 1_788_524_216
 WHEEL_NAME = f"fetech-{VERSION}-py3-none-any.whl"
 SDIST_NAME = f"fetech-{VERSION}.tar.gz"
